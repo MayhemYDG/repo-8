@@ -5,7 +5,7 @@ Ideas from [awx](https://github.com/ansible/awx), [awx-operator](https://github.
 
 ## AWX configuration and deployment
 
-Master branch is compatible with AWX version __21.9.0__. Use git tag with desired version.
+Master branch is compatible with AWX version __21.10.2__. Use git tag with desired version.
 
 [`CHANGELOG`](./CHANGELOG.md)
 
@@ -69,7 +69,7 @@ docker run --rm -v $PWD:/tmp --env-file <(env | grep receptor_hostname) quay.io/
 
 Create [`custom Docker image`](./docker/Dockerfile.awx-ee) for execution nodes and for management nodes (if `awx_node_role_type` variable is set to `hybrid`).
 
-Or use `docker.io/t42x/awx-ha-cluster-ee:latest` image which is based on the [`same Dockerfile`](./docker/Dockerfile.awx-ee).
+Or use `quay.io/tadas/awx-ha-cluster-ee:latest` image which is based on the [`same Dockerfile`](./docker/Dockerfile.awx-ee).
 
 #### Start installation (K8S-like with auto peering)
 
