@@ -195,12 +195,16 @@ static void InsertComplexDoubleRow(Image *image,double *p,int y,double MinVal,
   {
     if (*p > 0)
       {
-        f=(*p/MaxVal)*(Quantum) (QuantumRange-GetPixelRed(image,q));
-        if ((f+GetPixelRed(image,q)) >= QuantumRange)
+        f=(*p/MaxVal)*((double) QuantumRange-(double) GetPixelRed(image,q));
+        if (IsNaN(f) != 0)      
+          f=0.0;
+        if ((f+(double) GetPixelRed(image,q)) >= (double) QuantumRange)
           SetPixelRed(image,QuantumRange,q);
         else
-          SetPixelRed(image,GetPixelRed(image,q)+ClampToQuantum(f),q);
-        f=GetPixelGreen(image,q)-f/2.0;
+          SetPixelRed(image,(double) GetPixelRed(image,q)+ClampToQuantum(f),q);
+        f=(double) GetPixelGreen(image,q)-f/2.0;
+        if (IsNaN(f) != 0)      
+          f=0.0;
         if (f <= 0.0)
           {
             SetPixelGreen(image,0,q);
@@ -215,7 +219,9 @@ static void InsertComplexDoubleRow(Image *image,double *p,int y,double MinVal,
     if (*p < 0)
       {
         f=(*p/MinVal)*(Quantum) (QuantumRange-GetPixelBlue(image,q));
-        if ((f+GetPixelBlue(image,q)) >= QuantumRange)
+        if (IsNaN(f) != 0)      
+          f=0.0;
+        if ((f+(double) GetPixelBlue(image,q)) >= (double) QuantumRange)
           SetPixelBlue(image,QuantumRange,q);
         else
           SetPixelBlue(image,GetPixelBlue(image,q)+ClampToQuantum(f),q);
@@ -258,7 +264,10 @@ static void InsertComplexFloatRow(Image *image,float *p,int y,double MinVal,
   {
     if (*p > 0)
       {
-        f=(*p/MaxVal)*(Quantum) (QuantumRange-GetPixelRed(image,q));
+        f=((double) *p/MaxVal)*((double) QuantumRange-(double)
+          GetPixelRed(image,q));
+        if (IsNaN(f) != 0)      
+          f=0.0;
         if ((f+GetPixelRed(image,q)) < QuantumRange)
           SetPixelRed(image,GetPixelRed(image,q)+ClampToQuantum(f),q);
         else
@@ -278,6 +287,8 @@ static void InsertComplexFloatRow(Image *image,float *p,int y,double MinVal,
     if (*p < 0)
       {
         f=(*p/MaxVal)*(Quantum) (QuantumRange-GetPixelBlue(image,q));
+        if (IsNaN(f) != 0)      
+          f=0.0;
         if ((f+GetPixelBlue(image,q)) < QuantumRange)
           SetPixelBlue(image,GetPixelBlue(image,q)+ClampToQuantum(f),q);
         else
@@ -314,7 +325,7 @@ static void ReadBlobFloatsLSB(Image * image, size_t len, float *data)
     len -= sizeof(float);
   }
   if (len > 0)
-    (void) SeekBlob(image, len, SEEK_CUR);
+    (void) SeekBlob(image, (MagickOffsetType) len, SEEK_CUR);
 }
 
 static void ReadBlobFloatsMSB(Image * image, size_t len, float *data)
@@ -325,7 +336,7 @@ static void ReadBlobFloatsMSB(Image * image, size_t len, float *data)
     len -= sizeof(float);
   }
   if (len > 0)
-    (void) SeekBlob(image, len, SEEK_CUR);
+    (void) SeekBlob(image, (MagickOffsetType) len, SEEK_CUR);
 }
 
 /* This function reads one block of doubles*/
@@ -337,7 +348,7 @@ static void ReadBlobDoublesLSB(Image * image, size_t len, double *data)
     len -= sizeof(double);
   }
   if (len > 0)
-    (void) SeekBlob(image, len, SEEK_CUR);
+    (void) SeekBlob(image, (MagickOffsetType) len, SEEK_CUR);
 }
 
 static void ReadBlobDoublesMSB(Image * image, size_t len, double *data)
@@ -348,7 +359,7 @@ static void ReadBlobDoublesMSB(Image * image, size_t len, double *data)
     len -= sizeof(double);
   }
   if (len > 0)
-    (void) SeekBlob(image, len, SEEK_CUR);
+    (void) SeekBlob(image, (MagickOffsetType) len, SEEK_CUR);
 }
 
 /* Calculate minimum and maximum from a given block of data */
@@ -410,7 +421,7 @@ float *fltrow;
       }
     }
   }
-  (void) SeekBlob(image, filepos, SEEK_SET);
+  (void) SeekBlob(image, (MagickOffsetType) filepos, SEEK_SET);
 }
 
 
@@ -480,11 +491,11 @@ Image *image2;
 void *cache_block, *decompress_block;
 z_stream zip_info;
 FILE *mat_file;
-size_t magick_size;
+ssize_t magick_size;
 size_t extent;
 int file;
 
-int status;
+MagickBooleanType status;
 int zip_status;
 ssize_t TotalSize = 0;
 
@@ -641,10 +652,10 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
     if(EOFBlob(image)) break;
     if ((ldblk > 9999) || (ldblk < 0))
       break;
-    HDR.Type[3]=ldblk % 10; ldblk /= 10;  /* T digit */
-    HDR.Type[2]=ldblk % 10; ldblk /= 10;  /* P digit */
-    HDR.Type[1]=ldblk % 10; ldblk /= 10;  /* O digit */
-    HDR.Type[0]=ldblk;        /* M digit */
+    HDR.Type[3]=(unsigned char) (ldblk % 10); ldblk /= 10;  /* T digit */
+    HDR.Type[2]=(unsigned char) (ldblk % 10); ldblk /= 10;  /* P digit */
+    HDR.Type[1]=(unsigned char) (ldblk % 10); ldblk /= 10;  /* O digit */
+    HDR.Type[0]=(unsigned char) (ldblk);        /* M digit */
     if (HDR.Type[3] != 0)
       break;  /* Data format */
     if (HDR.Type[2] != 0)
@@ -693,7 +704,7 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
       {
         Swap(image->columns,image->rows);
         if(HDR.imagf==1) ldblk *= 2;
-        SeekBlob(image, HDR.nCols*ldblk, SEEK_CUR);
+        SeekBlob(image, (MagickOffsetType) HDR.nCols*ldblk, SEEK_CUR);
         if ((image->columns == 0) || (image->rows == 0))
           return(image->previous == (Image *) NULL ? DestroyImageList(image)
             : image);
@@ -750,7 +761,7 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
       count=ReadBlob(image,depth/8*image->columns,(char *) pixels);
       if (count == -1)
         break;
-      q=QueueAuthenticPixels(image,0,image->rows-y-1,image->columns,1,
+      q=QueueAuthenticPixels(image,0,(ssize_t) image->rows-y-1,image->columns,1,
         exception);
       if (q == (Quantum *) NULL)
         break;
@@ -798,8 +809,8 @@ static Image *ReadMATImageV4(const ImageInfo *image_info,Image *image,
         rotated_image->colors = image->colors;
         DestroyBlob(rotated_image);
         rotated_image->blob=ReferenceBlob(image->blob);
-        AppendImageToList(&image,rotated_image);
-        DeleteImageFromList(&image);
+        ReplaceImageInList(&image,rotated_image);
+        image=rotated_image;
       }
     /*
       Proceed to next image.
@@ -880,7 +891,7 @@ static Image *ReadMATImage(const ImageInfo *image_info,ExceptionInfo *exception)
   double MinVal, MaxVal;
   unsigned z, z2;
   unsigned Frames;
-  int logging;
+  MagickBooleanType logging;
   int sample_size;
   MagickOffsetType filepos=0x80;
 
@@ -967,7 +978,7 @@ MATLAB_KO:
     Frames = 1;
     if(filepos > (MagickOffsetType) GetBlobSize(image) || filepos < 0)
       break;
-    if(SeekBlob(image,filepos,SEEK_SET) != filepos) break;
+    if(SeekBlob(image,(MagickOffsetType) filepos,SEEK_SET) != filepos) break;
     /* printf("pos=%X\n",TellBlob(image)); */
 
     MATLAB_HDR.DataType = ReadBlobXXXLong(image);
@@ -1102,7 +1113,7 @@ MATLAB_KO:
       case 0:
         size = ReadBlobXXXLong(image2);  /* Object name string size */
         size = 4 * (((size_t) size + 3 + 1) / 4);
-        (void) SeekBlob(image2, size, SEEK_CUR);
+        (void) SeekBlob(image2, (MagickOffsetType) size, SEEK_CUR);
         break;
       case 1:
       case 2:
@@ -1248,14 +1259,14 @@ RestoreMSCWarning
           quantum_info=DestroyQuantumInfo(quantum_info);
         ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
       }
-    (void) memset(BImgBuff,0,ldblk*sizeof(double));
+    (void) memset(BImgBuff,0,(size_t) ldblk*sizeof(double));
 
     MinVal = 0;
     MaxVal = 0;
     if (CellType==miDOUBLE || CellType==miSINGLE)        /* Find Min and Max Values for floats */
       {
-        CalcMinMax(image2,image_info->endian,MATLAB_HDR.SizeX,MATLAB_HDR.SizeY,
-          CellType,ldblk,BImgBuff,&quantum_info->minimum,
+        CalcMinMax(image2,(int) image_info->endian,MATLAB_HDR.SizeX,
+          MATLAB_HDR.SizeY,CellType,ldblk,BImgBuff,&quantum_info->minimum,
           &quantum_info->maximum);
       }
 
@@ -1273,7 +1284,7 @@ RestoreMSCWarning
               "  MAT set image pixels returns unexpected NULL on a row %u.", (unsigned)(MATLAB_HDR.SizeY-i-1));
             goto done_reading;    /* Skip image rotation, when cannot set image pixels    */
           }
-        if(ReadBlob(image2,ldblk,(unsigned char *)BImgBuff) != (ssize_t) ldblk)
+        if(ReadBlob(image2,(size_t) ldblk,(unsigned char *) BImgBuff) != (ssize_t) ldblk)
           {
             if (logging) (void)LogMagickEvent(CoderEvent,GetMagickModule(),
               "  MAT cannot read scanrow %u from a file.", (unsigned)(MATLAB_HDR.SizeY-i-1));
@@ -1328,13 +1339,14 @@ ExitLoop:
 
       if (CellType==miDOUBLE || CellType==miSINGLE)
       {
-        CalcMinMax(image2,  image_info->endian, MATLAB_HDR.SizeX, MATLAB_HDR.SizeY, CellType, ldblk, BImgBuff, &MinVal, &MaxVal);
+        CalcMinMax(image2,  (int) image_info->endian, MATLAB_HDR.SizeX,
+          MATLAB_HDR.SizeY, CellType, ldblk, BImgBuff, &MinVal, &MaxVal);
       }
 
       if (CellType==miDOUBLE)
         for (i = 0; i < (ssize_t) MATLAB_HDR.SizeY; i++)
         {
-          ReadBlobDoublesXXX(image2, ldblk, (double *)BImgBuff);
+          ReadBlobDoublesXXX(image2, (size_t) ldblk, (double *)BImgBuff);
           if (EOFBlob(image) != MagickFalse)
             break;
           InsertComplexDoubleRow(image, (double *)BImgBuff, i, MinVal, MaxVal,
@@ -1344,7 +1356,7 @@ ExitLoop:
       if (CellType==miSINGLE)
         for (i = 0; i < (ssize_t) MATLAB_HDR.SizeY; i++)
         {
-          ReadBlobFloatsXXX(image2, ldblk, (float *)BImgBuff);
+          ReadBlobFloatsXXX(image2, (size_t) ldblk, (float *)BImgBuff);
           if (EOFBlob(image) != MagickFalse)
             break;
           InsertComplexFloatRow(image,(float *)BImgBuff,i,MinVal,MaxVal,
@@ -1471,7 +1483,7 @@ END_OF_READING:
       Fix scene numbers
     */
     for (p=image; p != (Image *) NULL; p=p->next)
-      p->scene=scene++;
+      p->scene=(size_t) scene++;
   }
 
   if(clone_info != NULL)  /* cleanup garbage file from compression */
@@ -1594,7 +1606,7 @@ static MagickBooleanType WriteMATImage(const ImageInfo *image_info,Image *image,
     scene;
 
   size_t
-    imageListLength;
+    number_scenes;
 
   struct tm
     utc_time;
@@ -1631,7 +1643,7 @@ static MagickBooleanType WriteMATImage(const ImageInfo *image_info,Image *image,
   MATLAB_HDR[0x7F]='M';
   (void) WriteBlob(image,sizeof(MATLAB_HDR),(unsigned char *) MATLAB_HDR);
   scene=0;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     char
@@ -1666,8 +1678,8 @@ static MagickBooleanType WriteMATImage(const ImageInfo *image_info,Image *image,
     padding=((unsigned char)(data_size-1) & 0x7) ^ 0x7;
 
     (void) WriteBlobLSBLong(image,miMATRIX);
-    (void) WriteBlobLSBLong(image,(unsigned int) data_size+padding+
-      ((is_gray != MagickFalse) ? 48 : 56));
+    (void) WriteBlobLSBLong(image,(unsigned int) ((ssize_t) data_size+padding+
+      ((is_gray != MagickFalse) ? 48 : 56)));
     (void) WriteBlobLSBLong(image,0x6); /* 0x88 */
     (void) WriteBlobLSBLong(image,0x8); /* 0x8C */
     (void) WriteBlobLSBLong(image,0x6); /* 0x90 */
@@ -1728,7 +1740,7 @@ static MagickBooleanType WriteMATImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

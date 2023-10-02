@@ -50,6 +50,7 @@
 #include "MagickCore/image.h"
 #include "MagickCore/linked-list.h"
 #include "MagickCore/list.h"
+#include "MagickCore/locale_.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/monitor-private.h"
 #include "MagickCore/pixel-accessor.h"
@@ -169,8 +170,8 @@ static inline size_t ColorToNodeId(const PixelInfo *pixel,size_t index)
     ((ScaleQuantumToChar(ClampToQuantum(pixel->green)) >> index) & 0x01) << 1 |
     ((ScaleQuantumToChar(ClampToQuantum(pixel->blue)) >> index) & 0x01) << 2);
   if (pixel->alpha_trait != UndefinedPixelTrait)
-    id|=((ScaleQuantumToChar(ClampToQuantum(pixel->alpha)) >> index) &
-      0x01) << 3;
+    id|=((size_t) ((ScaleQuantumToChar(ClampToQuantum(pixel->alpha)) >> index) &
+      0x01) << 3);
   return(id);
 }
 
@@ -894,7 +895,7 @@ MagickExport MagickBooleanType IsPaletteImage(const Image *image)
 %  If the adjustment values are both zero this function is equivalent to a
 %  perfect normalization (or autolevel) of the image.
 %
-%  Each channel is stretched independantally of each other (producing color
+%  Each channel is stretched independently of each other (producing color
 %  distortion) unless the special 'SyncChannels' flag is also provided in the
 %  channels setting. If this flag is present the minimum and maximum point
 %  will be extracted from all the given channels, and those channels will be
@@ -938,7 +939,7 @@ MagickExport MagickBooleanType MinMaxStretchImage(Image *image,
     status;
 
   status=MagickTrue;
-  if (image->channel_mask == DefaultChannels)
+  if (image->channel_mask == AllChannels)
     {
       /*
         Auto-level all channels equally.
@@ -947,7 +948,7 @@ MagickExport MagickBooleanType MinMaxStretchImage(Image *image,
       min+=black;
       max-=white;
       if (fabs(min-max) >= MagickEpsilon)
-        status&=LevelImage(image,min,max,gamma,exception);
+        status&=(MagickStatusType) LevelImage(image,min,max,gamma,exception);
       return(status != 0 ? MagickTrue : MagickFalse);
     }
   /*
@@ -963,11 +964,11 @@ MagickExport MagickBooleanType MinMaxStretchImage(Image *image,
     if ((traits & UpdatePixelTrait) == 0)
       continue;
     channel_mask=SetImageChannelMask(image,(ChannelType) (1UL << i));
-    status&=GetImageRange(image,&min,&max,exception);
+    status&=(MagickStatusType) GetImageRange(image,&min,&max,exception);
     min+=black;
     max-=white;
     if (fabs(min-max) >= MagickEpsilon)
-      status&=LevelImage(image,min,max,gamma,exception);
+      status&=(MagickStatusType) LevelImage(image,min,max,gamma,exception);
     (void) SetImageChannelMask(image,channel_mask);
   }
   return(status != 0 ? MagickTrue : MagickFalse);
@@ -1101,7 +1102,8 @@ MagickExport size_t GetNumberColors(const Image *image,FILE *file,
     (void) ConcatenateMagickString(tuple,")",MagickPathExtent);
     (void) QueryColorname(image,&pixel,SVGCompliance,color,exception);
     GetColorTuple(&pixel,MagickTrue,hex);
-    (void) sprintf(count,"%10.20g:",(double) ((MagickOffsetType) p->count));
+    (void) FormatLocaleString(count,MagickPathExtent,"%10.20g:",(double)
+      ((MagickOffsetType) p->count));
     (void) FormatLocaleFile(file,"    %s %s %s %s\n",count,tuple,hex,color);
     if (image->progress_monitor != (MagickProgressMonitor) NULL)
       {

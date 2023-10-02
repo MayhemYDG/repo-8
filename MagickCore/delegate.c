@@ -59,6 +59,7 @@
 #include "MagickCore/fx-private.h"
 #include "MagickCore/image-private.h"
 #include "MagickCore/linked-list.h"
+#include "MagickCore/linked-list-private.h"
 #include "MagickCore/list.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/memory-private.h"
@@ -119,7 +120,7 @@ static const char
     "  <delegate decode=\"html\" command=\"&quot;html2ps&quot; -U -o &quot;%o&quot; &quot;%i&quot;\"/>"
     "  <delegate decode=\"ilbm\" command=\"&quot;ilbmtoppm&quot; &quot;%i&quot; &gt; &quot;%o&quot;\"/>"
     "  <delegate decode=\"jpg\" encode=\"lep\" mode=\"encode\" command=\"&quot;lepton&quot; &quot;%i&quot; &quot;%o&quot;\"/>"
-    "  <delegate decode=\"jxr\" command=\"mv &quot;%i&quot; &quot;%i.jxr&quot;; &quot;JxrDecApp&quot; -i &quot;%i.jxr&quot; -o &quot;%o.pnm&quot;; mv &quot;%i.jxr&quot; &quot;%i&quot;; mv &quot;%o.pnm&quot; &quot;%o&quot;\"/>"
+    "  <delegate decode=\"jxr\" command=\"mv &quot;%i&quot; &quot;%i.jxr&quot;; &quot;JxrDecApp&quot; -i &quot;%i.jxr&quot; -o &quot;%o.tiff&quot;; mv &quot;%i.jxr&quot; &quot;%i&quot;; mv &quot;%o.tiff&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"lep\" mode=\"decode\" command=\"&quot;lepton&quot; &quot;%i&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"odt\" command=\"&quot;soffice&quot; --convert-to pdf -outdir `dirname &quot;%i&quot;` &quot;%i&quot; 2&gt; &quot;%u&quot;; mv &quot;%i.pdf&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"pcl:cmyk\" stealth=\"True\" command=\"&quot;pcl6&quot; -dQUIET -dSAFER -dBATCH -dNOPAUSE -dNOPROMPT -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 &quot;-sDEVICE=pamcmyk32&quot; -dTextAlphaBits=%u -dGraphicsAlphaBits=%u &quot;-r%s&quot; %s &quot;-sOutputFile=%s&quot; &quot;%s&quot;\"/>"
@@ -129,8 +130,8 @@ static const char
     "  <delegate decode=\"pdf\" encode=\"ps\" mode=\"bi\" command=\"&quot;gs&quot; -sstdout=%%stderr -dQUIET -dSAFER -dBATCH -dNOPAUSE -dNOPROMPT -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 &quot;-sDEVICE=ps2write&quot; -sPDFPassword=&quot;%a&quot; &quot;-sOutputFile=%o&quot; &quot;-f%i&quot;\"/>"
     "  <delegate decode=\"png\" encode=\"webp\" command=\"&quot;cwebp&quot; -quiet -q %Q &quot;%i&quot; -o &quot;%o&quot;\"/>"
     "  <delegate decode=\"pnm\" encode=\"ilbm\" mode=\"encode\" command=\"&quot;ppmtoilbm&quot; -24if &quot;%i&quot; &gt; &quot;%o&quot;\"/>"
-    "  <delegate decode=\"bmp\" encode=\"jxr\" command=\"mv &quot;%i&quot; &quot;%i.bmp&quot;; &quot;JxrEncApp&quot; -i &quot;%i.bmp&quot; -o &quot;%o.jxr&quot;; mv &quot;%i.bmp&quot; &quot;%i&quot;; mv &quot;%o.jxr&quot; &quot;%o&quot;\"/>"
-    "  <delegate decode=\"bmp\" encode=\"wdp\" command=\"mv &quot;%i&quot; &quot;%i.bmp&quot;; &quot;JxrEncApp&quot; -i &quot;%i.bmp&quot; -o &quot;%o.jxr&quot;; mv &quot;%i.bmp&quot; &quot;%i&quot;; mv &quot;%o.jxr&quot; &quot;%o&quot;\"/>"
+    "  <delegate decode=\"tiff\" encode=\"jxr\" command=\"mv &quot;%i&quot; &quot;%i.tiff&quot;; &quot;JxrEncApp&quot; -i &quot;%i.tiff&quot; -o &quot;%o.jxr&quot;; mv &quot;%i.tiff&quot; &quot;%i&quot;; mv &quot;%o.jxr&quot; &quot;%o&quot;\"/>"
+    "  <delegate decode=\"tiff\" encode=\"wdp\" command=\"mv &quot;%i&quot; &quot;%i.tiff&quot;; &quot;JxrEncApp&quot; -i &quot;%i.tiff&quot; -o &quot;%o.jxr&quot;; mv &quot;%i.tiff&quot; &quot;%i&quot;; mv &quot;%o.jxr&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"ppt\" command=\"&quot;soffice&quot; --convert-to pdf -outdir `dirname &quot;%i&quot;` &quot;%i&quot; 2&gt; &quot;%u&quot;; mv &quot;%i.pdf&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"pptx\" command=\"&quot;soffice&quot; --convert-to pdf -outdir `dirname &quot;%i&quot;` &quot;%i&quot; 2&gt; &quot;%u&quot;; mv &quot;%i.pdf&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"ps\" encode=\"prt\" command=\"&quot;lpr&quot; &quot;%i&quot;\"/>"
@@ -143,10 +144,12 @@ static const char
     "  <delegate decode=\"ps:mono\" stealth=\"True\" command=\"&quot;gs&quot; -sstdout=%%stderr -dQUIET -dSAFER -dBATCH -dNOPAUSE -dNOPROMPT -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 &quot;-sDEVICE=pbmraw&quot; -dTextAlphaBits=%u -dGraphicsAlphaBits=%u &quot;-r%s&quot; %s &quot;-sOutputFile=%s&quot; &quot;-f%s&quot; &quot;-f%s&quot;\"/>"
     "  <delegate decode=\"shtml\" command=\"&quot;html2ps&quot; -U -o &quot;%o&quot; &quot;%i&quot;\"/>"
     "  <delegate decode=\"sid\" command=\"&quot;mrsidgeodecode&quot; -if sid -i &quot;%i&quot; -of tif -o &quot;%o&quot; &gt; &quot;%u&quot;\"/>"
-    "  <delegate decode=\"svg\" command=\"&quot;rsvg-convert&quot; -o &quot;%o&quot; &quot;%i&quot;\"/>"
+    "  <delegate decode=\"svg\" command=\"&quot;rsvg-convert&quot; --dpi-x %x --dpi-y %y -o &quot;%o&quot; &quot;%i&quot;\"/>"
+#ifndef MAGICKCORE_RSVG_DELEGATE
     "  <delegate decode=\"svg:decode\" stealth=\"True\" command=\"&quot;inkscape&quot; &quot;%s&quot; --export-png=&quot;%s&quot; --export-dpi=&quot;%s&quot; --export-background=&quot;%s&quot; --export-background-opacity=&quot;%s&quot; &gt; &quot;%s&quot; 2&gt;&amp;1\"/>"
+#endif
     "  <delegate decode=\"tiff\" encode=\"launch\" mode=\"encode\" command=\"&quot;gimp&quot; &quot;%i&quot;\"/>"
-    "  <delegate decode=\"wdp\" command=\"mv &quot;%i&quot; &quot;%i.jxr&quot;; &quot;JxrDecApp&quot; -i &quot;%i.jxr&quot; -o &quot;%o.bmp&quot;; mv &quot;%i.jxr&quot; &quot;%i&quot;; mv &quot;%o.bmp&quot; &quot;%o&quot;\"/>"
+    "  <delegate decode=\"wdp\" command=\"mv &quot;%i&quot; &quot;%i.jxr&quot;; &quot;JxrDecApp&quot; -i &quot;%i.jxr&quot; -o &quot;%o.tiff&quot;; mv &quot;%i.jxr&quot; &quot;%i&quot;; mv &quot;%o.tiff&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"webp\" command=\"&quot;dwebp&quot; -pam &quot;%i&quot; -o &quot;%o&quot;\"/>"
     "  <delegate decode=\"xls\" command=\"&quot;soffice&quot; --convert-to pdf -outdir `dirname &quot;%i&quot;` &quot;%i&quot; 2&gt; &quot;%u&quot;; mv &quot;%i.pdf&quot; &quot;%o&quot;\"/>"
     "  <delegate decode=\"xlsx\" command=\"&quot;soffice&quot; --convert-to pdf -outdir `dirname &quot;%i&quot;` &quot;%i&quot; 2&gt; &quot;%u&quot;; mv &quot;%i.pdf&quot; &quot;%o&quot;\"/>"
@@ -158,7 +161,7 @@ static const char
     "</delegatemap>";
 
 /*
-  Global declaractions.
+  Global declarations.
 */
 static LinkedListInfo
   *delegate_cache = (LinkedListInfo *) NULL;
@@ -167,7 +170,7 @@ static SemaphoreInfo
   *delegate_semaphore = (SemaphoreInfo *) NULL;
 
 /*
-  Forward declaractions.
+  Forward declarations.
 */
 static MagickBooleanType
   IsDelegateCacheInstantiated(ExceptionInfo *),
@@ -493,7 +496,7 @@ MagickExport int ExternalDelegateCommand(const MagickBooleanType asynchronous,
       want to 'move' a file.
 
       TODO: This won't work if one of the delegate parameters has a forward
-            slash as aparameter.
+            slash as a parameter.
     */
     p=strstr(sanitize_command,"cmd.exe /c");
     if (p != (char*) NULL)
@@ -600,7 +603,7 @@ static char *GetMagickPropertyLetter(ImageInfo *image_info,Image *image,
   string=(const char *) value;
   switch (letter)
   {
-    case 'a': /* authentication passphase */
+    case 'a': /* authentication passphrase */
     {
       WarnNoImageInfoReturn("\"%%%c\"",letter);
       string=GetImageOption(image_info,"authenticate");
@@ -709,7 +712,7 @@ static char *GetMagickPropertyLetter(ImageInfo *image_info,Image *image,
         image->scene);
       break;
     }
-    case 't': /* Base filename without directory or extention */
+    case 't': /* Base filename without directory or extension */
     {
       WarnNoImageReturn("\"%%%c\"",letter);
       GetPathComponent(image->magick_filename,BasePath,value);
@@ -918,7 +921,7 @@ static char *InterpretDelegateProperties(ImageInfo *image_info,
 #define ExtendInterpretText(string_length) \
 { \
   size_t length=(string_length); \
-  if ((size_t) (q-interpret_text+length+1) >= extent) \
+  if ((size_t) (q-interpret_text+(ssize_t) length+1) >= extent) \
     { \
       extent+=length; \
       interpret_text=(char *) ResizeQuantumMemory(interpret_text,extent+ \
@@ -947,7 +950,7 @@ static char *InterpretDelegateProperties(ImageInfo *image_info,
 #define AppendString2Text(string) \
 { \
   size_t length=strlen((string)); \
-  if ((size_t) (q-interpret_text+length+1) >= extent) \
+  if ((size_t) (q-interpret_text+(ssize_t) length+1) >= extent) \
     { \
       extent+=length; \
       interpret_text=(char *) ResizeQuantumMemory(interpret_text,extent+ \
@@ -1092,7 +1095,7 @@ static char *InterpretDelegateProperties(ImageInfo *image_info,
     if (number != MagickFalse)
       {
         /*
-          But only if not preceeded by a number!
+          But only if not preceded by a number!
         */
         *q++='%'; /* do NOT substitute the percent */
         p--;      /* back up one */
@@ -1224,6 +1227,9 @@ MagickExport const DelegateInfo *GetDelegateInfo(const char *decode,
   const char *encode,ExceptionInfo *exception)
 {
   const DelegateInfo
+    *delegate_info;
+
+  ElementInfo
     *p;
 
   assert(exception != (ExceptionInfo *) NULL);
@@ -1232,46 +1238,50 @@ MagickExport const DelegateInfo *GetDelegateInfo(const char *decode,
   /*
     Search for named delegate.
   */
+  delegate_info=(const DelegateInfo *) NULL;
   LockSemaphoreInfo(delegate_semaphore);
-  ResetLinkedListIterator(delegate_cache);
-  p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
+  p=GetHeadElementInLinkedList(delegate_cache);
   if ((LocaleCompare(decode,"*") == 0) && (LocaleCompare(encode,"*") == 0))
     {
       UnlockSemaphoreInfo(delegate_semaphore);
-      return(p);
+      if (p != (ElementInfo *) NULL)
+        delegate_info=(const DelegateInfo* ) p->value;
+      return(delegate_info);
     }
-  while (p != (const DelegateInfo *) NULL)
+  while (p != (ElementInfo *) NULL)
   {
-    if (p->mode > 0)
+    delegate_info=(const DelegateInfo* ) p->value;
+    if (delegate_info->mode > 0)
       {
-        if (LocaleCompare(p->decode,decode) == 0)
+        if (LocaleCompare(delegate_info->decode,decode) == 0)
           break;
-        p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
+        p=p->next;
         continue;
       }
-    if (p->mode < 0)
+    if (delegate_info->mode < 0)
       {
-        if (LocaleCompare(p->encode,encode) == 0)
+        if (LocaleCompare(delegate_info->encode,encode) == 0)
           break;
-        p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
+        p=p->next;
         continue;
       }
-    if (LocaleCompare(decode,p->decode) == 0)
-      if (LocaleCompare(encode,p->encode) == 0)
+    if (LocaleCompare(decode,delegate_info->decode) == 0)
+      if (LocaleCompare(encode,delegate_info->encode) == 0)
         break;
     if (LocaleCompare(decode,"*") == 0)
-      if (LocaleCompare(encode,p->encode) == 0)
+      if (LocaleCompare(encode,delegate_info->encode) == 0)
         break;
-    if (LocaleCompare(decode,p->decode) == 0)
+    if (LocaleCompare(decode,delegate_info->decode) == 0)
       if (LocaleCompare(encode,"*") == 0)
         break;
-    p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
+    p=p->next;
   }
-  if (p != (const DelegateInfo *) NULL)
-    (void) InsertValueInLinkedList(delegate_cache,0,
-      RemoveElementByValueFromLinkedList(delegate_cache,p));
+  if (p == (ElementInfo *) NULL)
+    delegate_info=(const DelegateInfo *) NULL;
+  else
+    SetHeadElementInLinkedList(delegate_cache,p);
   UnlockSemaphoreInfo(delegate_semaphore);
-  return(p);
+  return(delegate_info);
 }
 
 /*
@@ -1342,44 +1352,45 @@ MagickExport const DelegateInfo **GetDelegateInfoList(const char *pattern,
   const DelegateInfo
     **delegates;
 
-  const DelegateInfo
+  ElementInfo
     *p;
 
   ssize_t
     i;
 
-  /*
-    Allocate delegate list.
-  */
   assert(number_delegates != (size_t *) NULL);
   assert(pattern != (char *) NULL);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",pattern);
   *number_delegates=0;
-  p=GetDelegateInfo("*","*",exception);
-  if (p == (const DelegateInfo *) NULL)
+  if (IsDelegateCacheInstantiated(exception) == MagickFalse)
     return((const DelegateInfo **) NULL);
   delegates=(const DelegateInfo **) AcquireQuantumMemory((size_t)
     GetNumberOfElementsInLinkedList(delegate_cache)+1UL,sizeof(*delegates));
   if (delegates == (const DelegateInfo **) NULL)
     return((const DelegateInfo **) NULL);
-  /*
-    Generate delegate list.
-  */
   LockSemaphoreInfo(delegate_semaphore);
-  ResetLinkedListIterator(delegate_cache);
-  p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
-  for (i=0; p != (const DelegateInfo *) NULL; )
+  p=GetHeadElementInLinkedList(delegate_cache);
+  for (i=0; p != (ElementInfo *) NULL; )
   {
-    if( (p->stealth == MagickFalse) &&
-        ( GlobExpression(p->decode,pattern,MagickFalse) != MagickFalse ||
-          GlobExpression(p->encode,pattern,MagickFalse) != MagickFalse) )
-      delegates[i++]=p;
-    p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
+    const DelegateInfo
+      *delegate_info;
+
+    delegate_info=(const DelegateInfo *) p->value;
+    if( (delegate_info->stealth == MagickFalse) &&
+        (GlobExpression(delegate_info->decode,pattern,MagickFalse) != MagickFalse ||
+         GlobExpression(delegate_info->encode,pattern,MagickFalse) != MagickFalse))
+      delegates[i++]=delegate_info;
+    p=p->next;
   }
   UnlockSemaphoreInfo(delegate_semaphore);
-  qsort((void *) delegates,(size_t) i,sizeof(*delegates),DelegateInfoCompare);
-  delegates[i]=(DelegateInfo *) NULL;
+  if (i == 0)
+    delegates=(const DelegateInfo **) RelinquishMagickMemory((void*) delegates);
+  else
+    {
+      qsort((void *) delegates,(size_t) i,sizeof(*delegates),DelegateInfoCompare);
+      delegates[i]=(DelegateInfo *) NULL;
+    }
   *number_delegates=(size_t) i;
   return(delegates);
 }
@@ -1439,43 +1450,47 @@ MagickExport char **GetDelegateList(const char *pattern,
   char
     **delegates;
 
-  const DelegateInfo
+  ElementInfo
     *p;
 
   ssize_t
     i;
 
-  /*
-    Allocate delegate list.
-  */
   assert(pattern != (char *) NULL);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",pattern);
   assert(number_delegates != (size_t *) NULL);
   *number_delegates=0;
-  p=GetDelegateInfo("*","*",exception);
-  if (p == (const DelegateInfo *) NULL)
+  if (IsDelegateCacheInstantiated(exception) == MagickFalse)
     return((char **) NULL);
   delegates=(char **) AcquireQuantumMemory((size_t)
     GetNumberOfElementsInLinkedList(delegate_cache)+1UL,sizeof(*delegates));
   if (delegates == (char **) NULL)
     return((char **) NULL);
   LockSemaphoreInfo(delegate_semaphore);
-  ResetLinkedListIterator(delegate_cache);
-  p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
-  for (i=0; p != (const DelegateInfo *) NULL; )
+  p=GetHeadElementInLinkedList(delegate_cache);
+  for (i=0; p != (ElementInfo *) NULL; )
   {
-    if( (p->stealth == MagickFalse) &&
-        GlobExpression(p->decode,pattern,MagickFalse) != MagickFalse )
-      delegates[i++]=ConstantString(p->decode);
-    if( (p->stealth == MagickFalse) &&
-        GlobExpression(p->encode,pattern,MagickFalse) != MagickFalse )
-      delegates[i++]=ConstantString(p->encode);
-    p=(const DelegateInfo *) GetNextValueInLinkedList(delegate_cache);
+    const DelegateInfo
+      *delegate_info;
+
+    delegate_info=(const DelegateInfo *) p->value;
+    if ((delegate_info->stealth == MagickFalse) &&
+       (GlobExpression(delegate_info->decode,pattern,MagickFalse) != MagickFalse))
+      delegates[i++]=ConstantString(delegate_info->decode);
+    if ((delegate_info->stealth == MagickFalse) &&
+        (GlobExpression(delegate_info->encode,pattern,MagickFalse) != MagickFalse))
+      delegates[i++]=ConstantString(delegate_info->encode);
+    p=p->next;
   }
   UnlockSemaphoreInfo(delegate_semaphore);
-  qsort((void *) delegates,(size_t) i,sizeof(*delegates),DelegateCompare);
-  delegates[i]=(char *) NULL;
+  if (i == 0)
+    delegates=(char **) RelinquishMagickMemory(delegates);
+  else
+    {
+      qsort((void *) delegates,(size_t) i,sizeof(*delegates),DelegateCompare);
+      delegates[i]=(char *) NULL;
+    }
   *number_delegates=(size_t) i;
   return(delegates);
 }
@@ -1622,15 +1637,13 @@ static MagickBooleanType CopyDelegateFile(const char *source,
   MagickBooleanType
     status;
 
-  size_t
+  ssize_t
+    count,
     i;
 
   size_t
     length,
     quantum;
-
-  ssize_t
-    count;
 
   struct stat
     attributes;
@@ -1669,7 +1682,7 @@ static MagickBooleanType CopyDelegateFile(const char *source,
       return(MagickFalse);
     }
   length=0;
-  for (i=0; ; i+=count)
+  for (i=0; ; i+=(ssize_t) count)
   {
     count=(ssize_t) read(source_file,buffer,quantum);
     if (count <= 0)
@@ -1815,6 +1828,7 @@ MagickExport MagickBooleanType InvokeDelegate(ImageInfo *image_info,
       {
         (void) FormatLocaleString(p->filename,MagickPathExtent,"%s:%s",
           delegate_info->decode,clone_info->filename);
+        (void) SetImageOption(clone_info,"quantum:format","floating-point");
         status=WriteImage(clone_info,p,exception);
         if (status == MagickFalse)
           {
@@ -2147,8 +2161,8 @@ static MagickBooleanType LoadDelegateCache(LinkedListInfo *cache,
                   file_xml=FileToXML(path,~0UL);
                   if (file_xml != (char *) NULL)
                     {
-                      status&=LoadDelegateCache(cache,file_xml,path,
-                        depth+1,exception);
+                      status&=(MagickStatusType) LoadDelegateCache(cache,
+                        file_xml,path,depth+1,exception);
                       file_xml=DestroyString(file_xml);
                     }
                 }

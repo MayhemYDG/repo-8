@@ -62,6 +62,11 @@ MAGICKCORE_JXL_MODULES = coders/jxl.la
 MAGICKCORE_JXL_SRCS = coders/jxl.c
 endif
 
+if DMR_DELEGATE
+MAGICKCORE_DMR_MODULES = coders/dmr.la
+MAGICKCORE_DMR_SRCS = coders/dmr.c
+endif
+
 if LIBOPENJP2_DELEGATE
 MAGICKCORE_JP2_MODULES = coders/jp2.la
 MAGICKCORE_JP2_SRCS = coders/jp2.c
@@ -110,6 +115,8 @@ MAGICKCORE_CODER_SRCS = \
 	coders/ashlar.h \
 	coders/avs.c \
 	coders/avs.h \
+	coders/bayer.c \
+	coders/bayer.h \
 	coders/bgr.c \
 	coders/bgr.h \
 	coders/bmp.c \
@@ -370,6 +377,7 @@ MAGICKCORE_CODER_SRCS = \
 	coders/yuv.h \
 	$(MAGICKCORE_DPS_SRCS) \
 	$(MAGICKCORE_DJVU_SRCS) \
+	$(MAGICKCORE_DMR_SRCS) \
 	$(MAGICKCORE_EXR_SRCS) \
 	$(MAGICKCORE_FLIF_SRCS) \
 	$(MAGICKCORE_FPX_SRCS) \
@@ -390,6 +398,7 @@ CODERS_NOINST_HDRS = \
 	coders/art.h \
 	coders/ashlar.h \
 	coders/avs.h \
+	coders/bayer.h \
 	coders/bgr.h \
 	coders/bmp.h \
 	coders/braille.h \
@@ -538,6 +547,7 @@ coders_LTLIBRARIES = \
 	coders/art.la \
 	coders/ashlar.la \
 	coders/avs.la \
+	coders/bayer.la \
 	coders/bgr.la \
 	coders/bmp.la \
 	coders/braille.la \
@@ -655,6 +665,7 @@ coders_LTLIBRARIES = \
 	coders/yuv.la \
 	$(MAGICKCORE_DPS_MODULES) \
 	$(MAGICKCORE_DJVU_MODULES) \
+	$(MAGICKCORE_DMR_MODULES) \
 	$(MAGICKCORE_EXR_MODULES) \
 	$(MAGICKCORE_FLIF_MODULES) \
 	$(MAGICKCORE_FPX_MODULES) \
@@ -696,6 +707,12 @@ coders_avs_la_SOURCES      = coders/avs.c
 coders_avs_la_CPPFLAGS     = $(MAGICK_CODER_CPPFLAGS)
 coders_avs_la_LDFLAGS      = $(MODULECOMMONFLAGS)
 coders_avs_la_LIBADD       = $(MAGICKCORE_LIBS)
+
+# BAYER coder module
+coders_bayer_la_SOURCES     = coders/bayer.c
+coders_bayer_la_CPPFLAGS    = $(MAGICK_CODER_CPPFLAGS)
+coders_bayer_la_LDFLAGS     = $(MODULECOMMONFLAGS)
+coders_bayer_la_LIBADD      = $(MAGICKCORE_LIBS)
 
 # BRG coder module
 coders_bgr_la_SOURCES      = coders/bgr.c
@@ -798,6 +815,12 @@ coders_djvu_la_SOURCES     = coders/djvu.c
 coders_djvu_la_CPPFLAGS    = $(MAGICK_CODER_CPPFLAGS)
 coders_djvu_la_LDFLAGS     = $(MODULECOMMONFLAGS)
 coders_djvu_la_LIBADD      = $(MAGICKCORE_LIBS) $(DJVU_LIBS) $(JPEG_LIBS) $(LZMA_LIBS) $(ZLIB_LIBS) $(MATH_LIBS)
+
+# DMR coder module
+coders_dmr_la_SOURCES      = coders/dmr.c
+coders_dmr_la_CPPFLAGS     = $(MAGICK_CODER_CPPFLAGS)
+coders_dmr_la_LDFLAGS      = $(MODULECOMMONFLAGS)
+coders_dmr_la_LIBADD       = $(MAGICKCORE_LIBS) $(DMR_LIBS)
 
 # DNG coder module
 coders_dng_la_SOURCES      = coders/dng.c
@@ -1335,7 +1358,7 @@ coders_thumbnail_la_LIBADD = $(MAGICKCORE_LIBS)
 
 # TIFF coder module
 coders_tiff_la_SOURCES     = coders/tiff.c coders/psd.c coders/psd-private.h
-coders_tiff_la_CPPFLAGS    = $(MAGICK_CODER_CPPFLAGS)
+coders_tiff_la_CPPFLAGS    = $(MAGICK_CODER_CPPFLAGS) $(TIFF_CFLAGS)
 coders_tiff_la_LDFLAGS     = $(MODULECOMMONFLAGS)
 coders_tiff_la_LIBADD      = $(MAGICKCORE_LIBS) $(TIFF_LIBS) $(JBIG_LIBS) $(JPEG_LIBS) $(LZMA_LIBS) $(ZLIB_LIBS) $(ZSTD_LIBS) $(WEBPMUX_LIBS) $(WEBP_LIBS) $(MATH_LIBS)
 
@@ -1380,6 +1403,9 @@ coders_url_la_SOURCES      = coders/url.c
 coders_url_la_CPPFLAGS     = $(MAGICK_CODER_CPPFLAGS)
 coders_url_la_LDFLAGS      = $(MODULECOMMONFLAGS)
 coders_url_la_LIBADD       = $(MAGICKCORE_LIBS) $(XML_LIBS) $(LZMA_LIBS) $(ZLIB_LIBS) $(MATH_LIBS)
+if WIN32_NATIVE_BUILD
+coders_url_la_LIBADD += -lurlmon
+endif
 
 # UYVY coder module
 coders_uyvy_la_SOURCES     = coders/uyvy.c

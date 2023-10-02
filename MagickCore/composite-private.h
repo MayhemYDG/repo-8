@@ -21,6 +21,7 @@
 
 #include "MagickCore/color.h"
 #include "MagickCore/image.h"
+#include "MagickCore/artifact.h"
 #include "MagickCore/image-private.h"
 #include "MagickCore/pixel-accessor.h"
 
@@ -106,7 +107,8 @@ static inline void CompositePixelOver(const Image *image,const PixelInfo *p,
       }
       case AlphaPixelChannel:
       {
-        composite[i]=ClampToQuantum(QuantumRange*RoundToUnity(Sa+Da-Sa*Da));
+        composite[i]=ClampToQuantum((double) QuantumRange*
+          RoundToUnity(Sa+Da-Sa*Da));
         break;
       }
       default:
@@ -183,6 +185,12 @@ static inline void CompositePixelInfoBlend(const PixelInfo *p,
   */
   CompositePixelInfoPlus(p,(double) (alpha*p->alpha),q,(double) (beta*q->alpha),
     composite);
+}
+
+static inline void DisableCompositeClampUnlessSpecified(Image *image)
+{
+  if (GetImageArtifact(image,"compose:clamp") == (const char *) NULL)
+    (void) SetImageArtifact(image,"compose:clamp","off");
 }
 
 static inline MagickBooleanType GetCompositeClipToSelf(

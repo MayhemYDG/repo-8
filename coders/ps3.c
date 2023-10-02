@@ -361,10 +361,10 @@ static MagickBooleanType SerializeImageChannel(const ImageInfo *image_info,
         {
           bit=(unsigned char) 0x00;
           if (x < (ssize_t) image->columns)
-            bit=(unsigned char) (GetPixelLuma(image,p) == TransparentAlpha ?
-              0x01 : 0x00);
+            bit=(unsigned char) (GetPixelLuma(image,p) == (double)
+              TransparentAlpha ? 0x01 : 0x00);
           code=(code << 1)+bit;
-          if (((x+1) % pack) == 0)
+          if (((x+1) % (ssize_t) pack) == 0)
             {
               *q++=code;
               code='\0';
@@ -857,20 +857,18 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     media_info,
     page_info;
 
-  ssize_t
-    i;
-
   SegmentInfo
     bounds;
 
   size_t
-    imageListLength,
     length,
+    number_scenes,
     page,
     pixel,
     text_size;
 
   ssize_t
+    i,
     j;
 
   time_t
@@ -932,7 +930,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
   (void) memset(&bounds,0,sizeof(bounds));
   page=0;
   scene=0;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     MagickBooleanType
@@ -987,15 +985,16 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     (void) ParseMetaGeometry(page_geometry,&geometry.x,&geometry.y,
       &geometry.width,&geometry.height);
     scale.x=PerceptibleReciprocal(resolution.x)*geometry.width*delta.x;
-    geometry.width=(size_t) floor(scale.x+0.5);
+    geometry.width=CastDoubleToUnsigned(scale.x+0.5);
     scale.y=PerceptibleReciprocal(resolution.y)*geometry.height*delta.y;
-    geometry.height=(size_t) floor(scale.y+0.5);
+    geometry.height=CastDoubleToUnsigned(scale.y+0.5);
     (void) ParseAbsoluteGeometry(page_geometry,&media_info);
     (void) ParseGravityGeometry(image,page_geometry,&page_info,exception);
     if (image->gravity != UndefinedGravity)
       {
         geometry.x=(-page_info.x);
-        geometry.y=(ssize_t) (media_info.height+page_info.y-image->rows);
+        geometry.y=(ssize_t) media_info.height+page_info.y-(ssize_t)
+          image->rows;
       }
     pointsize=12.0;
     if (image_info->pointsize != 0.0)
@@ -1077,7 +1076,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
               (void) CopyMagickString(buffer,"%%Pages: 1\n",MagickPathExtent);
             else
               (void) FormatLocaleString(buffer,MagickPathExtent,
-                "%%%%Pages: %.20g\n",(double) imageListLength);
+                "%%%%Pages: %.20g\n",(double) number_scenes);
             (void) WriteBlobString(image,buffer);
           }
         if (image->colorspace == CMYKColorspace)
@@ -1595,7 +1594,7 @@ static MagickBooleanType WritePS3Image(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

@@ -180,6 +180,9 @@ static MagickBooleanType WriteHISTOGRAMImage(const ImageInfo *image_info,
   const char
     *option;
 
+  const MagickInfo
+    *magick_info;
+
   Image
     *histogram_image;
 
@@ -297,7 +300,7 @@ static MagickBooleanType WriteHISTOGRAMImage(const ImageInfo *image_info,
       {
         y=CastDoubleToLong(ceil((double) histogram_image->rows-scale*
           histogram[x].red-0.5));
-        r=q+y*GetPixelChannels(histogram_image);
+        r=q+y*(ssize_t) GetPixelChannels(histogram_image);
         for ( ; y < (ssize_t) histogram_image->rows; y++)
         {
           SetPixelRed(histogram_image,QuantumRange,r);
@@ -308,7 +311,7 @@ static MagickBooleanType WriteHISTOGRAMImage(const ImageInfo *image_info,
       {
         y=CastDoubleToLong(ceil((double) histogram_image->rows-scale*
           histogram[x].green-0.5));
-        r=q+y*GetPixelChannels(histogram_image);
+        r=q+y*(ssize_t) GetPixelChannels(histogram_image);
         for ( ; y < (ssize_t) histogram_image->rows; y++)
         {
           SetPixelGreen(histogram_image,QuantumRange,r);
@@ -319,7 +322,7 @@ static MagickBooleanType WriteHISTOGRAMImage(const ImageInfo *image_info,
       {
         y=CastDoubleToLong(ceil((double) histogram_image->rows-scale*
           histogram[x].blue-0.5));
-        r=q+y*GetPixelChannels(histogram_image);
+        r=q+y*(ssize_t) GetPixelChannels(histogram_image);
         for ( ; y < (ssize_t) histogram_image->rows; y++)
         {
           SetPixelBlue(histogram_image,QuantumRange,r);
@@ -378,8 +381,9 @@ static MagickBooleanType WriteHISTOGRAMImage(const ImageInfo *image_info,
   write_info=CloneImageInfo(image_info);
   *write_info->magick='\0';
   (void) SetImageInfo(write_info,1,exception);
-  if ((*write_info->magick == '\0') ||
-      (LocaleCompare(write_info->magick,"HISTOGRAM") == 0))
+  magick_info=GetMagickInfo(write_info->magick,exception);
+  if ((magick_info == (const MagickInfo*) NULL) ||
+      (LocaleCompare(magick_info->magick_module,"HISTOGRAM") == 0))
     (void) FormatLocaleString(histogram_image->filename,MagickPathExtent,
       "miff:%s",write_info->filename);
   status=WriteImage(write_info,histogram_image,exception);

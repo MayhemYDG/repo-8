@@ -147,7 +147,7 @@ MagickExport CacheView *AcquireAuthenticCacheView(const Image *image,
 %
 */
 MagickExport CacheView *AcquireVirtualCacheView(const Image *image,
-  ExceptionInfo *exception)
+  ExceptionInfo *magick_unused(exception))
 {
   CacheView
     *magick_restrict cache_view;
@@ -684,7 +684,7 @@ MagickExport const Quantum *GetCacheViewVirtualPixels(
 %
 %  The format of the GetOneCacheViewAuthenticPixel method is:
 %
-%      MagickBooleaNType GetOneCacheViewAuthenticPixel(
+%      MagickBooleanType GetOneCacheViewAuthenticPixel(
 %        const CacheView *cache_view,const ssize_t x,const ssize_t y,
 %        Quantum *pixel,ExceptionInfo *exception)
 %

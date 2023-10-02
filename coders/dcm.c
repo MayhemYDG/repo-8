@@ -692,7 +692,7 @@ static const DicomInfo
     { 0x0018, 0x1602, "IS", "Shutter Left Vertical Edge" },
     { 0x0018, 0x1604, "IS", "Shutter Right Vertical Edge" },
     { 0x0018, 0x1606, "IS", "Shutter Upper Horizontal Edge" },
-    { 0x0018, 0x1608, "IS", "Shutter Lower Horizonta lEdge" },
+    { 0x0018, 0x1608, "IS", "Shutter Lower Horizontal Edge" },
     { 0x0018, 0x1610, "IS", "Center of Circular Shutter" },
     { 0x0018, 0x1612, "IS", "Radius of Circular Shutter" },
     { 0x0018, 0x1620, "IS", "Vertices of Polygonal Shutter" },
@@ -2188,7 +2188,7 @@ static const DicomInfo
     { 0x3006, 0x0039, "SQ", "ROI Contour Sequence" },
     { 0x3006, 0x0040, "SQ", "Contour Sequence" },
     { 0x3006, 0x0042, "CS", "Contour Geometric Type" },
-    { 0x3006, 0x0044, "DS", "Contour SlabT hickness" },
+    { 0x3006, 0x0044, "DS", "Contour Slab Thickness" },
     { 0x3006, 0x0045, "DS", "Contour Offset Vector" },
     { 0x3006, 0x0046, "IS", "Number of Contour Points" },
     { 0x3006, 0x0050, "DS", "Contour Data" },
@@ -2455,7 +2455,7 @@ static const DicomInfo
     { 0x300c, 0x00a0, "IS", "Referenced Tolerance Table Number" },
     { 0x300c, 0x00b0, "SQ", "Referenced Bolus Sequence" },
     { 0x300c, 0x00c0, "IS", "Referenced Wedge Number" },
-    { 0x300c, 0x00d0, "IS", "Referenced Compensato rNumber" },
+    { 0x300c, 0x00d0, "IS", "Referenced Compensator Number" },
     { 0x300c, 0x00e0, "IS", "Referenced Block Number" },
     { 0x300c, 0x00f0, "IS", "Referenced Control Point" },
     { 0x300e, 0x0002, "CS", "Approval Status" },
@@ -2807,8 +2807,7 @@ static int ReadDCMByte(DCMStreamInfo *stream_info,Image *image)
 static unsigned short ReadDCMShort(DCMStreamInfo *stream_info,Image *image)
 {
   int
-    shift,
-    byte;
+    shift;
 
   unsigned short
     value;
@@ -2816,11 +2815,8 @@ static unsigned short ReadDCMShort(DCMStreamInfo *stream_info,Image *image)
   if (image->compression != RLECompression)
     return(ReadBlobLSBShort(image));
   shift=image->depth < 16 ? 4 : 8;
-  value=(unsigned short) ReadDCMByte(stream_info,image);
-  byte=ReadDCMByte(stream_info,image);
-  if (byte < 0)
-    return(0);
-  value|=(unsigned short) (byte << shift);
+  value=(((unsigned short) ReadDCMByte(stream_info,image) << shift) |
+          (unsigned short) ReadDCMByte(stream_info,image));
   return(value);
 }
 
@@ -2944,7 +2940,7 @@ static MagickBooleanType ReadDCMPixels(Image *image,DCMInfo *info,
                         info->window_center-0.5)/(info->window_width-1))+0.5));
                 }
             }
-          index&=info->mask;
+          index&=(ssize_t) info->mask;
           index=(int) ConstrainColormapIndex(image,(ssize_t) index,exception);
           if (first_segment != MagickFalse)
             SetPixelIndex(image,(Quantum) index,q);
@@ -3090,14 +3086,10 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
     use_explicit;
 
   MagickOffsetType
-    blob_size,
     offset;
 
-  unsigned char
-    *p;
-
-  ssize_t
-    i;
+  MagickSizeType
+    blob_size;
 
   size_t
     colors,
@@ -3108,11 +3100,13 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
   ssize_t
     count,
+    i,
     scene,
     sequence_depth;
 
   unsigned char
-    *data;
+    *data,
+    *p;
 
   unsigned short
     group,
@@ -3178,8 +3172,8 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
   number_scenes=1;
   use_explicit=MagickFalse;
   explicit_retry=MagickFalse;
-  blob_size=(MagickOffsetType) GetBlobSize(image);
-  while (TellBlob(image) < blob_size)
+  blob_size=GetBlobSize(image);
+  while (TellBlob(image) < ((MagickOffsetType) blob_size-10))
   {
     for (group=0; (group != 0x7FE0) || (element != 0x0010) ; )
     {
@@ -3243,7 +3237,7 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
               quantum=4;
             }
         }
-      if ((group == 0xFFFE) && (element == 0xE0DD))
+      if ((group == 0xFFFE) && (element == 0xE0DD) && (sequence_depth != 0))
         {
           /*
             If we're exiting a sequence, restore the previous image parameters,
@@ -3384,7 +3378,7 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
           else
             if ((quantum != 0) && (length != 0))
               {
-                if (length > (size_t) GetBlobSize(image))
+                if (length > (size_t) blob_size)
                   ThrowDCMException(CorruptImageError,
                     "InsufficientImageDataInFile")
                 if (~length >= 1)
@@ -3892,7 +3886,7 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
         (void) (((ssize_t) ReadBlobLSBShort(image) << 16) |
           ReadBlobLSBShort(image));
         length=(size_t) ReadBlobLSBLong(image);
-        if (length > (size_t) GetBlobSize(image))
+        if (length > (size_t) blob_size)
           ThrowDCMException(CorruptImageError,"InsufficientImageDataInFile")
         stream_info->offset_count=length >> 2;
         if (stream_info->offset_count != 0)
@@ -3939,7 +3933,7 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
           tag=((unsigned int) ReadBlobLSBShort(image) << 16) |
             ReadBlobLSBShort(image);
           length=(size_t) ReadBlobLSBLong(image);
-          if (length > (size_t) GetBlobSize(image))
+          if (length > (size_t) blob_size)
             {
               images=DestroyImageList(images);
               read_info=DestroyImageInfo(read_info);
@@ -4023,7 +4017,7 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
           Compute pixel scaling table.
         */
         length=(size_t) (GetQuantumRange(info.depth)+1);
-        if (length > (size_t) GetBlobSize(image))
+        if (length > (size_t) blob_size)
           ThrowDCMException(CorruptImageError,"InsufficientImageDataInFile")
         if (info.scale != (Quantum *) NULL)
           info.scale=(Quantum *) RelinquishMagickMemory(info.scale);
@@ -4055,11 +4049,11 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
           if (c == EOF)
             break;
         }
-        tag=((unsigned int) ReadBlobLSBShort(image) << 16) |
-          ReadBlobLSBShort(image);
+        tag=(((unsigned int) ReadBlobLSBShort(image)) << 16) |
+          (unsigned int) ReadBlobLSBShort(image);
         (void) tag;
         length=(size_t) ReadBlobLSBLong(image);
-        if (length > (size_t) GetBlobSize(image))
+        if (length > (size_t) blob_size)
           ThrowDCMException(CorruptImageError,"InsufficientImageDataInFile")
         stream_info->offset_count=length >> 2;
         if (stream_info->offset_count != 0)
@@ -4073,15 +4067,11 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
               ThrowDCMException(ResourceLimitError,"MemoryAllocationFailed")
             for (i=0; i < (ssize_t) stream_info->offset_count; i++)
             {
-              offset=(MagickOffsetType) ReadBlobLSBSignedLong(image);
-              if (offset > (MagickOffsetType) GetBlobSize(image))
-                ThrowDCMException(CorruptImageError,
-                  "InsufficientImageDataInFile")
-              stream_info->offsets[i]=(ssize_t) offset;
+              stream_info->offsets[i]=(ssize_t) ReadBlobLSBSignedLong(image);
               if (EOFBlob(image) != MagickFalse)
                 break;
             }
-            offset=TellBlob(image)+8;
+            offset=TellBlob(image);
             for (i=0; i < (ssize_t) stream_info->offset_count; i++)
               stream_info->offsets[i]+=offset;
           }
@@ -4099,8 +4089,8 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
       if ((image->colormap == (PixelInfo *) NULL) &&
           (info.samples_per_pixel == 1))
         {
-          int
-            index;
+          Quantum
+            color;
 
           size_t
             one;
@@ -4109,44 +4099,32 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
           if (colors == 0)
             colors=one << info.depth;
           if (AcquireImageColormap(image,colors,exception) == MagickFalse)
-            ThrowDCMException(ResourceLimitError,"MemoryAllocationFailed")
+            ThrowDCMException(ResourceLimitError,"UnableToCreateColormap")
           if (map.red != (int *) NULL)
             for (i=0; i < (ssize_t) colors; i++)
             {
-              index=map.red[i];
-              if ((info.scale != (Quantum *) NULL) && (index >= 0) &&
-                  (index < (int) info.scale_size))
-                index=(int) info.scale[index];
-              image->colormap[i].red=(MagickRealType) index;
+              color=ScaleShortToQuantum(map.red[i]);
+              image->colormap[i].red=(MagickRealType) color;
             }
           if (map.green != (int *) NULL)
             for (i=0; i < (ssize_t) colors; i++)
             {
-              index=map.green[i];
-              if ((info.scale != (Quantum *) NULL) && (index >= 0) &&
-                  (index < (int) info.scale_size))
-                index=(int) info.scale[index];
-              image->colormap[i].green=(MagickRealType) index;
+              color=ScaleShortToQuantum(map.green[i]);
+              image->colormap[i].green=(MagickRealType) color;
             }
           if (map.blue != (int *) NULL)
             for (i=0; i < (ssize_t) colors; i++)
             {
-              index=map.blue[i];
-              if ((info.scale != (Quantum *) NULL) && (index >= 0) &&
-                  (index < (int) info.scale_size))
-                index=(int) info.scale[index];
-              image->colormap[i].blue=(MagickRealType) index;
+              color=ScaleShortToQuantum(map.blue[i]);
+              image->colormap[i].blue=(MagickRealType) color;
             }
           if (map.gray != (int *) NULL)
             for (i=0; i < (ssize_t) colors; i++)
             {
-              index=map.gray[i];
-              if ((info.scale != (Quantum *) NULL) && (index >= 0) &&
-                  (index < (int) info.scale_size))
-                index=(int) info.scale[index];
-              image->colormap[i].red=(MagickRealType) index;
-              image->colormap[i].green=(MagickRealType) index;
-              image->colormap[i].blue=(MagickRealType) index;
+              color=ScaleShortToQuantum(map.gray[i]);
+              image->colormap[i].red=(MagickRealType) color;
+              image->colormap[i].green=(MagickRealType) color;
+              image->colormap[i].blue=(MagickRealType) color;
             }
         }
       if (image->compression == RLECompression)
@@ -4166,8 +4144,8 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
             if (c == EOF)
               break;
           }
-          tag=((unsigned int) ReadBlobLSBShort(image) << 16) |
-            ReadBlobLSBShort(image);
+          tag=(((unsigned int) ReadBlobLSBShort(image) << 16)) |
+            (unsigned int) ReadBlobLSBShort(image);
           stream_info->remaining=(size_t) ReadBlobLSBLong(image);
           if ((tag != 0xFFFEE000) || (stream_info->remaining <= 64) ||
               (EOFBlob(image) != MagickFalse))
@@ -4327,12 +4305,12 @@ static Image *ReadDCMImage(const ImageInfo *image_info,ExceptionInfo *exception)
             }
           image=SyncNextImageInList(image);
           status=SetImageProgress(image,LoadImagesTag,TellBlob(image),
-            GetBlobSize(image));
+            blob_size);
           if (status == MagickFalse)
             break;
         }
     }
-    if (TellBlob(image) < (MagickOffsetType) GetBlobSize(image))
+    if (TellBlob(image) < ((MagickOffsetType) blob_size-10))
       {
         /*
           Allocate next image structure.

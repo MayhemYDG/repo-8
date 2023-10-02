@@ -18,7 +18,7 @@
 %                                March 2000                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright @ 2000 ImageMagick Studio LLC, a non-profit organization         %
+%  Copyright @ 1999 ImageMagick Studio LLC, a non-profit organization         %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -79,11 +79,6 @@
 #include "coders/coders-private.h"
 
 #if defined(MAGICKCORE_XML_DELEGATE)
-#  if defined(MAGICKCORE_WINDOWS_SUPPORT)
-#    if !defined(__MINGW32__)
-#      include <win32config.h>
-#    endif
-#  endif
 #  include <libxml/xmlmemory.h>
 #  include <libxml/parserInternals.h>
 #  include <libxml/xmlerror.h>
@@ -258,7 +253,7 @@ static MagickBooleanType IsSVG(const unsigned char *magick,const size_t length)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  ReadSVGImage() reads a Scalable Vector Gaphics file and returns it.  It
+%  ReadSVGImage() reads a Scalable Vector Graphics file and returns it.  It
 %  allocates the memory necessary for the new Image structure and returns a
 %  pointer to the new image.
 %
@@ -304,7 +299,8 @@ static Image *RenderSVGImage(const ImageInfo *image_info,Image *image,
   delegate_info=GetDelegateInfo("svg:decode",(char *) NULL,exception);
   if (delegate_info == (const DelegateInfo *) NULL)
     return((Image *) NULL);
-  status=AcquireUniqueSymbolicLink(image->filename,input_filename);
+  status=AcquireUniqueSymbolicLink(image->filename,input_filename) ==
+    MagickFalse ? 0 : 1;
   (void) AcquireUniqueFilename(unique);
   (void) FormatLocaleString(output_filename,MagickPathExtent,"%s.png",unique);
   (void) AcquireUniqueFilename(unique);
@@ -375,13 +371,11 @@ static Image *RenderRSVGImage(const ImageInfo *image_info,Image *image,
   MemoryInfo
     *pixel_info;
 
-  unsigned char
-    *p;
-
   RsvgDimensionData
     dimension_info;
 
   unsigned char
+    *p,
     *pixels;
 
 #else
@@ -391,9 +385,6 @@ static Image *RenderRSVGImage(const ImageInfo *image_info,Image *image,
   const guchar
     *p;
 #endif
-
-  const char
-    *option;
 
   GError
     *error;
@@ -425,13 +416,17 @@ static Image *RenderRSVGImage(const ImageInfo *image_info,Image *image,
     sizeof(*buffer));
   if (buffer == (unsigned char *) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
+  {
 #if LIBRSVG_CHECK_VERSION(2,40,3)
-  option=GetImageOption(image_info,"svg:xml-parse-huge");
-  if ((option != (char *) NULL) && (IsStringTrue(option) != MagickFalse))
-    svg_handle=rsvg_handle_new_with_flags(RSVG_HANDLE_FLAG_UNLIMITED);
-  else
+    const char *option = GetImageOption(image_info,"svg:parse-huge");
+    if (option == (char *) NULL)
+      option=GetImageOption(image_info,"svg:xml-parse-huge");  /* deprecated */
+    if ((option != (char *) NULL) && (IsStringTrue(option) != MagickFalse))
+      svg_handle=rsvg_handle_new_with_flags(RSVG_HANDLE_FLAG_UNLIMITED);
+    else
 #endif
-    svg_handle=rsvg_handle_new();
+      svg_handle=rsvg_handle_new();
+  }
   if (svg_handle == (RsvgHandle *) NULL)
     {
       buffer=(unsigned char *) RelinquishMagickMemory(buffer);
@@ -446,7 +441,7 @@ static Image *RenderRSVGImage(const ImageInfo *image_info,Image *image,
   {
     buffer[n]='\0';
     error=(GError *) NULL;
-    (void) rsvg_handle_write(svg_handle,buffer,n,&error);
+    (void) rsvg_handle_write(svg_handle,buffer,(gsize) n,&error);
     if (error != (GError *) NULL)
       g_error_free(error);
   }
@@ -506,8 +501,8 @@ static Image *RenderRSVGImage(const ImageInfo *image_info,Image *image,
     }
   else
     {
-      image->columns=dimension_info.width;
-      image->rows=dimension_info.height;
+      image->columns=(size_t) dimension_info.width;
+      image->rows=(size_t) dimension_info.height;
     }
   pixel_info=(MemoryInfo *) NULL;
 #else
@@ -788,7 +783,7 @@ static void SVGInternalSubset(void *context,const xmlChar *name,
     *svg_info;
 
   /*
-    Does this document has an internal subset?
+    Does this document have an internal subset?
   */
   (void) LogMagickEvent(CoderEvent,GetMagickModule(),
     "  SAX.internalSubset(%s, %s, %s)",(const char *) name,
@@ -851,11 +846,17 @@ static xmlEntityPtr SVGGetParameterEntity(void *context,const xmlChar *name)
   return(xmlGetParameterEntity(svg_info->document,name));
 }
 
+static void SVGError(void *,const char *,...)
+  magick_attribute((__format__ (__printf__,2,3)));
+
 static void SVGEntityDeclaration(void *context,const xmlChar *name,int type,
   const xmlChar *public_id,const xmlChar *system_id,xmlChar *content)
 {
   SVGInfo
     *svg_info;
+
+  xmlEntityPtr
+    entity;
 
   /*
     An entity definition has been parsed.
@@ -866,12 +867,16 @@ static void SVGEntityDeclaration(void *context,const xmlChar *name,int type,
     system_id != (xmlChar *) NULL ? (const char *) system_id : "none",content);
   svg_info=(SVGInfo *) context;
   if (svg_info->parser->inSubset == 1)
-    (void) xmlAddDocEntity(svg_info->document,name,type,public_id,system_id,
+    entity=xmlAddDocEntity(svg_info->document,name,type,public_id,system_id,
       content);
   else
     if (svg_info->parser->inSubset == 2)
-      (void) xmlAddDtdEntity(svg_info->document,name,type,public_id,system_id,
+      entity=xmlAddDtdEntity(svg_info->document,name,type,public_id,system_id,
         content);
+    else
+      return;
+  if (entity == (xmlEntityPtr) NULL)  
+    SVGError(svg_info,"NULL entity");
 }
 
 static void SVGAttributeDeclaration(void *context,const xmlChar *element,
@@ -1009,11 +1014,11 @@ static char **SVGKeyValuePairs(void *context,const int key_sentinel,
     *p,
     *q;
 
-  ssize_t
-    i;
-
   size_t
     extent;
+
+  ssize_t
+    i;
 
   SVGInfo
     *svg_info;
@@ -1110,17 +1115,15 @@ static void SVGProcessStyleElement(void *context,const xmlChar *name,
     background[MagickPathExtent],
     *color,
     *keyword,
+    **tokens,
     *units,
     *value;
 
-  char
-    **tokens;
+  size_t
+    number_tokens;
 
   ssize_t
     i;
-
-  size_t
-    number_tokens;
 
   SVGInfo
     *svg_info;
@@ -1555,12 +1558,12 @@ static void SVGStartElement(void *context,const xmlChar *name,
     *p,
     *value;
 
+  size_t
+    number_tokens;
+
   ssize_t
     i,
     j;
-
-  size_t
-    number_tokens;
 
   SVGInfo
     *svg_info;
@@ -1572,8 +1575,8 @@ static void SVGStartElement(void *context,const xmlChar *name,
     name);
   svg_info=(SVGInfo *) context;
   svg_info->n++;
-  svg_info->scale=(double *) ResizeQuantumMemory(svg_info->scale,
-    svg_info->n+1UL,sizeof(*svg_info->scale));
+  svg_info->scale=(double *) ResizeQuantumMemory(svg_info->scale,(size_t)
+    svg_info->n+1,sizeof(*svg_info->scale));
   if (svg_info->scale == (double *) NULL)
     {
       (void) ThrowMagickException(svg_info->exception,GetMagickModule(),
@@ -2821,10 +2824,10 @@ static void SVGStartElement(void *context,const xmlChar *name,
             svg_info->view_box=svg_info->bounds;
           svg_info->width=0;
           if (svg_info->bounds.width >= MagickEpsilon)
-            svg_info->width=(size_t) floor(svg_info->bounds.width+0.5);
+            svg_info->width=CastDoubleToUnsigned(svg_info->bounds.width+0.5);
           svg_info->height=0;
           if (svg_info->bounds.height >= MagickEpsilon)
-            svg_info->height=(size_t) floor(svg_info->bounds.height+0.5);
+            svg_info->height=CastDoubleToUnsigned(svg_info->bounds.height+0.5);
           (void) FormatLocaleFile(svg_info->file,"viewbox 0 0 %.20g %.20g\n",
             (double) svg_info->width,(double) svg_info->height);
           sx=PerceptibleReciprocal(svg_info->view_box.width)*svg_info->width;
@@ -3201,10 +3204,8 @@ static void SVGEndElement(void *context,const xmlChar *name)
 static void SVGCharacters(void *context,const xmlChar *c,int length)
 {
   char
+    *p,
     *text;
-
-  char
-    *p;
 
   ssize_t
     i;
@@ -3218,12 +3219,12 @@ static void SVGCharacters(void *context,const xmlChar *c,int length)
   (void) LogMagickEvent(CoderEvent,GetMagickModule(),
     "  SAX.characters(%s,%.20g)",c,(double) length);
   svg_info=(SVGInfo *) context;
-  text=(char *) AcquireQuantumMemory(length+1,sizeof(*text));
+  text=(char *) AcquireQuantumMemory((size_t) length+1,sizeof(*text));
   if (text == (char *) NULL)
     return;
   p=text;
   for (i=0; i < (ssize_t) length; i++)
-    *p++=c[i];
+    *p++=(char) c[i];
   *p='\0';
   SVGStripString(MagickFalse,text);
   if (svg_info->text == (char *) NULL)
@@ -3339,9 +3340,6 @@ static void SVGWarning(void *context,const char *format,...)
   message=DestroyString(message);
   va_end(operands);
 }
-
-static void SVGError(void *,const char *,...)
-  magick_attribute((__format__ (__printf__,2,3)));
 
 static void SVGError(void *context,const char *format,...)
 {
@@ -3481,9 +3479,6 @@ static Image *RenderMSVGImage(const ImageInfo *image_info,Image *image,
   char
     filename[MagickPathExtent];
 
-  const char
-    *option;
-
   FILE
     *file;
 
@@ -3545,7 +3540,6 @@ static Image *RenderMSVGImage(const ImageInfo *image_info,Image *image,
   if (image->debug != MagickFalse)
     (void) LogMagickEvent(CoderEvent,GetMagickModule(),"begin SAX");
   xmlInitParser();
-  (void) xmlSubstituteEntitiesDefault(1);
   (void) memset(&sax_modules,0,sizeof(sax_modules));
   sax_modules.internalSubset=SVGInternalSubset;
   sax_modules.isStandalone=SVGIsStandalone;
@@ -3583,9 +3577,16 @@ static Image *RenderMSVGImage(const ImageInfo *image_info,Image *image,
         message,n,image->filename);
       if (svg_info->parser != (xmlParserCtxtPtr) NULL)
         {
-          option=GetImageOption(image_info,"svg:xml-parse-huge");
-          if ((option != (char *) NULL) && (IsStringTrue(option) != MagickFalse))
+          const char *option = GetImageOption(image_info,"svg:parse-huge");
+          if (option == (char *) NULL)
+            option=GetImageOption(image_info,"svg:xml-parse-huge");  /* deprecated */
+          if ((option != (char *) NULL) &&
+              (IsStringTrue(option) != MagickFalse))
             (void) xmlCtxtUseOptions(svg_info->parser,XML_PARSE_HUGE);
+          option=GetImageOption(image_info,"svg:substitute-entities");
+          if ((option != (char *) NULL) &&
+              (IsStringTrue(option) != MagickFalse))
+            (void) xmlCtxtUseOptions(svg_info->parser,XML_PARSE_NOENT);
           while ((n=ReadBlob(image,MagickPathExtent-1,message)) != 0)
           {
             message[n]='\0';
@@ -3605,7 +3606,10 @@ static Image *RenderMSVGImage(const ImageInfo *image_info,Image *image,
   (void) xmlParseChunk(svg_info->parser,(char *) message,0,1);
   SVGEndDocument(svg_info);
   if (svg_info->parser->myDoc != (xmlDocPtr) NULL)
-    xmlFreeDoc(svg_info->parser->myDoc);
+    {
+      xmlFreeDoc(svg_info->parser->myDoc);
+      svg_info->parser->myDoc=(xmlDocPtr) NULL;
+    }
   xmlFreeParserCtxt(svg_info->parser);
   if (image->debug != MagickFalse)
     (void) LogMagickEvent(CoderEvent,GetMagickModule(),"end SAX");
@@ -3650,13 +3654,14 @@ static Image *RenderMSVGImage(const ImageInfo *image_info,Image *image,
       if (svg_info->comment != (char *) NULL)
         (void) SetImageProperty(image,"svg:comment",svg_info->comment,
           exception);
+      for (next=GetFirstImageInList(image); next != (Image *) NULL; )
+      {
+        (void) CopyMagickString(next->filename,image->filename,
+          MagickPathExtent);
+        (void) CopyMagickString(next->magick,"SVG",MagickPathExtent);
+        next=GetNextImageInList(next);
+      }
     }
-  for (next=GetFirstImageInList(image); next != (Image *) NULL; )
-  {
-    (void) CopyMagickString(next->filename,image->filename,MagickPathExtent);
-    (void) CopyMagickString(next->magick,"SVG",MagickPathExtent);
-    next=GetNextImageInList(next);
-  }
   svg_info=DestroySVGInfo(svg_info);
   (void) RelinquishUniqueFileResource(filename);
   return(GetFirstImageInList(image));
@@ -3984,14 +3989,12 @@ static MagickBooleanType TraceSVGImage(Image *image,ExceptionInfo *exception)
     const Quantum
       *p;
 
-    ssize_t
-      i,
-      x;
-
     size_t
       number_planes;
 
     ssize_t
+      i,
+      x,
       y;
 
     /*
@@ -4038,7 +4041,8 @@ static MagickBooleanType TraceSVGImage(Image *image,ExceptionInfo *exception)
     char
       *base64,
       filename[MagickPathExtent],
-      message[MagickPathExtent];
+      message[MagickPathExtent],
+      *p;
 
     const DelegateInfo
       *delegate_info;
@@ -4051,9 +4055,6 @@ static MagickBooleanType TraceSVGImage(Image *image,ExceptionInfo *exception)
 
     MagickBooleanType
       status;
-
-    char
-      *p;
 
     size_t
       blob_length,
@@ -4113,7 +4114,7 @@ static MagickBooleanType TraceSVGImage(Image *image,ExceptionInfo *exception)
     blob=(unsigned char *) RelinquishMagickMemory(blob);
     (void) FormatLocaleString(message,MagickPathExtent,
       "  <image id=\"image%.20g\" width=\"%.20g\" height=\"%.20g\" "
-      "x=\"%.20g\" y=\"%.20g\"\n    href=\"data:image/png;base64,",
+      "x=\"%.20g\" y=\"%.20g\"\n    xlink:href=\"data:image/png;base64,",
       (double) image->scene,(double) image->columns,(double) image->rows,
       (double) image->page.x,(double) image->page.y);
     (void) WriteBlobString(image,message);
@@ -4159,9 +4160,6 @@ static MagickBooleanType WriteSVGImage(const ImageInfo *image_info,Image *image,
   int
     n;
 
-  ssize_t
-    j;
-
   MagickBooleanType
     active,
     status;
@@ -4175,16 +4173,15 @@ static MagickBooleanType WriteSVGImage(const ImageInfo *image_info,Image *image,
   PrimitiveType
     primitive_type;
 
-  ssize_t
-    x;
-
-  ssize_t
-    i;
-
   size_t
     extent,
     length,
     number_points;
+
+  ssize_t
+    i,
+    j,
+    x;
 
   SVGInfo
     svg_info;
@@ -5187,9 +5184,9 @@ static MagickBooleanType WriteSVGImage(const ImageInfo *image_info,Image *image,
         for (p=token; *p != '\0'; p++)
           if (isalpha((int) ((unsigned char) *p)) != 0)
             number_attributes++;
-        if (i > (ssize_t) (number_points-6*BezierQuantum*number_attributes-1))
+        if (i > ((ssize_t) number_points-6*BezierQuantum*number_attributes-1))
           {
-            number_points+=6*BezierQuantum*number_attributes;
+            number_points+=(size_t) (6*BezierQuantum*number_attributes);
             primitive_info=(PrimitiveInfo *) ResizeQuantumMemory(primitive_info,
               number_points,sizeof(*primitive_info));
             if (primitive_info == (PrimitiveInfo *) NULL)

@@ -388,6 +388,9 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
     *filter,
     *value;
 
+  const Quantum
+    *p;
+
   double
     pointsize;
 
@@ -422,26 +425,19 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
     media_info,
     page_info;
 
-  const Quantum
-    *p;
-
-  ssize_t
-    x;
-
-  ssize_t
-    i;
-
   SegmentInfo
     bounds;
 
   size_t
-    imageListLength,
     length,
+    number_scenes,
     page,
     text_size;
 
   ssize_t
+    i,
     j,
+    x,
     y;
 
   time_t
@@ -467,25 +463,19 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
   compression=image->compression;
   if (image_info->compression != UndefinedCompression)
     compression=image_info->compression;
-  switch (compression)
-  {
 #if !defined(MAGICKCORE_JPEG_DELEGATE)
-    case JPEGCompression:
+  if (compression == JPEGCompression)
     {
       compression=RLECompression;
       (void) ThrowMagickException(exception,GetMagickModule(),
         MissingDelegateError,"DelegateLibrarySupportNotBuiltIn","`%s' (JPEG)",
         image->filename);
-      break;
     }
 #endif
-    default:
-      break;
-  }
   (void) memset(&bounds,0,sizeof(bounds));
   page=1;
   scene=0;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     /*
@@ -537,15 +527,16 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
     (void) ParseMetaGeometry(page_geometry,&geometry.x,&geometry.y,
       &geometry.width,&geometry.height);
     scale.x=PerceptibleReciprocal(resolution.x)*geometry.width*delta.x;
-    geometry.width=(size_t) floor(scale.x+0.5);
+    geometry.width=CastDoubleToUnsigned(scale.x+0.5);
     scale.y=PerceptibleReciprocal(resolution.y)*geometry.height*delta.y;
-    geometry.height=(size_t) floor(scale.y+0.5);
+    geometry.height=CastDoubleToUnsigned(scale.y+0.5);
     (void) ParseAbsoluteGeometry(page_geometry,&media_info);
     (void) ParseGravityGeometry(image,page_geometry,&page_info,exception);
     if (image->gravity != UndefinedGravity)
       {
         geometry.x=(-page_info.x);
-        geometry.y=(ssize_t) (media_info.height+page_info.y-image->rows);
+        geometry.y=(ssize_t) media_info.height+page_info.y-(ssize_t)
+          image->rows;
       }
     pointsize=12.0;
     if (image_info->pointsize != 0.0)
@@ -608,7 +599,7 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
               (void) CopyMagickString(buffer,"%%Pages: 1\n",MagickPathExtent);
             else
               (void) FormatLocaleString(buffer,MagickPathExtent,
-                "%%%%Pages: %.20g\n",(double) imageListLength);
+                "%%%%Pages: %.20g\n",(double) number_scenes);
             (void) WriteBlobString(image,buffer);
           }
         if (image->colorspace == CMYKColorspace)
@@ -686,10 +677,11 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
       bounds.x1=(double) geometry.x;
     if ((double) geometry.y < bounds.y1)
       bounds.y1=(double) geometry.y;
-    if ((double) (geometry.x+geometry.width-1) > bounds.x2)
+    if ((double) (geometry.x+(ssize_t) geometry.width-1) > bounds.x2)
       bounds.x2=(double) geometry.x+geometry.width-1;
-    if ((double) (geometry.y+(geometry.height+text_size)-1) > bounds.y2)
-      bounds.y2=(double) geometry.y+(geometry.height+text_size)-1;
+    if ((double) (geometry.y+((ssize_t) geometry.height+(ssize_t) text_size)-1) > bounds.y2)
+      bounds.y2=(double) geometry.y+((ssize_t) geometry.height+(ssize_t)
+        text_size)-1;
     value=GetImageProperty(image,"label",exception);
     if (value != (const char *) NULL)
       (void) WriteBlobString(image,"%%PageResources: font Helvetica\n");
@@ -1111,7 +1103,7 @@ static MagickBooleanType WritePS2Image(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

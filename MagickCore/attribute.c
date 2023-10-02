@@ -144,6 +144,9 @@ static double GetEdgeBackgroundCensus(const Image *image,
   const char
     *artifact;
 
+  const Quantum
+    *p;
+
   double
     census;
 
@@ -156,9 +159,6 @@ static double GetEdgeBackgroundCensus(const Image *image,
 
   RectangleInfo
     edge_geometry;
-
-  const Quantum
-    *p;
 
   ssize_t
     y;
@@ -397,6 +397,9 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
   const char
     *artifact;
 
+  const Quantum
+    *p;
+
   MagickBooleanType
     status;
 
@@ -406,9 +409,6 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
 
   RectangleInfo
     bounds;
-
-  const Quantum
-    *p;
 
   ssize_t
     y;
@@ -420,7 +420,7 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
   artifact=GetImageArtifact(image,"trim:percent-background");
   if (artifact != (const char *) NULL)
     return(GetEdgeBoundingBox(image,exception));
-  artifact=GetImageArtifact(image, "trim:edges");
+  artifact=GetImageArtifact(image,"trim:edges");
   if (artifact == (const char *) NULL)
     {
       bounds.width=(size_t) (image->columns == 1 ? 1 : 0);
@@ -473,6 +473,7 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
     exception);
   if (p != (const Quantum *) NULL)
     GetPixelInfoPixel(image,p,&target[2]);
+  GetPixelInfo(image,&target[3]);
   p=GetCacheViewVirtualPixels(image_view,(ssize_t) image->columns-1,(ssize_t)
     image->rows-1,1,1,exception);
   if (p != (const Quantum *) NULL)
@@ -485,14 +486,14 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
 #endif
   for (y=0; y < (ssize_t) image->rows; y++)
   {
+    const Quantum
+      *magick_restrict q;
+
     PixelInfo
       pixel;
 
     RectangleInfo
       bounding_box;
-
-    const Quantum
-      *magick_restrict q;
 
     ssize_t
       x;
@@ -554,8 +555,8 @@ MagickExport RectangleInfo GetImageBoundingBox(const Image *image,
       "GeometryDoesNotContainImage","`%s'",image->filename);
   else
     {
-      bounds.width-=(bounds.x-1);
-      bounds.height-=(bounds.y-1);
+      bounds.width-=(size_t) (bounds.x-1);
+      bounds.height-=(size_t) (bounds.y-1);
     }
   return(bounds);
 }
@@ -732,12 +733,12 @@ void TraceConvexHull(PointInfo *vertices,size_t number_vertices,
   PointInfo
     **chain;
 
-  ssize_t
-    i;
-
   size_t
     demark,
     n;
+
+  ssize_t
+    i;
 
   /*
     Construct the upper and lower hulls: rightmost to leftmost counterclockwise.
@@ -921,7 +922,7 @@ MagickExport size_t GetImageDepth(const Image *image,ExceptionInfo *exception)
   for (i=0; i < (ssize_t) number_threads; i++)
     current_depth[i]=1;
   if ((image->storage_class == PseudoClass) &&
-      (image->alpha_trait == UndefinedPixelTrait))
+      ((image->alpha_trait & BlendPixelTrait) == 0))
     {
       for (i=0; i < (ssize_t) image->colors; i++)
       {
@@ -1216,11 +1217,11 @@ MagickExport PointInfo *GetImageMinimumBoundingBox(Image *image,
     *bounding_box,
     *vertices;
 
-  ssize_t
-    i;
-
   size_t
     number_hull_vertices;
+
+  ssize_t
+    i;
 
   /*
     Generate the minimum bounding box with the "Rotating Calipers" algorithm.
@@ -1268,12 +1269,12 @@ MagickExport PointInfo *GetImageMinimumBoundingBox(Image *image,
     for (j=0; j < (ssize_t) number_hull_vertices; j++)
     {
       diameter=fabs(getFeretDiameter(&vertices[i],
-        &vertices[(i+1) % number_hull_vertices],&vertices[j]));
+        &vertices[(i+1) % (ssize_t) number_hull_vertices],&vertices[j]));
       if (min_diameter < diameter)
         {
           min_diameter=diameter;
           p=i;
-          q=(i+1) % number_hull_vertices;
+          q=(i+1) % (ssize_t) number_hull_vertices;
           v=j;
         }
     }
@@ -1511,7 +1512,7 @@ MagickExport ImageType GetImageType(const Image *image)
   assert(image->signature == MagickCoreSignature);
   if (image->colorspace == CMYKColorspace)
     {
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         return(ColorSeparationType);
       return(ColorSeparationAlphaType);
     }
@@ -1600,8 +1601,7 @@ MagickExport ImageType IdentifyImageGray(const Image *image,
           type=UndefinedType;
           break;
         }
-      if ((type == BilevelType) &&
-          (IsPixelMonochrome(image,p) == MagickFalse))
+      if ((type == BilevelType) && (IsPixelMonochrome(image,p) == MagickFalse))
         type=GrayscaleType;
       p+=GetPixelChannels(image);
     }
@@ -1734,7 +1734,7 @@ MagickExport ImageType IdentifyImageType(const Image *image,
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
   if (image->colorspace == CMYKColorspace)
     {
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         return(ColorSeparationType);
       return(ColorSeparationAlphaType);
     }
@@ -1779,7 +1779,7 @@ MagickExport MagickBooleanType IsImageGray(const Image *image)
 {
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
-  if (IsGrayImageType(image->type))
+  if (IsGrayImageType(image->type) != MagickFalse)
     return(MagickTrue);
   return(MagickFalse);
 }
@@ -1829,7 +1829,7 @@ MagickExport MagickBooleanType IsImageMonochrome(const Image *image)
 %  IsImageOpaque() returns MagickTrue if none of the pixels in the image have
 %  an alpha value other than OpaqueAlpha (QuantumRange).
 %
-%  Will return true immediatally is alpha channel is not available.
+%  Will return true immediately is alpha channel is not available.
 %
 %  The format of the IsImageOpaque method is:
 %
@@ -1865,7 +1865,7 @@ MagickExport MagickBooleanType IsImageOpaque(const Image *image,
   assert(image->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-  if (image->alpha_trait == UndefinedPixelTrait)
+  if ((image->alpha_trait & BlendPixelTrait) == 0)
     return(MagickTrue);
   image_view=AcquireVirtualCacheView(image,exception);
   for (y=0; y < (ssize_t) image->rows; y++)
@@ -2160,7 +2160,8 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
   {
     case BilevelType:
     {
-      status=TransformImageColorspace(image,GRAYColorspace,exception);
+      if (IsGrayImageType(image->type) == MagickFalse)
+        status=TransformImageColorspace(image,GRAYColorspace,exception);
       (void) NormalizeImage(image,exception);
       (void) BilevelImage(image,(double) QuantumRange/2.0,exception);
       quantize_info=AcquireQuantizeInfo(image_info);
@@ -2173,20 +2174,23 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case GrayscaleType:
     {
-      status=TransformImageColorspace(image,GRAYColorspace,exception);
+      if (IsGrayImageType(image->type) == MagickFalse)
+        status=TransformImageColorspace(image,GRAYColorspace,exception);
       image->alpha_trait=UndefinedPixelTrait;
       break;
     }
     case GrayscaleAlphaType:
     {
-      status=TransformImageColorspace(image,GRAYColorspace,exception);
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if (IsGrayImageType(image->type) == MagickFalse)
+        status=TransformImageColorspace(image,GRAYColorspace,exception);
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       break;
     }
     case PaletteType:
     {
-      status=TransformImageColorspace(image,sRGBColorspace,exception);
+      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
+        status=TransformImageColorspace(image,sRGBColorspace,exception);
       if ((image->storage_class == DirectClass) || (image->colors > 256))
         {
           quantize_info=AcquireQuantizeInfo(image_info);
@@ -2202,8 +2206,9 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
       ChannelType
         channel_mask;
 
-      status=TransformImageColorspace(image,sRGBColorspace,exception);
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
+        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       channel_mask=SetImageChannelMask(image,AlphaChannel);
       (void) BilevelImage(image,(double) QuantumRange/2.0,exception);
@@ -2215,8 +2220,9 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case PaletteAlphaType:
     {
-      status=TransformImageColorspace(image,sRGBColorspace,exception);
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
+        status=TransformImageColorspace(image,sRGBColorspace,exception);
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       quantize_info=AcquireQuantizeInfo(image_info);
       quantize_info->colorspace=TransparentColorspace;
@@ -2226,7 +2232,8 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case TrueColorType:
     {
-      status=TransformImageColorspace(image,sRGBColorspace,exception);
+      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
+        status=TransformImageColorspace(image,sRGBColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
       image->alpha_trait=UndefinedPixelTrait;
@@ -2234,16 +2241,18 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case TrueColorAlphaType:
     {
-      status=TransformImageColorspace(image,sRGBColorspace,exception);
+      if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
+        status=TransformImageColorspace(image,sRGBColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       break;
     }
     case ColorSeparationType:
     {
-      status=TransformImageColorspace(image,CMYKColorspace,exception);
+      if (image->colorspace != CMYKColorspace)
+        status=TransformImageColorspace(image,CMYKColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
       image->alpha_trait=UndefinedPixelTrait;
@@ -2251,10 +2260,11 @@ MagickExport MagickBooleanType SetImageType(Image *image,const ImageType type,
     }
     case ColorSeparationAlphaType:
     {
-      status=TransformImageColorspace(image,CMYKColorspace,exception);
+      if (image->colorspace != CMYKColorspace)
+        status=TransformImageColorspace(image,CMYKColorspace,exception);
       if (image->storage_class != DirectClass)
         status=SetImageStorageClass(image,DirectClass,exception);
-      if (image->alpha_trait == UndefinedPixelTrait)
+      if ((image->alpha_trait & BlendPixelTrait) == 0)
         status=SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       break;
     }

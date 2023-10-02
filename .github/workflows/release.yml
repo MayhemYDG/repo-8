@@ -11,8 +11,6 @@ name: release
 jobs:
   change_log:
     name: 'Create ChangeLog.md'
-    container:
-      image: node:18
     runs-on: ubuntu-latest
 
     steps:
@@ -142,7 +140,7 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
         cd ImageMagick-Windows\ImageMagick\PerlMagick
         set PATH=%PATH%;C:\Strawberry${{matrix.bit}}\c\bin;C:\Strawberry${{matrix.bit}}\perl\site\bin;C:\Strawberry${{matrix.bit}}\perl\bin;C:\WINDOWS\System32\WindowsPowerShell\v1.0
-        perl "Makefile.PL" "MAKE=nmake"
+        perl "Makefile.PL" "MAKE=nmake" "CC=g++"
         nmake
         nmake release
 
@@ -150,6 +148,7 @@ jobs:
       uses: dlemstra/code-sign-action@v1
       with:
         certificate: '${{ secrets.CERTIFICATE }}'
+        password: '${{ secrets.CERTIFICATE_PASSWORD }}'
         folder: 'ImageMagick-Windows\VisualMagick\bin'
 
     - name: Create installer
@@ -162,6 +161,7 @@ jobs:
       uses: dlemstra/code-sign-action@v1
       with:
         certificate: '${{ secrets.CERTIFICATE }}'
+        password: '${{ secrets.CERTIFICATE_PASSWORD }}'
         folder: 'ImageMagick-Windows\VisualMagick\installer\output'
 
     - uses: actions/upload-artifact@v3
@@ -266,7 +266,7 @@ jobs:
       shell: cmd
       run: |
         cd ImageMagick-Windows\VisualMagick\configure
-        configure.exe /noWizard /VS2022 /noOpenMP /${{matrix.hdri}} /${{matrix.quantum}} /${{matrix.platform}} /smt
+        configure.exe /noWizard /VS2022 /${{matrix.hdri}} /${{matrix.quantum}} /${{matrix.platform}} /smt
 
     - name: Build ImageMagick
       shell: cmd
@@ -276,15 +276,16 @@ jobs:
         set /p solution=<solution
         msbuild %solution% /m /t:Rebuild /p:Configuration=Release,Platform=${{matrix.platform}}
 
-    - name: Sign exectables
+    - name: Sign executables
       uses: dlemstra/code-sign-action@v1
       with:
         certificate: '${{ secrets.CERTIFICATE }}'
+        password: '${{ secrets.CERTIFICATE_PASSWORD }}'
         folder: 'ImageMagick-Windows\VisualMagick\bin'
 
     - name: Copy Files
       id: package
-      shell: powershell
+      shell: pwsh
       run: |
         [void](New-Item -Name "portable" -ItemType directory)
         Copy-Item "ImageMagick-Windows\VisualMagick\bin\*.exe" "portable"
@@ -308,10 +309,11 @@ jobs:
         Copy-Item "ImageMagick-Windows\VisualMagick\NOTICE.txt" "portable"
         Copy-Item "ImageMagick-Windows\ImageMagick\README.txt" "portable"
 
-        $version = (cat "ImageMagick-Windows\VisualMagick\installer\inc\version.isx" | Select-String "MagickPackageVersion") | Out-String
+        $version = (cat "ImageMagick-Windows\VisualMagick\installer\inc\version.isx" | Select-String "MagickPackageFullVersionText") | Out-String
         $version = ($version | Select-String '".*"' -AllMatches |  Select -Expand Matches | Select -Expand Value | Out-String)
         $version = $version -Replace "`n|`r|""",""
-        Write-Host "::set-output name=version::$version"
+        $version = $version -Replace " ","-"
+        echo "version=$version" >> $env:GITHUB_OUTPUT
 
     - uses: actions/upload-artifact@v3
       with:

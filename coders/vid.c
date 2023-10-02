@@ -164,10 +164,16 @@ static Image *ReadVIDImage(const ImageInfo *image_info,ExceptionInfo *exception)
     (void) CloneString(&read_info->size,DefaultTileGeometry);
   for (i=0; i < (ssize_t) number_files; i++)
   {
+    char
+      extension[MagickPathExtent];
+
     if (IsEventLogging() != MagickFalse)
       (void) LogMagickEvent(CoderEvent,GetMagickModule(),"name: %s",
         filelist[i]);
     if (LocaleNCompare(filelist[i],"VID:",4) == 0)
+      continue;
+    GetPathComponent(filelist[i],ExtensionPath,extension);
+    if (LocaleNCompare(extension,"VID",3) == 0)
       continue;
     (void) CopyMagickString(read_info->filename,filelist[i],MagickPathExtent);
     *read_info->magick='\0';
@@ -201,7 +207,8 @@ static Image *ReadVIDImage(const ImageInfo *image_info,ExceptionInfo *exception)
         "thumbnail geometry: %.20gx%.20g",(double) next_image->columns,(double)
         next_image->rows);
     AppendImageToList(&images,next_image);
-    status=SetImageProgress(images,LoadImagesTag,i,number_files);
+    status=SetImageProgress(images,LoadImagesTag,i,(MagickSizeType)
+      number_files);
     if (status == MagickFalse)
       break;
   }
@@ -315,6 +322,9 @@ ModuleExport void UnregisterVIDImage(void)
 static MagickBooleanType WriteVIDImage(const ImageInfo *image_info,Image *image,
   ExceptionInfo *exception)
 {
+  const MagickInfo
+    *magick_info;
+
   Image
     *montage_image;
 
@@ -345,8 +355,9 @@ static MagickBooleanType WriteVIDImage(const ImageInfo *image_info,Image *image,
   write_info=CloneImageInfo(image_info);
   *write_info->magick='\0';
   (void) SetImageInfo(write_info,1,exception);
-  if ((*write_info->magick == '\0') ||
-      (LocaleCompare(write_info->magick,"VID") == 0))
+  magick_info=GetMagickInfo(write_info->magick,exception);
+  if ((magick_info == (const MagickInfo*) NULL) ||
+      (LocaleCompare(magick_info->magick_module,"VID") == 0))
     (void) FormatLocaleString(montage_image->filename,MagickPathExtent,
       "miff:%s",write_info->filename);
   status=WriteImage(write_info,montage_image,exception);

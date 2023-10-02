@@ -5,21 +5,24 @@
 [![Donate](https://img.shields.io/badge/%24-donate-ff00ff.svg)](https://github.com/sponsors/ImageMagick)
 
 <p align="center">
-<img align="center" src="https://imagemagick.org/image/wizard.png" alt="ImageMagick logo" width="265"/>
+<img align="center" src="https://imagemagick.org/image/wizard.png" alt="ImageMagick logo" width="265" height="353"/>
 </p>
 
-Use [ImageMagick®](https://imagemagick.org/) to create, edit, compose, or convert digital images. It can read and write images in a variety of formats (over 200) including PNG, JPEG, GIF, WebP, HEIC, SVG, PDF, DPX, EXR and TIFF. ImageMagick can resize, flip, mirror, rotate, distort, shear and transform images, adjust image colors, apply various special effects, or draw text, lines, polygons, ellipses and Bézier curves.
+[ImageMagick®](https://imagemagick.org/) is a free and [open-source](https://imagemagick.org/script/license.php) software suite for displaying, converting, and editing raster image and vector image files. It can read and write over 200 image file [formats](https://imagemagick.org/script/formats.php), and can support a wide range of image manipulation operations, such as resizing, cropping, and color correction.
 
 #### What is ImageMagick?
 
-ImageMagick is free software delivered as a ready-to-run binary distribution or as source code that you may use, copy, modify, and distribute in both open and proprietary applications. It is distributed under a derived Apache 2.0 [license](https://imagemagick.org/script/license.php).
+ImageMagick is written in C and is available for a wide range of operating systems, including Linux, macOS, and Windows. It can be used as a standalone application, or as a library that can be integrated into other software programs.
 
-ImageMagick utilizes multiple computational threads to increase performance and can read, process, or write mega-, giga-, or tera-pixel image sizes.
-The current release is the ImageMagick 7.1.0 series. It runs on Linux, Windows, Mac Os X, iOS, Android OS, and others.
-
-The authoritative ImageMagick web site is https://imagemagick.org. The authoritative source code repository is https://github.com/ImageMagick/ImageMagick. We continue to maintain the legacy release of ImageMagick, version 6, at https://legacy.imagemagick.org.
+The main website for ImageMagick can be found at [https://imagemagick.org](https://imagemagick.org/). The source code for this software can be accessed through the repository located at [https://github.com/ImageMagick/ImageMagick](https://github.com/ImageMagick/ImageMagick). In addition, a legacy version of ImageMagick, version 6, is also still maintained and can be found at [https://legacy.imagemagick.org](https://legacy.imagemagick.org/).
 
 #### Features and Capabilities
+
+One of the key features of ImageMagick is its support for scripting and automation. This allows users to create complex image manipulation pipelines that can be run automatically, without the need for manual intervention. This can be especially useful for tasks that require the processing of large numbers of images, or for tasks that need to be performed on a regular basis.
+
+In addition to its core image manipulation capabilities, ImageMagick also includes a number of other features, such as support for animation, color management, and image rendering. These features make it a versatile tool for a wide range of image-related tasks, including graphic design, scientific visualization, and digital art.
+
+Overall, ImageMagick is a powerful and versatile software suite for displaying, converting, and editing image files. Its support for scripting and automation, along with its other features, make it a valuable tool for a wide range of image-related tasks.
 
 Here are just a few [examples](https://imagemagick.org/script/examples.php) of what ImageMagick can do:
 
@@ -32,14 +35,14 @@ Here are just a few [examples](https://imagemagick.org/script/examples.php) of w
 * [Composite](https://imagemagick.org/script/composite.php): overlap one image over another.
 * [Connected component labeling](https://imagemagick.org/script/connected-components.php): uniquely label connected regions in an image.
 * [Convex hull](https://imagemagick.org/script/convex-hull.php) smallest area convex polygon containing the image foreground objects. In addition, the minimum bounding box and unrotate angle are also generated.
-* [Decorate](https://legacy.imagemagick.org/Usage/crop/): add a border or frame to an image.
-* [Delineate image features](https://legacy.imagemagick.org/Usage/transform/#vision): Canny edge detection, mean-shift, Hough lines.
-* [Discrete Fourier transform](https://legacy.imagemagick.org/Usage/fourier/): implements the forward and inverse [DFT](http://en.wikipedia.org/wiki/Discrete_Fourier_transform).
+* [Decorate](https://imagemagick.org/Usage/crop/): add a border or frame to an image.
+* [Delineate image features](https://imagemagick.org/Usage/transform/#vision): Canny edge detection, mean-shift, Hough lines.
+* [Discrete Fourier transform](https://imagemagick.org/Usage/fourier/): implements the forward and inverse [DFT](http://en.wikipedia.org/wiki/Discrete_Fourier_transform).
 * [Distributed pixel cache](https://imagemagick.org/script/distribute-pixel-cache.php): offload intermediate pixel storage to one or more remote servers.
-* [Draw](https://legacy.imagemagick.org/Usage/draw/): add shapes or text to an image.
+* [Draw](https://imagemagick.org/Usage/draw/): add shapes or text to an image.
 * [Encipher or decipher an image](https://imagemagick.org/script/cipher.php): convert ordinary images into unintelligible gibberish and back again.
 * [Format conversion](https://imagemagick.org/script/convert.php): convert an image from one [format](https://imagemagick.org/script/formats.php) to another (e.g.  PNG to JPEG).
-* [Generalized pixel distortion](https://legacy.imagemagick.org/Usage/distorts/): correct for, or induce image distortions including perspective.
+* [Generalized pixel distortion](https://imagemagick.org/Usage/distorts/): correct for, or induce image distortions including perspective.
 * [Heterogeneous distributed processing](https://imagemagick.org/script/architecture.php#distributed): certain algorithms are OpenCL-enabled to take advantage of speed-ups offered by executing in concert across heterogeneous platforms consisting of CPUs, GPUs, and other processors.
 * [High dynamic-range images](https://imagemagick.org/script/high-dynamic-range.php): accurately represent the wide range of intensity levels found in real scenes ranging from the brightest direct sunlight to the deepest darkest shadows.
 * [Histogram equalization](https://imagemagick.org/script/clahe.php) use adaptive histogram equalization to improve contrast in images.
@@ -50,19 +53,19 @@ Here are just a few [examples](https://imagemagick.org/script/examples.php) of w
 * [ImageMagick on the iPhone](https://imagemagick.org/script/download.php#iOS): convert, edit, or compose images on your iPhone.
 * [Large image support](https://imagemagick.org/script/architecture.php#tera-pixel): read, process, or write mega-, giga-, or tera-pixel image sizes.
 * [Montage](https://imagemagick.org/script/montage.php): juxtapose image thumbnails on an image canvas.
-* [Morphology of shapes](https://legacy.imagemagick.org/Usage/morphology/): extract features, describe shapes and recognize patterns in images.
+* [Morphology of shapes](https://imagemagick.org/Usage/morphology/): extract features, describe shapes and recognize patterns in images.
 * [Motion picture support](https://imagemagick.org/script/motion-picture.php): read and write the common image formats used in digital film work.
-* [Multispectral imagery](https://imagemagick.org/script/architecture.php#multispectral): support multispectral imagery up to 64 bands.
-* [Noise and color reduction](https://legacy.imagemagick.org/Usage/transform/#vision) Kuwahara Filter, mean-shift.
+* [Multispectral imagery](https://imagemagick.org/script/multispectral-imagery.php): support multispectral imagery up to 64 bands.
+* [Noise and color reduction](https://imagemagick.org/Usage/transform/#vision) Kuwahara Filter, mean-shift.
 * [Perceptual hash](http://www.fmwconcepts.com/misc_tests/perceptual_hash_test_results_510/index.html): maps visually identical images to the same or similar hash-- useful in image retrieval, authentication, indexing, or copy detection as well as digital watermarking.
-* [Special effects](https://legacy.imagemagick.org/Usage/blur/): blur, sharpen, threshold, or tint an image.
-* [Text & comments](https://legacy.imagemagick.org/Usage/text/): insert descriptive or artistic text in an image.
+* [Special effects](https://imagemagick.org/Usage/blur/): blur, sharpen, threshold, or tint an image.
+* [Text & comments](https://imagemagick.org/Usage/text/): insert descriptive or artistic text in an image.
 * [Threads of execution support](https://imagemagick.org/script/architecture.php#threads): ImageMagick is thread safe and most internal algorithms are OpenMP-enabled to take advantage of speed-ups offered by multicore processor chips.
-* [Transform](https://legacy.imagemagick.org/Usage/resize/): resize, rotate, deskew, crop, flip or trim an image.
-* [Transparency](https://legacy.imagemagick.org/Usage/masking/): render portions of an image invisible.
+* [Transform](https://imagemagick.org/Usage/resize/): resize, rotate, deskew, crop, flip or trim an image.
+* [Transparency](https://imagemagick.org/Usage/masking/): render portions of an image invisible.
 * [Virtual pixel support](https://imagemagick.org/script/architecture.php#virtual-pixels): convenient access to pixels outside the image region.
 
-[Examples of ImageMagick Usage](https://legacy.imagemagick.org/Usage/), shows how to use ImageMagick from the command-line to accomplish any of these tasks and much more. Also, see [Fred's ImageMagick Scripts](http://www.fmwconcepts.com/imagemagick/): a plethora of command-line scripts that perform geometric transforms, blurs, sharpens, edging, noise removal, and color manipulations. With [Magick.NET](https://github.com/dlemstra/Magick.NET), use ImageMagick without having to install ImageMagick on your server or desktop.
+[Examples of ImageMagick Usage](https://imagemagick.org/Usage/), demonstrates how to use the software from the [command line](https://imagemagick.org/script/command-line-processing.php) to achieve various effects. There are also several scripts available on the website called [Fred's ImageMagick Scripts](http://www.fmwconcepts.com/imagemagick/), which can be used to apply geometric transforms, blur and sharpen images, remove noise, and perform other operations. Additionally, there is a tool called [Magick.NET](https://github.com/dlemstra/Magick.NET) that allows users to access the functionality of ImageMagick without having to install the software on their own systems. Finally, the website also includes a [Cookbook](http://im.snibgo.com/) with tips and examples for using ImageMagick on Windows systems.
 
 #### News
 

@@ -746,7 +746,7 @@ Magick::DrawableBase* Magick::DrawableFillPatternUrl::copy() const
   return(new DrawableFillPatternUrl(*this));
 }
 
-// Specify drawing fill fule
+// Specify drawing fill rule
 Magick::DrawableFillRule::~DrawableFillRule ( void )
 {
 }
@@ -1207,8 +1207,7 @@ Magick::DrawableStrokeDashArray& Magick::DrawableStrokeDashArray::operator=(
 void Magick::DrawableStrokeDashArray::operator()(
   MagickCore::DrawingWand *context_) const
 {
-  (void) DrawSetStrokeDashArray(context_,(const unsigned long) _size,
-    _dasharray);
+  (void) DrawSetStrokeDashArray(context_,(unsigned long) _size,_dasharray);
 }
 
 Magick::DrawableBase *Magick::DrawableStrokeDashArray::copy() const

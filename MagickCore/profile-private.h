@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  MagickCore pribate image profile methods.
+  MagickCore private image profile methods.
 */
 #ifndef MAGICKCORE_PROFILE_PRIVATE_H
 #define MAGICKCORE_PROFILE_PRIVATE_H
@@ -24,12 +24,10 @@
 extern "C" {
 #endif
 
-extern MagickPrivate MagickBooleanType
-  SyncImageProfiles(Image *);
-
 extern MagickPrivate void
   Update8BIMClipPath(const Image *,const size_t,const size_t,
-    const RectangleInfo *);
+    const RectangleInfo *),
+  SyncImageProfiles(Image *);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

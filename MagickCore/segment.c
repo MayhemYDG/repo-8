@@ -658,7 +658,7 @@ static MagickBooleanType Classify(Image *image,short **extrema,
       }
   }
   image_view=DestroyCacheView(image_view);
-  status&=SyncImage(image,exception);
+  status&=(MagickStatusType) SyncImage(image,exception);
   /*
     Relinquish resources.
   */
@@ -997,11 +997,11 @@ MagickExport MagickBooleanType GetImageDynamicThreshold(const Image *image,
   */
   InitializeHistogram(image,histogram,exception);
   (void) OptimalTau(histogram[Red],Tau,0.2f,DeltaTau,
-    (smooth_threshold == 0.0f ? 1.0f : smooth_threshold),extrema[Red]);
+    (smooth_threshold == 0.0 ? 1.0 : smooth_threshold),extrema[Red]);
   (void) OptimalTau(histogram[Green],Tau,0.2f,DeltaTau,
-    (smooth_threshold == 0.0f ? 1.0f : smooth_threshold),extrema[Green]);
+    (smooth_threshold == 0.0 ? 1.0 : smooth_threshold),extrema[Green]);
   (void) OptimalTau(histogram[Blue],Tau,0.2f,DeltaTau,
-    (smooth_threshold == 0.0f ? 1.0f : smooth_threshold),extrema[Blue]);
+    (smooth_threshold == 0.0 ? 1.0 : smooth_threshold),extrema[Blue]);
   /*
     Form clusters.
   */
@@ -1150,7 +1150,8 @@ MagickExport MagickBooleanType GetImageDynamicThreshold(const Image *image,
   }
   object=head;
   background=head;
-  if (count > 1)
+  if ((count > 1) && (head != (Cluster *) NULL) && 
+      (head->next != (Cluster *) NULL))
     {
       object=head->next;
       for (cluster=object; cluster->next != (Cluster *) NULL; )
@@ -1375,7 +1376,7 @@ static IntervalTree *InitializeIntervalTree(const ZeroCrossing *zero_crossing,
   root->right=255;
   root->mean_stability=0.0;
   root->stability=0.0;
-  (void) memset(list,0,TreeLength*sizeof(*list));
+  (void) memset(list,0,(size_t) TreeLength*sizeof(*list));
   for (i=(-1); i < (ssize_t) number_crossings; i++)
   {
     /*

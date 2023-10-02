@@ -8,7 +8,7 @@
 // Simple demo program for Magick++
 //
 // Concept and algorithms lifted from PerlMagick demo script written
-// by John Christy.
+// by Cristy.
 //
 // Max run-time size 60MB (as compared with 95MB for PerlMagick) under SPARC Solaris
 //
@@ -22,7 +22,7 @@ using namespace std;
 
 using namespace Magick;
 
-#if MAGICKCORE_FREETYPE_DELEGATE
+#if defined(MAGICKCORE_FREETYPE_DELEGATE)
   #define MakeLabel(image, text) image.label( (text) )
 #else
   #define MakeLabel(image, text)
@@ -89,7 +89,7 @@ int main( int /*argc*/, char ** argv)
       example.addNoiseChannel( BlueChannel, PoissonNoise );
       images.push_back( example );
 
-#if MAGICKCORE_FREETYPE_DELEGATE
+#if defined(MAGICKCORE_FREETYPE_DELEGATE)
       cout << "  annotate ..." << endl;
       example = model;
       MakeLabel(example, "Annotate");
@@ -502,7 +502,8 @@ int main( int /*argc*/, char ** argv)
       logo.zoom( "45%" );
 
       // Composite logo into montage image
-      Geometry placement(0,0,(montage_image.columns()/2)-(logo.columns()/2),0);
+      Geometry placement(0,0,((ssize_t) montage_image.columns()/2)-
+        ((ssize_t) logo.columns()/2),0);
       montage_image.composite( logo, placement, OverCompositeOp );
     }
 

@@ -221,7 +221,7 @@ static int MVGPrintf(DrawingWand *wand,const char *format,...)
     }
     wand->mvg[wand->mvg_length]='\0';
     count=(-1);
-    offset=(ssize_t) wand->mvg_alloc-wand->mvg_length-1;
+    offset=(ssize_t) (wand->mvg_alloc-wand->mvg_length-1);
     if (offset > 0)
       {
         va_start(argp,format);
@@ -236,8 +236,8 @@ static int MVGPrintf(DrawingWand *wand,const char *format,...)
       ThrowDrawException(DrawError,"UnableToPrint",format)
     else
       {
-        wand->mvg_length+=count;
-        wand->mvg_width+=count;
+        wand->mvg_length+=(size_t) count;
+        wand->mvg_width+=(size_t) count;
       }
     wand->mvg[wand->mvg_length]='\0';
     if ((wand->mvg_length > 1) && (wand->mvg[wand->mvg_length-1] == '\n'))
@@ -270,7 +270,7 @@ static int MVGAutoWrapPrintf(DrawingWand *wand,const char *format,...)
     ThrowDrawException(DrawError,"UnableToPrint",format)
   else
     {
-      if (((wand->mvg_width + count) > 78) && (buffer[count-1] != '\n'))
+      if (((wand->mvg_width+(size_t) count) > 78) && (buffer[count-1] != '\n'))
         (void) MVGPrintf(wand, "\n");
       (void) MVGPrintf(wand,"%s",buffer);
     }
@@ -280,7 +280,7 @@ static int MVGAutoWrapPrintf(DrawingWand *wand,const char *format,...)
 static void MVGAppendColor(DrawingWand *wand,const PixelInfo *packet)
 {
   if ((packet->red == 0) && (packet->green == 0) && (packet->blue == 0) &&
-      (packet->alpha == (Quantum) TransparentAlpha))
+      (packet->alpha == (double) TransparentAlpha))
     (void) MVGPrintf(wand,"none");
   else
     {
@@ -292,8 +292,8 @@ static void MVGAppendColor(DrawingWand *wand,const PixelInfo *packet)
 
       GetPixelInfo(wand->image,&pixel);
       pixel.colorspace=sRGBColorspace;
-      pixel.alpha_trait=packet->alpha != OpaqueAlpha ? BlendPixelTrait :
-        UndefinedPixelTrait;
+      pixel.alpha_trait=packet->alpha != (double) OpaqueAlpha ?
+        BlendPixelTrait : UndefinedPixelTrait;
       pixel.red=(double) packet->red;
       pixel.green=(double) packet->green;
       pixel.blue=(double) packet->blue;
@@ -382,11 +382,9 @@ WandExport DrawingWand *AcquireDrawingWand(const DrawInfo *draw_info,
       CurrentContext=DestroyDrawInfo(CurrentContext);
       CurrentContext=CloneDrawInfo((ImageInfo *) NULL,draw_info);
     }
+  wand->image=DestroyImage(wand->image);
   if (image != (Image *) NULL)
-    {
-      wand->image=DestroyImage(wand->image);
-      wand->destroy=MagickFalse;
-    }
+    wand->destroy=MagickFalse;
   wand->image=image;
   return(wand);
 }
@@ -1526,7 +1524,7 @@ WandExport FillRule DrawGetFillRule(const DrawingWand *wand)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  DrawGetFont() returns a null-terminaged string specifying the font used
+%  DrawGetFont() returns a null-terminated string specifying the font used
 %  when annotating with text. The value returned must be freed by the user
 %  when no longer needed.
 %
@@ -1825,7 +1823,7 @@ WandExport double DrawGetOpacity(const DrawingWand *wand)
   assert(wand->signature == MagickWandSignature);
   if (wand->debug != MagickFalse)
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
-  alpha=(double) QuantumScale*CurrentContext->alpha;
+  alpha=QuantumScale*(double) CurrentContext->alpha;
   return(alpha);
 }
 
@@ -2580,8 +2578,8 @@ WandExport char *DrawGetVectorGraphics(DrawingWand *wand)
   child=AddChildToXMLTree(xml_info,"fill",0);
   if (child != (XMLTreeInfo *) NULL)
     {
-      if (CurrentContext->fill.alpha != OpaqueAlpha)
-        pixel.alpha_trait=CurrentContext->fill.alpha != OpaqueAlpha ?
+      if (CurrentContext->fill.alpha != (double) OpaqueAlpha)
+        pixel.alpha_trait=CurrentContext->fill.alpha != (double) OpaqueAlpha ?
           BlendPixelTrait : UndefinedPixelTrait;
       pixel=CurrentContext->fill;
       GetColorTuple(&pixel,MagickTrue,value);
@@ -2648,8 +2646,8 @@ WandExport char *DrawGetVectorGraphics(DrawingWand *wand)
   child=AddChildToXMLTree(xml_info,"stroke",0);
   if (child != (XMLTreeInfo *) NULL)
     {
-      if (CurrentContext->stroke.alpha != OpaqueAlpha)
-        pixel.alpha_trait=CurrentContext->stroke.alpha != OpaqueAlpha ?
+      if (CurrentContext->stroke.alpha != (double) OpaqueAlpha)
+        pixel.alpha_trait=CurrentContext->stroke.alpha != (double) OpaqueAlpha ?
           BlendPixelTrait : UndefinedPixelTrait;
       pixel=CurrentContext->stroke;
       GetColorTuple(&pixel,MagickTrue,value);
@@ -2742,8 +2740,8 @@ WandExport char *DrawGetVectorGraphics(DrawingWand *wand)
   child=AddChildToXMLTree(xml_info,"text-undercolor",0);
   if (child != (XMLTreeInfo *) NULL)
     {
-      if (CurrentContext->undercolor.alpha != OpaqueAlpha)
-        pixel.alpha_trait=CurrentContext->undercolor.alpha != OpaqueAlpha ?
+      if (CurrentContext->undercolor.alpha != (double) OpaqueAlpha)
+        pixel.alpha_trait=CurrentContext->undercolor.alpha != (double) OpaqueAlpha ?
           BlendPixelTrait : UndefinedPixelTrait;
       pixel=CurrentContext->undercolor;
       GetColorTuple(&pixel,MagickTrue,value);
@@ -3012,7 +3010,7 @@ WandExport void DrawPathCurveToRelative(DrawingWand *wand,const double x1,
 %  The format of the DrawPathCurveToQuadraticBezierAbsolute method is:
 %
 %      void DrawPathCurveToQuadraticBezierAbsolute(DrawingWand *wand,
-%        const double x1,const double y1,onst double x,const double y)
+%        const double x1,const double y1,const double x,const double y)
 %
 %  A description of each parameter follows:
 %
@@ -4457,7 +4455,7 @@ WandExport void DrawRotate(DrawingWand *wand,const double degrees)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  DrawRoundRectangle() draws a rounted rectangle given two coordinates,
+%  DrawRoundRectangle() draws a rounded rectangle given two coordinates,
 %  x & y corner radiuses and using the current stroke, stroke width,
 %  and fill settings.
 %
@@ -4851,7 +4849,7 @@ WandExport void DrawSetFillOpacity(DrawingWand *wand,const double fill_opacity)
   assert(wand->signature == MagickWandSignature);
   if (wand->debug != MagickFalse)
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
-  alpha=(double) ClampToQuantum(QuantumRange*fill_opacity);
+  alpha=(double) ClampToQuantum((double) QuantumRange*fill_opacity);
   if ((wand->filter_off != MagickFalse) ||
       (CurrentContext->fill.alpha != alpha))
     {
@@ -4937,7 +4935,7 @@ WandExport void DrawSetOpacity(DrawingWand *wand,const double opacity)
   assert(wand->signature == MagickWandSignature);
   if (wand->debug != MagickFalse)
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
-  quantum_alpha=ClampToQuantum(QuantumRange*opacity);
+  quantum_alpha=ClampToQuantum((double) QuantumRange*opacity);
   if ((wand->filter_off != MagickFalse) ||
       (CurrentContext->alpha != quantum_alpha))
     {
@@ -5004,7 +5002,7 @@ WandExport MagickBooleanType DrawSetFillPatternURL(DrawingWand *wand,
   DrawPatternPath(wand->image,CurrentContext,pattern_spec,
     &CurrentContext->fill_pattern,wand->exception);
 #endif
-  if (CurrentContext->fill.alpha != (Quantum) TransparentAlpha)
+  if (CurrentContext->fill.alpha != (double) TransparentAlpha)
     CurrentContext->fill.alpha=(double) CurrentContext->alpha;
   (void) MVGPrintf(wand,"fill %s\n",pattern_spec);
   return(MagickTrue);
@@ -5060,7 +5058,7 @@ WandExport void DrawSetFillRule(DrawingWand *wand,const FillRule fill_rule)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  DrawSetFont() sets the fully-sepecified font to use when annotating with
+%  DrawSetFont() sets the fully-specified font to use when annotating with
 %  text.
 %
 %  The format of the DrawSetFont method is:
@@ -5444,7 +5442,7 @@ WandExport MagickBooleanType DrawSetStrokePatternURL(DrawingWand *wand,
   DrawPatternPath(wand->image,CurrentContext,pattern_spec,
     &CurrentContext->stroke_pattern,wand->exception);
 #endif
-  if (CurrentContext->stroke.alpha != (Quantum) TransparentAlpha)
+  if (CurrentContext->stroke.alpha != (double) TransparentAlpha)
     CurrentContext->stroke.alpha=(double) CurrentContext->alpha;
   (void) MVGPrintf(wand,"stroke %s\n",pattern_spec);
   return(MagickTrue);
@@ -5824,7 +5822,7 @@ WandExport void DrawSetStrokeOpacity(DrawingWand *wand,
   assert(wand->signature == MagickWandSignature);
   if (wand->debug != MagickFalse)
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
-  alpha=(double) ClampToQuantum(QuantumRange*opacity);
+  alpha=(double) ClampToQuantum((double) QuantumRange*opacity);
   if ((wand->filter_off != MagickFalse) ||
       (CurrentContext->stroke.alpha != alpha))
     {
@@ -6357,8 +6355,8 @@ WandExport MagickBooleanType DrawSetVectorGraphics(DrawingWand *wand,
     {
       value=GetXMLTreeContent(child);
       if (value != (const char *) NULL)
-        CurrentContext->fill.alpha=(double) ClampToQuantum(QuantumRange*
-          (1.0-StringToDouble(value,(char **) NULL)));
+        CurrentContext->fill.alpha=(double) ClampToQuantum((double)
+          QuantumRange*(1.0-StringToDouble(value,(char **) NULL)));
     }
   child=GetXMLTreeChild(xml_info,"fill-rule");
   if (child != (XMLTreeInfo *) NULL)
@@ -6474,7 +6472,7 @@ WandExport MagickBooleanType DrawSetVectorGraphics(DrawingWand *wand,
                   (void) GetNextToken(p,&p,MagickPathExtent,token);
               }
               CurrentContext->dash_pattern=(double *) AcquireQuantumMemory(
-                (size_t) (2UL*x)+1UL,sizeof(*CurrentContext->dash_pattern));
+                (size_t) (2*x)+1UL,sizeof(*CurrentContext->dash_pattern));
               if (CurrentContext->dash_pattern == (double *) NULL)
                 ThrowWandFatalException(ResourceLimitFatalError,
                   "MemoryAllocationFailed",wand->name);
@@ -6529,8 +6527,8 @@ WandExport MagickBooleanType DrawSetVectorGraphics(DrawingWand *wand,
     {
       value=GetXMLTreeContent(child);
       if (value != (const char *) NULL)
-        CurrentContext->stroke.alpha=(double) ClampToQuantum(QuantumRange*
-          (1.0-StringToDouble(value,(char **) NULL)));
+        CurrentContext->stroke.alpha=(double) ClampToQuantum((double)
+          QuantumRange*(1.0-StringToDouble(value,(char **) NULL)));
     }
   child=GetXMLTreeChild(xml_info,"stroke-width");
   if (child != (XMLTreeInfo *) NULL)

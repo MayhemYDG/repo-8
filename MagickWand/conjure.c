@@ -168,7 +168,12 @@ WandExport MagickBooleanType ConjureImageCommand(ImageInfo *image_info,
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   if (argc < 2)
-    return(ConjureUsage());
+    {
+      (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
+        "MissingArgument","%s","");
+      (void) ConjureUsage();
+      return(MagickFalse);
+    }
   image=NewImageList();
   number_images=0;
   option=(char *) NULL;
@@ -268,10 +273,12 @@ WandExport MagickBooleanType ConjureImageCommand(ImageInfo *image_info,
           Persist key/value pair.
         */
         (void) DeleteImageOption(image_info,option+1);
-        status=SetImageOption(image_info,option+1,argv[i+1]);
+        i++;
+        if (i == argc)
+          ThrowConjureException(OptionError,"MissingArgument",option);
+        status=SetImageOption(image_info,option+1,argv[i]);
         if (status == MagickFalse)
           ThrowConjureException(ImageError,"UnableToPersistKey",option);
-        i++;
         continue;
       }
     /*

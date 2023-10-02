@@ -334,8 +334,8 @@ static Image *ReadPCLImage(const ImageInfo *image_info,ExceptionInfo *exception)
     image->resolution.x,image->resolution.y);
   if (image_info->ping != MagickFalse)
     (void) FormatLocaleString(density,MagickPathExtent,"2.0x2.0");
-  page.width=(size_t) floor(page.width*image->resolution.x/delta.x+0.5);
-  page.height=(size_t) floor(page.height*image->resolution.y/delta.y+0.5);
+  page.width=CastDoubleToUnsigned(page.width*image->resolution.x/delta.x+0.5);
+  page.height=CastDoubleToUnsigned(page.height*image->resolution.y/delta.y+0.5);
   (void) FormatLocaleString(options,MagickPathExtent,"-g%.20gx%.20g ",(double)
     page.width,(double) page.height);
   image=DestroyImage(image);
@@ -676,33 +676,33 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
   const char
     *option;
 
+  const Quantum
+    *p;
+
   MagickBooleanType
     status;
 
   MagickOffsetType
     scene;
 
-  const Quantum *p;
-
-  ssize_t i, x;
-
-  unsigned char *q;
-
   size_t
     density,
-    imageListLength,
     length,
+    number_scenes,
     one,
     packets;
 
   ssize_t
+    i,
+    x,
     y;
 
   unsigned char
     bits_per_pixel,
     *compress_pixels,
     *pixels,
-    *previous_pixels;
+    *previous_pixels,
+    *q;
 
   /*
     Open output image file.
@@ -729,7 +729,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
     }
   scene=0;
   one=1;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     /*
@@ -886,7 +886,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
           for (x=0; x < (ssize_t) image->columns; x++)
           {
             byte<<=1;
-            if (GetPixelLuma(image,p) < (QuantumRange/2.0))
+            if (GetPixelLuma(image,p) < ((double) QuantumRange/2.0))
               byte|=0x01;
             bit++;
             if (bit == 8)
@@ -989,7 +989,7 @@ static MagickBooleanType WritePCLImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

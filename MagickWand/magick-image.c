@@ -723,7 +723,7 @@ WandExport MagickWand *MagickAppendImages(MagickWand *wand,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickAutoGammaImage() extracts the 'mean' from the image and adjust the
-%  image to try make set its gamma appropriatally.
+%  image to try make set its gamma appropriately.
 %
 %  The format of the MagickAutoGammaImage method is:
 %
@@ -909,9 +909,9 @@ WandExport MagickBooleanType MagickAutoThresholdImage(MagickWand *wand,
 %
 %    o spatial_sigma: sigma in the coordinate space. A larger value means that
 %      farther pixels influence each other as long as their colors are close
-%      enough (see intensity_sigma ). When the neigborhood diameter is greater
+%      enough (see intensity_sigma ). When the neighborhood diameter is greater
 %      than zero, it specifies the neighborhood size regardless of
-%      spatial_sigma. Otherwise, the neigborhood diameter is proportional to
+%      spatial_sigma. Otherwise, the neighborhood diameter is proportional to
 %      spatial_sigma.
 %
 */
@@ -976,9 +976,11 @@ WandExport MagickBooleanType MagickBlackThresholdImage(MagickWand *wand,
   if (wand->images == (Image *) NULL)
     ThrowWandException(WandError,"ContainsNoImages",wand->name);
   (void) FormatLocaleString(thresholds,MagickPathExtent,
-    QuantumFormat "," QuantumFormat "," QuantumFormat "," QuantumFormat,
-    PixelGetRedQuantum(threshold),PixelGetGreenQuantum(threshold),
-    PixelGetBlueQuantum(threshold),PixelGetAlphaQuantum(threshold));
+    "%g" "," "%g" "," "%g" "," "%g",
+    (double) PixelGetRedQuantum(threshold),
+    (double) PixelGetGreenQuantum(threshold),
+    (double) PixelGetBlueQuantum(threshold),
+    (double) PixelGetAlphaQuantum(threshold));
   return(BlackThresholdImage(wand->images,thresholds,wand->exception));
 }
 
@@ -1151,7 +1153,7 @@ WandExport MagickBooleanType MagickBorderImage(MagickWand *wand,
 %
 %  Use MagickBrightnessContrastImage() to change the brightness and/or contrast
 %  of an image.  It converts the brightness and contrast parameters into slope
-%  and intercept and calls a polynomical function to apply to the image.
+%  and intercept and calls a polynomial function to apply to the image.
 
 %
 %  The format of the MagickBrightnessContrastImage method is:
@@ -1772,18 +1774,18 @@ WandExport MagickBooleanType MagickColorizeImage(MagickWand *wand,
   if (target.colorspace != CMYKColorspace)
     (void) FormatLocaleString(percent_blend,MagickPathExtent,
       "%g,%g,%g,%g",(double) (100.0*QuantumScale*
-      PixelGetRedQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetGreenQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetBlueQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetAlphaQuantum(blend)));
+      (double) PixelGetRedQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetGreenQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetBlueQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetAlphaQuantum(blend)));
   else
     (void) FormatLocaleString(percent_blend,MagickPathExtent,
       "%g,%g,%g,%g,%g",(double) (100.0*QuantumScale*
-      PixelGetRedQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetGreenQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetBlueQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetBlackQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetAlphaQuantum(blend)));
+      (double) PixelGetRedQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetGreenQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetBlueQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetBlackQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetAlphaQuantum(blend)));
   target=PixelGetPixel(colorize);
   colorize_image=ColorizeImage(wand->images,percent_blend,&target,
     wand->exception);
@@ -1904,7 +1906,7 @@ WandExport MagickBooleanType MagickColorThresholdImage(MagickWand *wand,
 %
 %  MagickCombineImages() combines one or more images into a single image.  The
 %  grayscale value of the pixels of each image in the sequence is assigned in
-%  order to the specified  hannels of the combined image.   The typical
+%  order to the specified channels of the combined image.   The typical
 %  ordering would be image 1 => Red, 2 => Green, 3 => Blue, etc.
 %
 %  The format of the MagickCombineImages method is:
@@ -2152,7 +2154,7 @@ WandExport MagickWand *MagickComplexImages(MagickWand *wand,
 %
 %    o compose: This operator affects how the composite is applied to the
 %      image.  The default is Over.  These are some of the compose methods
-%      availble.
+%      available.
 %
 %        OverCompositeOp       InCompositeOp         OutCompositeOp
 %        AtopCompositeOp       XorCompositeOp        PlusCompositeOp
@@ -2214,7 +2216,7 @@ WandExport MagickBooleanType MagickCompositeImage(MagickWand *wand,
 %
 %    o compose: This operator affects how the composite is applied to the
 %      image.  The default is Over.  These are some of the compose methods
-%      availble.
+%      available.
 %
 %        OverCompositeOp       InCompositeOp         OutCompositeOp
 %        AtopCompositeOp       XorCompositeOp        PlusCompositeOp
@@ -2275,13 +2277,13 @@ WandExport MagickBooleanType MagickCompositeImageGravity(MagickWand *wand,
 %
 %  Composition uses given x and y offsets, as the 'origin' location of the
 %  source images virtual canvas (not the real image) allowing you to compose a
-%  list of 'layer images' into the destiantioni images.  This makes it well
-%  sutiable for directly composing 'Clears Frame Animations' or 'Coaleased
-%  Animations' onto a static or other 'Coaleased Animation' destination image
+%  list of 'layer images' into the destination images.  This makes it well
+%  suitable for directly composing 'Clears Frame Animations' or 'Coalesced
+%  Animations' onto a static or other 'Coalesced Animation' destination image
 %  list.  GIF disposal handling is not looked at.
 %
 %  Special case:- If one of the image sequences is the last image (just a
-%  single image remaining), that image is repeatally composed with all the
+%  single image remaining), that image is repeatedly composed with all the
 %  images in the other image list.  Either the source or destination lists may
 %  be the single image, for this situation.
 %
@@ -2289,7 +2291,7 @@ WandExport MagickBooleanType MagickCompositeImageGravity(MagickWand *wand,
 %  will ve cloned to match the number of images remaining in the source image
 %  list.
 %
-%  This is equivelent to the "-layer Composite" Shell API operator.
+%  This is equivalent to the "-layer Composite" Shell API operator.
 %
 %  The format of the MagickCompositeLayers method is:
 %
@@ -2299,7 +2301,7 @@ WandExport MagickBooleanType MagickCompositeImageGravity(MagickWand *wand,
 %
 %  A description of each parameter follows:
 %
-%    o wand: the magick wand holding destaintion images
+%    o wand: the magick wand holding destination images
 %
 %    o source_wand: the wand holding the source images
 %
@@ -2819,7 +2821,7 @@ WandExport MagickBooleanType MagickDeskewImage(MagickWand *wand,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickDespeckleImage() reduces the speckle noise in an image while
-%  perserving the edges of the original image.
+%  preserving the edges of the original image.
 %
 %  The format of the MagickDespeckleImage method is:
 %
@@ -2978,7 +2980,7 @@ WandExport MagickBooleanType MagickDisplayImages(MagickWand *wand,
 %
 %  MagickDistortImage() distorts an image using various distortion methods, by
 %  mapping color lookups of the source image to a new destination image
-%  usally of the same size as the source image, unless 'bestfit' is set to
+%  usually of the same size as the source image, unless 'bestfit' is set to
 %  true.
 %
 %  If 'bestfit' is enabled, and distortion allows it, the destination image is
@@ -3013,7 +3015,7 @@ WandExport MagickBooleanType MagickDisplayImages(MagickWand *wand,
 %        Perspective, and Bilinear, falls back to a Affine distortion when less
 %        that 4 control point pairs are provided. While Affine distortions let
 %        you use any number of control point pairs, that is Zero pairs is a
-%        no-Op (viewport only) distrotion, one pair is a translation and two
+%        no-Op (viewport only) distortion, one pair is a translation and two
 %        pairs of control points do a scale-rotate-translate, without any
 %        shearing.
 %
@@ -3326,7 +3328,7 @@ WandExport MagickBooleanType MagickEqualizeImage(MagickWand *wand)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickEvaluateImage() applys an arithmetic, relational, or logical
+%  MagickEvaluateImage() applies an arithmetic, relational, or logical
 %  expression to an image.  Use these operators to lighten or darken an image,
 %  to increase or decrease contrast in an image, or to produce the "negative"
 %  of an image.
@@ -3616,7 +3618,8 @@ WandExport MagickBooleanType MagickFloodfillPaintImage(MagickWand *wand,
   draw_info=CloneDrawInfo(wand->image_info,(DrawInfo *) NULL);
   PixelGetQuantumPacket(fill,&draw_info->fill);
   (void) GetOneVirtualPixelInfo(wand->images,TileVirtualPixelMethod,x %
-    wand->images->columns,y % wand->images->rows,&target,wand->exception);
+    (ssize_t) wand->images->columns,y % (ssize_t) wand->images->rows,&target,
+    wand->exception);
   if (bordercolor != (PixelWand *) NULL)
     PixelGetMagickColor(bordercolor,&target);
   wand->images->fuzz=fuzz;
@@ -3798,7 +3801,7 @@ WandExport MagickBooleanType MagickFrameImage(MagickWand *wand,
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickFunctionImage() applys an arithmetic, relational, or logical
+%  MagickFunctionImage() applies an arithmetic, relational, or logical
 %  expression to an image.  Use these operators to lighten or darken an image,
 %  to increase or decrease contrast in an image, or to produce the "negative"
 %  of an image.
@@ -4252,7 +4255,7 @@ WandExport unsigned char *MagickGetImagesBlob(MagickWand *wand,size_t *length)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickGetImageBluePrimary() returns the chromaticy blue primary point for the
+%  MagickGetImageBluePrimary() returns the chromaticity blue primary point for the
 %  image.
 %
 %  The format of the MagickGetImageBluePrimary method is:
@@ -4339,7 +4342,7 @@ WandExport MagickBooleanType MagickGetImageBorderColor(MagickWand *wand,
 %  image in each of four directions (horizontal, vertical, left and right
 %  diagonals) for the specified distance.  The features include the angular
 %  second moment, contrast, correlation, sum of squares: variance, inverse
-%  difference moment, sum average, sum varience, sum entropy, entropy,
+%  difference moment, sum average, sum variance, sum entropy, entropy,
 %  difference variance, difference entropy, information measures of
 %  correlation 1, information measures of correlation 2, and maximum
 %  correlation coefficient.  You can access the red channel contrast, for
@@ -5074,6 +5077,43 @@ WandExport char *MagickGetImageFilename(MagickWand *wand)
 %                                                                             %
 %                                                                             %
 %                                                                             %
+%   M a g i c k G e t I m a g e F i l t e r                                   %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  MagickGetImageFilter() gets the image filter.
+%
+%  The format of the MagickGetImageFilter method is:
+%
+%      FilterType MagickGetImageFilter(MagickWand *wand)
+%
+%  A description of each parameter follows:
+%
+%    o wand: the magick wand.
+%
+*/
+WandExport FilterType MagickGetImageFilter(MagickWand *wand)
+{
+  assert(wand != (MagickWand *) NULL);
+  assert(wand->signature == MagickWandSignature);
+  if (wand->debug != MagickFalse)
+    (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
+  if (wand->images == (Image *) NULL)
+    {
+      (void) ThrowMagickException(wand->exception,GetMagickModule(),WandError,
+        "ContainsNoImages","`%s'",wand->name);
+      return(UndefinedFilter);
+    }
+  return(wand->images->filter);
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
 %   M a g i c k G e t I m a g e F o r m a t                                   %
 %                                                                             %
 %                                                                             %
@@ -5229,7 +5269,7 @@ WandExport GravityType MagickGetImageGravity(MagickWand *wand)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickGetImageGreenPrimary() returns the chromaticy green primary point.
+%  MagickGetImageGreenPrimary() returns the chromaticity green primary point.
 %
 %  The format of the MagickGetImageGreenPrimary method is:
 %
@@ -5406,7 +5446,7 @@ WandExport InterlaceType MagickGetImageInterlaceScheme(MagickWand *wand)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickGetImageInterpolateMethod() returns the interpolation method for the
-%  sepcified image.
+%  specified image.
 %
 %  The format of the MagickGetImageInterpolateMethod method is:
 %
@@ -5691,7 +5731,7 @@ WandExport MagickBooleanType MagickGetImagePixelColor(MagickWand *wand,
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickGetImageRedPrimary() returns the chromaticy red primary point.
+%  MagickGetImageRedPrimary() returns the chromaticity red primary point.
 %
 %  The format of the MagickGetImageRedPrimary method is:
 %
@@ -6067,7 +6107,7 @@ WandExport ResolutionType MagickGetImageUnits(MagickWand *wand)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickGetImageVirtualPixelMethod() returns the virtual pixel method for the
-%  sepcified image.
+%  specified image.
 %
 %  The format of the MagickGetImageVirtualPixelMethod method is:
 %
@@ -6104,7 +6144,7 @@ WandExport VirtualPixelMethod MagickGetImageVirtualPixelMethod(MagickWand *wand)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickGetImageWhitePoint() returns the chromaticy white point.
+%  MagickGetImageWhitePoint() returns the chromaticity white point.
 %
 %  The format of the MagickGetImageWhitePoint method is:
 %
@@ -7244,7 +7284,7 @@ WandExport MagickBooleanType MagickMagnifyImage(MagickWand *wand)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickMeanShiftImage() elineate arbitrarily shaped clusters in the image. For
+%  MagickMeanShiftImage() delineate arbitrarily shaped clusters in the image. For
 %  each pixel, it visits all the pixels in the neighborhood specified by
 %  the window centered at the pixel and excludes those that are outside the
 %  radius=(window-1)/2 surrounding the pixel. From those pixels, it finds those
@@ -7306,7 +7346,7 @@ WandExport MagickBooleanType MagickMeanShiftImage(MagickWand *wand,
 %
 %  The inital canvas's size depends on the given LayerMethod, and is
 %  initialized using the first images background color.  The images
-%  are then compositied onto that image in sequence using the given
+%  are then composited onto that image in sequence using the given
 %  composition that has been assigned to each individual image.
 %
 %  The format of the MagickMergeImageLayers method is:
@@ -7421,7 +7461,7 @@ WandExport MagickBooleanType MagickMinifyImage(MagickWand *wand)
 %
 %    o wand: the magick wand.
 %
-%    o brightness: the percent change in brighness.
+%    o brightness: the percent change in brightness.
 %
 %    o saturation: the percent change in saturation.
 %
@@ -7619,7 +7659,7 @@ WandExport MagickWand *MagickMorphImages(MagickWand *wand,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickMorphologyImage() applies a user supplied kernel to the image
-%  according to the given mophology method.
+%  according to the given morphology method.
 %
 %  The format of the MagickMorphologyImage method is:
 %
@@ -7834,9 +7874,9 @@ WandExport MagickBooleanType MagickNewImage(MagickWand *wand,const size_t width,
 %  image.
 %
 %  When the above condition (end of image list) is reached, the iterator is
-%  automaticall set so that you can start using MagickPreviousImage() to
+%  automatically set so that you can start using MagickPreviousImage() to
 %  again iterate over the images in the reverse direction, starting with the
-%  last image (again).  You can jump to this condition immeditally using
+%  last image (again).  You can jump to this condition immediately using
 %  MagickSetLastIterator().
 %
 %  The format of the MagickNextImage method is:
@@ -8147,7 +8187,7 @@ WandExport MagickBooleanType MagickOptimizeImageTransparency(MagickWand *wand)
 %      level. While checker,8,8,4 will produce a 332 colormaped image with
 %      only a single checkerboard hash pattern (50% grey) between each color
 %      level, to basically double the number of color levels with a bare
-%      minimim of dithering.
+%      minimum of dithering.
 %
 */
 WandExport MagickBooleanType MagickOrderedDitherImage(MagickWand *wand,
@@ -9160,7 +9200,7 @@ WandExport MagickBooleanType MagickRemoveImage(MagickWand *wand)
 %    Bessel   Blackman   Box
 %    Catrom   Cubic      Gaussian
 %    Hanning  Hermite    Lanczos
-%    Mitchell Point      Quandratic
+%    Mitchell Point      Quadratic
 %    Sinc     Triangle
 %
 %  Most of the filters are FIR (finite impulse response), however, Bessel,
@@ -9263,7 +9303,7 @@ WandExport MagickBooleanType MagickResetImagePage(MagickWand *wand,
 %    Bessel   Blackman   Box
 %    Catrom   Cubic      Gaussian
 %    Hanning  Hermite    Lanczos
-%    Mitchell Point      Quandratic
+%    Mitchell Point      Quadratic
 %    Sinc     Triangle
 %
 %  Most of the filters are FIR (finite impulse response), however, Bessel,
@@ -10326,7 +10366,7 @@ WandExport MagickBooleanType MagickSetImageDepth(MagickWand *wand,
 %
 %    o wand: the magick wand.
 %
-%    o dispose: the image disposeal type.
+%    o dispose: the image disposal type.
 %
 */
 WandExport MagickBooleanType MagickSetImageDispose(MagickWand *wand,
@@ -10457,6 +10497,48 @@ WandExport MagickBooleanType MagickSetImageFilename(MagickWand *wand,
   if (filename == (const char *) NULL)
     return(MagickFalse);
   (void) CopyMagickString(wand->images->filename,filename,MagickPathExtent);
+  return(MagickTrue);
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%   M a g i c k S e t I m a g e G r a v i t y                                 %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  MagickSetImageFilter() sets the image filter type.
+%
+%  The format of the MagickSetImageFilter method is:
+%
+%      MagickBooleanType MagickSetImageFilter(MagickWand *wand,
+%        const FilterType filter)
+%
+%  A description of each parameter follows:
+%
+%    o wand: the magick wand.
+%
+%    o filter: Bartlett, Blackman, Bohman, Box, Catrom, Cosine, Cubic, 
+%      CubicSpline, Gaussian, Hamming, Hann, Hermite, Jinc, Kaiser, Lagrange,
+%      Lanczos, Lanczos2, Lanczos2Sharp, LanczosRadius, LanczosSharp, Mitchell,
+%      Parzen, Point, Quadratic, Robidoux, RobidouxSharp, Sinc, SincFast,
+%      Spline, Triangle, Undefined, Welch.
+%
+*/
+WandExport MagickBooleanType MagickSetImageFilter(MagickWand *wand,
+  const FilterType filter)
+{
+  assert(wand != (MagickWand *) NULL);
+  assert(wand->signature == MagickWandSignature);
+  if (wand->debug != MagickFalse)
+    (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
+  if (wand->images == (Image *) NULL)
+    ThrowWandException(WandError,"ContainsNoImages",wand->name);
+  wand->images->filter=filter;
   return(MagickTrue);
 }
 
@@ -10919,7 +11001,7 @@ WandExport MagickBooleanType MagickSetImageAlpha(MagickWand *wand,
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
   if (wand->images == (Image *) NULL)
     ThrowWandException(WandError,"ContainsNoImages",wand->name);
-  status=SetImageAlpha(wand->images,ClampToQuantum(QuantumRange*alpha),
+  status=SetImageAlpha(wand->images,ClampToQuantum((double) QuantumRange*alpha),
     wand->exception);
   return(status);
 }
@@ -11515,7 +11597,7 @@ WandExport MagickBooleanType MagickSetImageWhitePoint(MagickWand *wand,
 %
 */
 WandExport MagickBooleanType MagickShadeImage(MagickWand *wand,
-  const MagickBooleanType gray,const double asimuth,const double elevation)
+  const MagickBooleanType gray,const double azimuth,const double elevation)
 {
   Image
     *shade_image;
@@ -11526,7 +11608,7 @@ WandExport MagickBooleanType MagickShadeImage(MagickWand *wand,
     (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
   if (wand->images == (Image *) NULL)
     ThrowWandException(WandError,"ContainsNoImages",wand->name);
-  shade_image=ShadeImage(wand->images,gray,asimuth,elevation,wand->exception);
+  shade_image=ShadeImage(wand->images,gray,azimuth,elevation,wand->exception);
   if (shade_image == (Image *) NULL)
     return(MagickFalse);
   ReplaceImageInList(&wand->images,shade_image);
@@ -11819,7 +11901,7 @@ WandExport MagickBooleanType MagickSigmoidalContrastImage(
 %
 %      MagickWand *MagickSimilarityImage(MagickWand *wand,
 %        const MagickWand *reference,const MetricType metric,
-%        const double similarity_threshold,RectangeInfo *offset,
+%        const double similarity_threshold,RectangleInfo *offset,
 %        double *similarity)
 %
 %  A description of each parameter follows:
@@ -11926,7 +12008,7 @@ WandExport MagickBooleanType MagickSketchImage(MagickWand *wand,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickSmushImages() takes all images from the current image pointer to the
-%  end of the image list and smushs them to each other top-to-bottom if the
+%  end of the image list and smushes them to each other top-to-bottom if the
 %  stack parameter is true, otherwise left-to-right.
 %
 %  The format of the MagickSmushImages method is:
@@ -12041,13 +12123,13 @@ WandExport MagickBooleanType MagickSolarizeImage(MagickWand *wand,
 %        style of image sparseion.
 %
 %        Affine, Perspective, and Bilinear, will do least squares fitting of
-%        the distrotion when more than the minimum number of control point
+%        the distortion when more than the minimum number of control point
 %        pairs are provided.
 %
 %        Perspective, and Bilinear, will fall back to a Affine sparseion when
 %        less than 4 control point pairs are provided. While Affine sparseions
 %        will let you use any number of control point pairs, that is Zero pairs
-%        is a No-Op (viewport only) distrotion, one pair is a translation and
+%        is a No-Op (viewport only) distortion, one pair is a translation and
 %        two pairs of control points will do a scale-rotate-translate, without
 %        any shearing.
 %
@@ -12160,7 +12242,7 @@ WandExport MagickBooleanType MagickSpliceImage(MagickWand *wand,
 %
 %    o wand: the magick wand.
 %
-%    o method:  intepolation method.
+%    o method:  interpolation method.
 %
 %    o radius:  Choose a random pixel in a neighborhood of this extent.
 %
@@ -12638,18 +12720,18 @@ WandExport MagickBooleanType MagickTintImage(MagickWand *wand,
   if (wand->images->colorspace != CMYKColorspace)
     (void) FormatLocaleString(percent_blend,MagickPathExtent,
       "%g,%g,%g,%g",(double) (100.0*QuantumScale*
-      PixelGetRedQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetGreenQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetBlueQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetAlphaQuantum(blend)));
+      (double) PixelGetRedQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetGreenQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetBlueQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetAlphaQuantum(blend)));
   else
     (void) FormatLocaleString(percent_blend,MagickPathExtent,
       "%g,%g,%g,%g,%g",(double) (100.0*QuantumScale*
-      PixelGetCyanQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetMagentaQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetYellowQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetBlackQuantum(blend)),(double) (100.0*QuantumScale*
-      PixelGetAlphaQuantum(blend)));
+      (double) PixelGetCyanQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetMagentaQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetYellowQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetBlackQuantum(blend)),(double) (100.0*QuantumScale*
+      (double) PixelGetAlphaQuantum(blend)));
   target=PixelGetPixel(tint);
   tint_image=TintImage(wand->images,percent_blend,&target,wand->exception);
   if (tint_image == (Image *) NULL)
@@ -12761,7 +12843,7 @@ WandExport MagickBooleanType MagickTransparentPaintImage(MagickWand *wand,
   PixelGetMagickColor(target,&target_pixel);
   wand->images->fuzz=fuzz;
   status=TransparentPaintImage(wand->images,&target_pixel,ClampToQuantum(
-    QuantumRange*alpha),invert,wand->exception);
+    (double) QuantumRange*alpha),invert,wand->exception);
   return(status);
 }
 
@@ -12969,7 +13051,7 @@ WandExport MagickBooleanType MagickUniqueImageColors(MagickWand *wand)
 %    o gain: the percentage of the difference between the original and the
 %      blur image that is added back into the original.
 %
-%    o threshold: the threshold in pixels needed to apply the diffence gain.
+%    o threshold: the threshold in pixels needed to apply the difference gain.
 %
 */
 WandExport MagickBooleanType MagickUnsharpMaskImage(MagickWand *wand,
@@ -13224,9 +13306,11 @@ WandExport MagickBooleanType MagickWhiteThresholdImage(MagickWand *wand,
   if (wand->images == (Image *) NULL)
     ThrowWandException(WandError,"ContainsNoImages",wand->name);
   (void) FormatLocaleString(thresholds,MagickPathExtent,
-    QuantumFormat "," QuantumFormat "," QuantumFormat "," QuantumFormat,
-    PixelGetRedQuantum(threshold),PixelGetGreenQuantum(threshold),
-    PixelGetBlueQuantum(threshold),PixelGetAlphaQuantum(threshold));
+    "%g" "," "%g" "," "%g" "," "%g",
+    (double) PixelGetRedQuantum(threshold),
+    (double) PixelGetGreenQuantum(threshold),
+    (double) PixelGetBlueQuantum(threshold),
+    (double) PixelGetAlphaQuantum(threshold));
   return(WhiteThresholdImage(wand->images,thresholds,wand->exception));
 }
 

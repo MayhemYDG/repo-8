@@ -35,7 +35,7 @@
 %
 %
 %   20071202 TS * rewrote RLE decoder - old version could cause buffer overflows
-%               * failure of RLE decoding now thows error RLEDecoderError
+%               * failure of RLE decoding now throws error RLEDecoderError
 %               * fixed bug in RLE decoding - now all rows are decoded, not just
 %     the first one
 %   * fixed bug in reader - record offsets now handled correctly
@@ -88,10 +88,12 @@ typedef struct _PDBInfo
     attributes,
     version;
 
-  size_t
+  ssize_t
     create_time,
     modify_time,
-    archive_time,
+    archive_time;
+
+  size_t
     modify_number,
     application_info,
     sort_info;
@@ -913,8 +915,8 @@ static MagickBooleanType WritePDBImage(const ImageInfo *image_info,Image *image,
     for (x=0; x < (ssize_t) pdb_image.width; x++)
     {
       if (x < (ssize_t) image->columns)
-        buffer[literal+repeat]|=(0xff-scanline[x*packet_size]) >>
-          (8-bits_per_pixel) << bits*bits_per_pixel;
+        buffer[literal+repeat]|=(0xff-scanline[x*(ssize_t) packet_size]) >>
+          (8-bits_per_pixel) << bits*(ssize_t) bits_per_pixel;
       bits--;
       if (bits < 0)
         {

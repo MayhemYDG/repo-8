@@ -714,12 +714,12 @@ MagickPrivate void ExpandFilename(char *path)
 %
 %  Meta-characters handled...
 %     @    read a list of filenames (no further expansion performed)
-%     ~    At start of filename expands to HOME environemtn variable
+%     ~    At start of filename expands to HOME environment variable
 %     *    matches any string including an empty string
 %     ?    matches by any single character
 %
 %  WARNING: filenames starting with '.' (hidden files in a UNIX file system)
-%  will never be expanded.  Attempting to epand '.*' will produce no change.
+%  will never be expanded.  Attempting to expand '.*' will produce no change.
 %
 %  Expansion is ignored for coders "label:" "caption:" "pango:" and "vid:".
 %  Which provide their own '@' meta-character handling.
@@ -827,7 +827,9 @@ MagickExport MagickBooleanType ExpandFilenames(int *number_arguments,
       continue;
     if ((IsGlob(filename) == MagickFalse) && (*option != '@'))
       continue;
-    if ((*option != '@') && (IsPathAccessible(option) == MagickFalse))
+    if (IsPathAccessible(option) != MagickFalse)
+      continue;
+    if (*option != '@')
       {
         /*
           Generate file list from wildcard filename (e.g. *.jpg).
@@ -855,7 +857,7 @@ MagickExport MagickBooleanType ExpandFilenames(int *number_arguments,
           Generate file list from file list (e.g. @filelist.txt).
         */
         exception=AcquireExceptionInfo();
-        files=FileToString(option+1,~0UL,exception);
+        files=FileToString(option,~0UL,exception);
         exception=DestroyExceptionInfo(exception);
         if (files == (char *) NULL)
           continue;
@@ -883,8 +885,8 @@ MagickExport MagickBooleanType ExpandFilenames(int *number_arguments,
     /*
       Transfer file list to argument vector.
     */
-    vector=(char **) ResizeQuantumMemory(vector,(size_t) *number_arguments+
-      count+number_files+1,sizeof(*vector));
+    vector=(char **) ResizeQuantumMemory(vector,(size_t) ((ssize_t)
+      *number_arguments+count+(ssize_t) number_files+1),sizeof(*vector));
     if (vector == (char **) NULL)
       {
         for (j=0; j < (ssize_t) number_files; j++)
@@ -1217,7 +1219,7 @@ MagickExport MagickBooleanType GetPathAttributes(const char *path,
 %    o path: Specifies a pointer to a character array that contains the
 %      file path.
 %
-%    o type: Specififies which file path component to return.
+%    o type: Specifies which file path component to return.
 %
 %    o component: the selected file path component is returned here.
 %
@@ -1337,6 +1339,7 @@ MagickExport void GetPathComponent(const char *path,PathType type,
             *p='\0';
           break;
         }
+      magick_fallthrough;
     }
     case HeadPath:
     {
@@ -1422,7 +1425,7 @@ MagickExport void GetPathComponent(const char *path,PathType type,
 %  The format of the GetPathComponents method is:
 %
 %      char **GetPathComponents(const char *path,
-%        size_t *number_componenets)
+%        size_t *number_components)
 %
 %  A description of each parameter follows:
 %
@@ -1743,7 +1746,7 @@ MagickExport void MagickDelay(const MagickSizeType milliseconds)
       timer;
 
     timer.tv_sec=(time_t) (milliseconds/1000);
-    timer.tv_nsec=(milliseconds % 1000)*1000*1000;
+    timer.tv_nsec=(time_t) ((milliseconds % 1000)*1000*1000);
     (void) nanosleep(&timer,(struct timespec *) NULL);
   }
 #elif defined(MAGICKCORE_HAVE_USLEEP)
@@ -1798,7 +1801,7 @@ MagickExport void MagickDelay(const MagickSizeType milliseconds)
 %  MultilineCensus() returns the number of lines within a label.  A line is
 %  represented by a \n character.
 %
-%  The format of the MultilineCenus method is:
+%  The format of the MultilineCensus method is:
 %
 %      size_t MultilineCensus(const char *label)
 %
@@ -1923,7 +1926,7 @@ MagickPrivate MagickBooleanType ShredFile(const char *path)
       if (i != 0)
         SetRandomKey(random_info,quantum,GetStringInfoDatum(key));
       count=write(file,GetStringInfoDatum(key),(size_t)
-        MagickMin((MagickSizeType) quantum,length-j));
+        MagickMin((MagickOffsetType) quantum,(MagickOffsetType) length-j));
       if (count <= 0)
         {
           count=0;

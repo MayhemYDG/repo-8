@@ -31,7 +31,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% General methds for handling the WandCLI structure used for Command Line.
+% General methods for handling the WandCLI structure used for Command Line.
 %
 % Anthony Thyssen, April 2011
 */
@@ -98,11 +98,11 @@ WandExport MagickCLI *AcquireMagickCLI(ImageInfo *image_info,
   cli_wand->quantize_info=AcquireQuantizeInfo(cli_wand->wand.image_info);
   cli_wand->process_flags=MagickCommandOptionFlags;  /* assume "magick" CLI */
   cli_wand->command=(const OptionInfo *) NULL;     /* no option at this time */
-  cli_wand->image_list_stack=(Stack *) NULL;
-  cli_wand->image_info_stack=(Stack *) NULL;
+  cli_wand->image_list_stack=(CLIStack *) NULL;
+  cli_wand->image_info_stack=(CLIStack *) NULL;
 
   /* default exception location...
-     EG: sprintf(locaiton, filename, line, column);
+     EG: sprintf(location, filename, line, column);
   */
   cli_wand->location="from \"%s\"";   /* location format using arguments: */
                                       /*      filename, line, column */
@@ -127,7 +127,7 @@ WandExport MagickCLI *AcquireMagickCLI(ImageInfo *image_info,
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  DestroyMagickCLI() destorys everything in a CLI wand, including image_info
+%  DestroyMagickCLI() destroys everything in a CLI wand, including image_info
 %  and any exceptions, if still present in the wand.
 %
 %  The format of the NewMagickWand method is:
@@ -138,7 +138,7 @@ WandExport MagickCLI *AcquireMagickCLI(ImageInfo *image_info,
 */
 WandExport MagickCLI *DestroyMagickCLI(MagickCLI *cli_wand)
 {
-  Stack
+  CLIStack
     *node;
 
   assert(cli_wand != (MagickCLI *) NULL);
@@ -152,14 +152,14 @@ WandExport MagickCLI *DestroyMagickCLI(MagickCLI *cli_wand)
     cli_wand->draw_info=DestroyDrawInfo(cli_wand->draw_info);
   if (cli_wand->quantize_info != (QuantizeInfo *) NULL )
     cli_wand->quantize_info=DestroyQuantizeInfo(cli_wand->quantize_info);
-  while(cli_wand->image_list_stack != (Stack *) NULL)
+  while(cli_wand->image_list_stack != (CLIStack *) NULL)
     {
       node=cli_wand->image_list_stack;
       cli_wand->image_list_stack=node->next;
       (void) DestroyImageList((Image *)node->data);
       (void) RelinquishMagickMemory(node);
     }
-  while(cli_wand->image_info_stack != (Stack *) NULL)
+  while(cli_wand->image_info_stack != (CLIStack *) NULL)
     {
       node=cli_wand->image_info_stack;
       cli_wand->image_info_stack=node->next;
@@ -192,7 +192,7 @@ WandExport MagickCLI *DestroyMagickCLI(MagickCLI *cli_wand)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  CLICatchException() will report exceptions, either just non-fatal warnings
-%  only, or all errors, according to 'all_execeptions' boolean argument.
+%  only, or all errors, according to 'all_exceptions' boolean argument.
 %
 %  The function returns true if errors are fatal, in which case the caller
 %  should abort and re-call with an 'all_exceptions' argument of true before
@@ -271,9 +271,9 @@ WandExport MagickBooleanType CLILogEvent(MagickCLI *cli_wand,
     return(MagickFalse);
 
   /* HACK - prepend the CLI location to format string.
-     The better way would be add more arguments to to the 'va' oparands
+     The better way would be add more arguments to the 'va' operands
      list, but that does not appear to be possible! So we do some
-     pre-formating of the location info here.
+     pre-formatting of the location info here.
   */
   (void) FormatLocaleString(new_format,MagickPathExtent,cli_wand->location,
        cli_wand->filename, cli_wand->line, cli_wand->column);
@@ -319,9 +319,9 @@ WandExport MagickBooleanType CLIThrowException(MagickCLI *cli_wand,
     operands;
 
   /* HACK - append location to format string.
-     The better way would be add more arguments to to the 'va' oparands
+     The better way would be add more arguments to the 'va' operands
      list, but that does not appear to be possible! So we do some
-     pre-formating of the location info here.
+     pre-formatting of the location info here.
   */
   (void) CopyMagickString(new_format,format,MagickPathExtent);
   (void) ConcatenateMagickString(new_format," ",MagickPathExtent);

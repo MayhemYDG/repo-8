@@ -143,11 +143,16 @@ static Image *ReadHDRImage(const ImageInfo *image_info,ExceptionInfo *exception)
   double
     gamma;
 
+  float
+    chromaticity[6],
+    white_point[2];
+
   Image
     *image;
 
   int
-    c;
+    c,
+    chromaticity_count = 0;
 
   MagickBooleanType
     status,
@@ -311,28 +316,10 @@ static Image *ReadHDRImage(const ImageInfo *image_info,ExceptionInfo *exception)
             {
               if (LocaleCompare(keyword,"primaries") == 0)
                 {
-                  float
-                    chromaticity[6],
-                    white_point[2];
-
-                  int
-                    count;
-
-                  count=sscanf(value,"%g %g %g %g %g %g %g %g",&chromaticity[0],
-                    &chromaticity[1],&chromaticity[2],&chromaticity[3],
-                    &chromaticity[4],&chromaticity[5],&white_point[0],
-                    &white_point[1]);
-                  if (count == 8)
-                    {
-                      image->chromaticity.red_primary.x=chromaticity[0];
-                      image->chromaticity.red_primary.y=chromaticity[1];
-                      image->chromaticity.green_primary.x=chromaticity[2];
-                      image->chromaticity.green_primary.y=chromaticity[3];
-                      image->chromaticity.blue_primary.x=chromaticity[4];
-                      image->chromaticity.blue_primary.y=chromaticity[5];
-                      image->chromaticity.white_point.x=white_point[0],
-                      image->chromaticity.white_point.y=white_point[1];
-                    }
+                  chromaticity_count=sscanf(value,"%g %g %g %g %g %g %g %g",
+                    &chromaticity[0],&chromaticity[1],&chromaticity[2],
+                    &chromaticity[3],&chromaticity[4],&chromaticity[5],
+                    &white_point[0],&white_point[1]);
                   break;
                 }
               (void) FormatLocaleString(tag,MagickPathExtent,"hdr:%s",keyword);
@@ -374,14 +361,25 @@ static Image *ReadHDRImage(const ImageInfo *image_info,ExceptionInfo *exception)
       while (isspace((int) ((unsigned char) c)) != 0)
         c=ReadBlobByte(image);
   }
-  if ((LocaleCompare(format,"32-bit_rle_rgbe") != 0) &&
-      (LocaleCompare(format,"32-bit_rle_xyze") != 0))
-    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
   if ((image->columns == 0) || (image->rows == 0))
     ThrowReaderException(CorruptImageError,"NegativeOrZeroImageSize");
-  (void) SetImageColorspace(image,RGBColorspace,exception);
-  if (LocaleCompare(format,"32-bit_rle_xyze") == 0)
+  if (LocaleCompare(format,"32-bit_rle_rgbe") == 0)
+    (void) SetImageColorspace(image,RGBColorspace,exception);
+  else if (LocaleCompare(format,"32-bit_rle_xyze") == 0)
     (void) SetImageColorspace(image,XYZColorspace,exception);
+  else
+    ThrowReaderException(CorruptImageError,"ImproperImageHeader");
+  if (chromaticity_count == 8)
+    {
+      image->chromaticity.red_primary.x=chromaticity[0];
+      image->chromaticity.red_primary.y=chromaticity[1];
+      image->chromaticity.green_primary.x=chromaticity[2];
+      image->chromaticity.green_primary.y=chromaticity[3];
+      image->chromaticity.blue_primary.x=chromaticity[4];
+      image->chromaticity.blue_primary.y=chromaticity[5];
+      image->chromaticity.white_point.x=white_point[0];
+      image->chromaticity.white_point.y=white_point[1];
+    }
   image->compression=(image->columns < 8) || (image->columns > 0x7ffff) ?
     NoCompression : RLECompression;
   if (image_info->ping != MagickFalse)
@@ -430,7 +428,7 @@ static Image *ReadHDRImage(const ImageInfo *image_info,ExceptionInfo *exception)
             p=pixels;
             for (i=0; i < 4; i++)
             {
-              end=&pixels[(i+1)*image->columns];
+              end=&pixels[(i+1)*(ssize_t) image->columns];
               while (p < end)
               {
                 count=ReadBlob(image,2*sizeof(*pixel),pixel);
@@ -471,9 +469,9 @@ static Image *ReadHDRImage(const ImageInfo *image_info,ExceptionInfo *exception)
       if (image->compression == RLECompression)
         {
           pixel[0]=pixels[x];
-          pixel[1]=pixels[x+image->columns];
-          pixel[2]=pixels[x+2*image->columns];
-          pixel[3]=pixels[x+3*image->columns];
+          pixel[1]=pixels[x+(ssize_t) image->columns];
+          pixel[2]=pixels[x+2*(ssize_t) image->columns];
+          pixel[3]=pixels[x+3*(ssize_t) image->columns];
         }
       else
         {
@@ -488,9 +486,12 @@ static Image *ReadHDRImage(const ImageInfo *image_info,ExceptionInfo *exception)
       if (pixel[3] != 0)
         {
           gamma=pow(2.0,pixel[3]-(128.0+8.0));
-          SetPixelRed(image,ClampToQuantum(QuantumRange*gamma*pixel[0]),q);
-          SetPixelGreen(image,ClampToQuantum(QuantumRange*gamma*pixel[1]),q);
-          SetPixelBlue(image,ClampToQuantum(QuantumRange*gamma*pixel[2]),q);
+          SetPixelRed(image,ClampToQuantum((double) QuantumRange*gamma*
+            (double) pixel[0]),q);
+          SetPixelGreen(image,ClampToQuantum((double) QuantumRange*gamma*
+            (double) pixel[1]),q);
+          SetPixelBlue(image,ClampToQuantum((double) QuantumRange*gamma*
+            (double) pixel[2]),q);
         }
       q+=GetPixelChannels(image);
     }
@@ -579,7 +580,7 @@ ModuleExport void UnregisterHDRImage(void)
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  WriteHDRImage() writes an image in the Radience RGBE image format.
+%  WriteHDRImage() writes an image in the Radiance RGBE image format.
 %
 %  The format of the WriteHDRImage method is:
 %
@@ -644,7 +645,7 @@ static size_t HDRWriteRunlengthPixels(Image *image,unsigned char *pixels)
         break;
       if (WriteBlob(image,(size_t) count*sizeof(*pixel),&pixels[p]) < 1)
         break;
-      p+=count;
+      p+=(size_t) count;
     }
     if (runlength >= MinimumRunlength)
       {
@@ -776,11 +777,11 @@ static MagickBooleanType WriteHDRImage(const ImageInfo *image_info,Image *image,
       pixel[1]=0;
       pixel[2]=0;
       pixel[3]=0;
-      gamma=QuantumScale*GetPixelRed(image,p);
-      if ((QuantumScale*GetPixelGreen(image,p)) > gamma)
-        gamma=QuantumScale*GetPixelGreen(image,p);
-      if ((QuantumScale*GetPixelBlue(image,p)) > gamma)
-        gamma=QuantumScale*GetPixelBlue(image,p);
+      gamma=QuantumScale*(double) GetPixelRed(image,p);
+      if ((QuantumScale*(double) GetPixelGreen(image,p)) > gamma)
+        gamma=QuantumScale*(double) GetPixelGreen(image,p);
+      if ((QuantumScale*(double) GetPixelBlue(image,p)) > gamma)
+        gamma=QuantumScale*(double) GetPixelBlue(image,p);
       if (gamma > MagickEpsilon)
         {
           int
@@ -788,20 +789,22 @@ static MagickBooleanType WriteHDRImage(const ImageInfo *image_info,Image *image,
 
           gamma=frexp(gamma,&exponent)*256.0/gamma;
           if (GetPixelRed(image,p) > 0)
-            pixel[0]=(unsigned char) (gamma*QuantumScale*GetPixelRed(image,p));
+            pixel[0]=(unsigned char) (gamma*QuantumScale*(double)
+              GetPixelRed(image,p));
           if (GetPixelGreen(image,p) > 0)
             pixel[1]=(unsigned char) (gamma*QuantumScale*
-              GetPixelGreen(image,p));
+              (double) GetPixelGreen(image,p));
           if (GetPixelBlue(image,p) > 0)
-            pixel[2]=(unsigned char) (gamma*QuantumScale*GetPixelBlue(image,p));
+            pixel[2]=(unsigned char) (gamma*QuantumScale*(double)
+              GetPixelBlue(image,p));
           pixel[3]=(unsigned char) (exponent+128);
         }
       if ((image->columns >= 8) && (image->columns <= 0x7ffff))
         {
           pixels[x]=pixel[0];
-          pixels[x+image->columns]=pixel[1];
-          pixels[x+2*image->columns]=pixel[2];
-          pixels[x+3*image->columns]=pixel[3];
+          pixels[x+(ssize_t) image->columns]=pixel[1];
+          pixels[x+2*(ssize_t) image->columns]=pixel[2];
+          pixels[x+3*(ssize_t) image->columns]=pixel[3];
         }
       else
         {
@@ -815,7 +818,8 @@ static MagickBooleanType WriteHDRImage(const ImageInfo *image_info,Image *image,
     if ((image->columns >= 8) && (image->columns <= 0x7ffff))
       {
         for (i=0; i < 4; i++)
-          length=HDRWriteRunlengthPixels(image,&pixels[i*image->columns]);
+          length=HDRWriteRunlengthPixels(image,
+            &pixels[i*(ssize_t) image->columns]);
       }
     else
       {

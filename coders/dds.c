@@ -87,6 +87,7 @@
 #define DDPF_RGB          0x00000040
 #define DDPF_LUMINANCE    0x00020000
 
+#define FOURCC_ATI2       0x32495441
 #define FOURCC_DXT1       0x31545844
 #define FOURCC_DXT3       0x33545844
 #define FOURCC_DXT5       0x35545844
@@ -283,6 +284,13 @@ typedef struct _DDSColors
     b[4],
     a[4];
 } DDSColors;
+
+typedef struct _BC5Colors
+{
+  unsigned char
+    r[8],
+    g[8];
+} BC5Colors;
 
 typedef struct _BC7Colors
 {
@@ -1089,10 +1097,10 @@ static const unsigned char BC7_anchor_index_table[4][64] =
 #define FixRange(min, max, steps) \
 if (min > max) \
   min = max; \
-if ((ssize_t) max - min < steps) \
-  max = MagickMin(min + steps, 255); \
-if ((ssize_t) max - min < steps) \
-  min = MagickMax(0, (ssize_t) max - steps)
+if ((max-min) < steps) \
+  max = MagickMin(min+(ssize_t) steps, 255); \
+if ((max- min) < steps) \
+  min = (size_t) MagickMax(0L, (ssize_t) max-(ssize_t) steps)
 
 #define Dot(left, right) (left.x*right.x) + (left.y*right.y) + (left.z*right.z)
 
@@ -1237,7 +1245,7 @@ static inline void VectorTruncate3(DDSVector3 *value)
 static inline size_t ClampToLimit(const float value, const size_t limit)
 {
   size_t
-    result = (int) (value + 0.5f);
+    result = (size_t) (value + 0.5f);
 
   if (result < 0.0f)
     return(0);
@@ -1393,7 +1401,7 @@ static MagickBooleanType SetDXT1Pixels(Image *image,ssize_t x,ssize_t y,
           SetPixelBlue(image,ScaleCharToQuantum(colors.b[code]),q);
           SetPixelOpacity(image,ScaleCharToQuantum(colors.a[code]),q);
           if ((colors.a[code] != 0) &&
-              (image->alpha_trait == UndefinedPixelTrait))
+              ((image->alpha_trait & BlendPixelTrait) == 0))
             return(MagickFalse);
           q+=GetPixelChannels(image);
         }
@@ -1520,8 +1528,9 @@ static MagickBooleanType ReadDXT1Pixels(Image *image,
     for (x = 0; x < (ssize_t) image->columns; x += 4)
     {
       /* Get 4x4 patch of pixels to write on */
-      q=QueueAuthenticPixels(image,x,y,MagickMin(4,image->columns-x),
-        MagickMin(4,image->rows-y),exception);
+      q=QueueAuthenticPixels(image,x,y,(size_t)
+        (MagickMin(4,(ssize_t) image->columns-x)),(size_t)
+        (MagickMin(4,(ssize_t) image->rows-y)),exception);
 
       if (q == (Quantum *) NULL)
         return(MagickFalse);
@@ -1540,8 +1549,9 @@ static MagickBooleanType ReadDXT1Pixels(Image *image,
         {
           /* Correct alpha */
           SetImageAlpha(image,QuantumRange,exception);
-          q=QueueAuthenticPixels(image,x,y,MagickMin(4,image->columns-x),
-            MagickMin(4,image->rows-y),exception);
+          q=QueueAuthenticPixels(image,x,y,(size_t) MagickMin(4,(ssize_t)
+            image->columns-x),(size_t) MagickMin(4,(ssize_t) image->rows-y),
+            exception);
           if (q != (Quantum *) NULL)
             SetDXT1Pixels(image,x,y,colors,bits,q);
         }
@@ -1576,12 +1586,12 @@ static MagickBooleanType SkipDXTMipmaps(Image *image,const DDSInfo *dds_info,
       MagickOffsetType
         offset;
 
-      ssize_t
-        i;
-
       size_t
         h,
         w;
+
+      ssize_t
+        i;
 
       w=DIV2(dds_info->width);
       h=DIV2(dds_info->height);
@@ -1591,7 +1601,8 @@ static MagickBooleanType SkipDXTMipmaps(Image *image,const DDSInfo *dds_info,
       */
       for (i = 1; (i < (ssize_t) dds_info->mipmapcount) && w && h; i++)
       {
-        offset=(MagickOffsetType)((w+3)/4)*((h+3)/4)*texel_size;
+        offset=(MagickOffsetType) (((w+3U)/4U)*((h+3U)/4U)*(size_t)
+          texel_size);
         if (SeekBlob(image,offset,SEEK_CUR) < 0)
           break;
         w=DIV2(w);
@@ -1652,8 +1663,9 @@ static MagickBooleanType ReadDXT3Pixels(Image *image,
     for (x = 0; x < (ssize_t) image->columns; x += 4)
     {
       /* Get 4x4 patch of pixels to write on */
-      q = QueueAuthenticPixels(image, x, y, MagickMin(4, image->columns - x),
-                         MagickMin(4, image->rows - y),exception);
+      q = QueueAuthenticPixels(image, x, y, (size_t)
+        MagickMin(4, (ssize_t) image->columns - x),(size_t)
+        MagickMin(4, (ssize_t) image->rows - y),exception);
 
       if (q == (Quantum *) NULL)
         return(MagickFalse);
@@ -1757,8 +1769,8 @@ static MagickBooleanType ReadDXT5Pixels(Image *image,
     for (x = 0; x < (ssize_t) image->columns; x += 4)
     {
       /* Get 4x4 patch of pixels to write on */
-      q = QueueAuthenticPixels(image, x, y, MagickMin(4, image->columns - x),
-                         MagickMin(4, image->rows - y),exception);
+      q = QueueAuthenticPixels(image, x, y, (size_t) MagickMin(4, (ssize_t) image->columns - x),(size_t)
+       MagickMin(4, (ssize_t) image->rows - y),exception);
 
       if (q == (Quantum *) NULL)
         return(MagickFalse);
@@ -2021,11 +2033,129 @@ static void ReadEndpoints(BC7Colors *endpoints,const unsigned char *block,
     }
 }
 
+static MagickBooleanType ReadBC5Pixels(Image *image,
+  const DDSInfo *magick_unused(dds_info),ExceptionInfo *exception)
+{
+  BC5Colors
+    colors = { { 0 }, { 0 } };
+
+  Quantum
+    *q;
+
+  size_t
+    start_bit_g,
+    start_bit_r;
+
+  ssize_t
+    i,
+    x,
+    y;
+
+  unsigned char
+    block[16],
+    mode;
+
+  magick_unreferenced(dds_info);
+  for (y = 0; y < (ssize_t)image->rows; y += 4)
+  {
+    for (x = 0; x < (ssize_t)image->columns; x += 4)
+    {
+      size_t
+        area;
+
+      ssize_t
+        count;
+
+      /* Get 4x4 patch of pixels to write on */
+      q=QueueAuthenticPixels(image,x,y,(size_t)
+        MagickMin(4,(ssize_t) image->columns-x),(size_t)
+        MagickMin(4,(ssize_t) image->rows-y),exception);
+
+      if (q == (Quantum *)NULL)
+        return(MagickFalse);
+
+      /* Read 16 bytes of data from the image */
+      count=ReadBlob(image,16,block);
+      if ((count != 16) || (EOFBlob(image) != MagickFalse))
+        return(MagickFalse);
+
+      /* Get the mode of the block, 6 colors or 4 colors */
+      colors.r[0]=block[0];
+      colors.r[1]=block[1];
+      colors.g[0]=block[8];
+      colors.g[1]=block[9];
+
+      /* Red palette */
+      mode=4;
+      if (colors.r[0] > colors.r[1])
+        mode=6;
+      for (i = 0; i < mode; i++)
+      {
+        colors.r[i+2]=(unsigned char) (((mode-i)*(float)colors.r[0]+(i+1)*
+          (float)colors.r[1])/((float)(mode+1)));
+      }
+      if (mode == 4)
+        {
+          colors.r[6]=0;
+          colors.r[7]=255;
+        }
+
+      /* Green palette */
+      mode=4;
+      if (colors.g[0] > colors.g[1])
+        mode=6;
+      for (i = 0; i < mode; i++)
+      {
+        colors.g[i+2]=(unsigned char) (((mode-i)*(float)colors.g[0]+(i+1)*
+          (float)colors.g[1])/((float)(mode+1)));
+      }
+      if (mode == 4) {
+        colors.g[6]=0;
+        colors.g[7]=255;
+      }
+
+      /* Write the pixels */
+      area=(size_t) (MagickMin(MagickMin(4,(ssize_t) image->columns-x)*
+        MagickMin(4,(ssize_t) image->rows-y),16));
+      start_bit_r=16;
+      start_bit_g=80;
+      for (i = 0; i < (ssize_t) area; i++)
+      {
+        SetPixelRed(image,ScaleCharToQuantum(colors.r[GetBits(block,
+          &start_bit_r,3)]),q);
+        SetPixelGreen(image,ScaleCharToQuantum(colors.g[GetBits(block,
+          &start_bit_g,3)]),q);
+        SetPixelBlue(image,(Quantum) 0,q);
+
+        q+=GetPixelChannels(image);
+      }
+      if (SyncAuthenticPixels(image, exception) == MagickFalse)
+        return(MagickFalse);
+    }
+    if (EOFBlob(image) != MagickFalse)
+      return(MagickFalse);
+  }
+  return(MagickTrue);
+}
+
+static MagickBooleanType ReadBC5(const ImageInfo *image_info,Image *image,
+  const DDSInfo *dds_info,const MagickBooleanType read_mipmaps,
+  ExceptionInfo *exception)
+{
+  if (ReadBC5Pixels(image,dds_info,exception) == MagickFalse)
+    return(MagickFalse);
+
+  if (read_mipmaps != MagickFalse)
+    return(ReadMipmaps(image_info,image,dds_info,ReadBC5Pixels,exception));
+  else
+    return(SkipDXTMipmaps(image,dds_info,16,exception));
+}
+
 static MagickBooleanType ReadBC7Pixels(Image *image,
   const DDSInfo *magick_unused(dds_info),ExceptionInfo *exception)
 {
   BC7Colors
-    colors = { 0 };
+    colors = { { 0 }, { 0 }, { 0 }, { 0 } };
 
   Quantum
     *q;
@@ -2075,8 +2205,9 @@ static MagickBooleanType ReadBC7Pixels(Image *image,
         area;
 
       /* Get 4x4 patch of pixels to write on */
-      q=QueueAuthenticPixels(image,x,y,MagickMin(4,image->columns-x),
-        MagickMin(4,image->rows-y),exception);
+      q=QueueAuthenticPixels(image,x,y,(size_t)
+        MagickMin(4,(ssize_t) image->columns-x),(size_t)
+        MagickMin(4,(ssize_t) image->rows-y),exception);
 
       if (q == (Quantum *) NULL)
         return(MagickFalse);
@@ -2133,9 +2264,9 @@ static MagickBooleanType ReadBC7Pixels(Image *image,
       /* get color and subset indices */
       for (i=0; i < 16; i++)
       {
-        subset_indices[i]=GetSubsetIndex(num_subsets,partition_id,i);
+        subset_indices[i]=GetSubsetIndex(num_subsets,partition_id,(size_t) i);
         num_bits=index_prec;
-        if (IsPixelAnchorIndex(subset_indices[i],num_subsets,i,partition_id))
+        if (IsPixelAnchorIndex(subset_indices[i],num_subsets,(size_t) i,partition_id))
           num_bits--;
         color_indices[i]=GetBits(block,&start_bit,num_bits);
       }
@@ -2149,8 +2280,8 @@ static MagickBooleanType ReadBC7Pixels(Image *image,
         }
 
       /* Write the pixels */
-      area=MagickMin(MagickMin(4,image->columns-x)*MagickMin(4,image->rows-y),
-        16);
+      area=(size_t) (MagickMin(MagickMin(4,(ssize_t) image->columns-x)*
+        MagickMin(4,(ssize_t) image->rows-y),16));
       for (i=0; i < (ssize_t) area; i++)
       {
         unsigned char
@@ -2332,7 +2463,7 @@ static MagickBooleanType SkipRGBMipmaps(Image *image,const DDSInfo *dds_info,
       */
       for (i=1; (i < (ssize_t) dds_info->mipmapcount) && w && h; i++)
       {
-        offset=(MagickOffsetType)w*h*pixel_size;
+        offset=(MagickOffsetType) (w*h*(size_t) pixel_size);
         if (SeekBlob(image,offset,SEEK_CUR) < 0)
           break;
         w=DIV2(w);
@@ -2385,7 +2516,8 @@ static MagickBooleanType ReadUncompressedRGBAPixels(Image *image,
     {
       if (IsBitMask(dds_info->pixelformat,0x7c00,0x03e0,0x001f,0x8000))
         alphaBits=1;
-      else if (IsBitMask(dds_info->pixelformat,0x00ff,0x00ff,0x00ff,0xff00))
+      else if ((IsBitMask(dds_info->pixelformat,0x00ff,0x00ff,0x00ff,0xff00)) ||
+               (IsBitMask(dds_info->pixelformat,0x00ff,0x0000,0x0000,0xff00)))
         {
           alphaBits=2;
           (void) SetImageType(image,GrayscaleAlphaType,exception);
@@ -2440,6 +2572,20 @@ static MagickBooleanType ReadUncompressedRGBAPixels(Image *image,
                SetPixelBlue(image,ScaleCharToQuantum((unsigned char)
                  ((((unsigned short)(color << 12) >> 12)/15.0)*255)),q);
             }
+        }
+      else if (dds_info->extFormat == DXGI_FORMAT_R10G10B10A2_UNORM)
+        {
+          const unsigned int
+            pixel=ReadBlobLSBLong(image);
+
+          SetPixelRed(image,ScaleShortToQuantum((unsigned short)
+            ((pixel & 0x3ff)/1023.0)*65535),q);
+          SetPixelBlue(image,ScaleShortToQuantum((unsigned short)
+            (((pixel >> 10) & 0x3ff)/1023.0)*65535),q);
+          SetPixelGreen(image,ScaleShortToQuantum((unsigned short)
+            (((pixel >> 20) & 0x3ff)/1023.0)*65535),q);
+          SetPixelAlpha(image,ScaleShortToQuantum((unsigned short)
+            (((pixel >> 30) & 3)/3.0)*65535),q);
         }
       else if (dds_info->extFormat == DXGI_FORMAT_R8G8B8A8_UNORM ||
           IsBitMask(dds_info->pixelformat,0x000000ff,0x0000ff00,0x00ff0000,0xff000000))
@@ -2568,120 +2714,134 @@ static Image *ReadDDSImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Initialize image structure.
   */
-  if (ReadDDSInfo(image, &dds_info) != MagickTrue)
+  if (ReadDDSInfo(image,&dds_info) != MagickTrue)
     ThrowReaderException(CorruptImageError,"ImproperImageHeader");
 
   if (dds_info.ddscaps2 & DDSCAPS2_CUBEMAP)
-    cubemap = MagickTrue;
+    cubemap=MagickTrue;
 
   if (dds_info.ddscaps2 & DDSCAPS2_VOLUME && dds_info.depth > 0)
-    volume = MagickTrue;
+    volume=MagickTrue;
 
   /*
     Determine pixel format
   */
   if (dds_info.pixelformat.flags & DDPF_RGB)
     {
-      compression = NoCompression;
+      compression=NoCompression;
       if (dds_info.pixelformat.flags & DDPF_ALPHAPIXELS)
         {
-          alpha_trait = BlendPixelTrait;
-          decoder = ReadUncompressedRGBA;
+          alpha_trait=BlendPixelTrait;
+          decoder=ReadUncompressedRGBA;
         }
       else
         {
-          alpha_trait = UndefinedPixelTrait;
-          decoder = ReadUncompressedRGB;
+          alpha_trait=UndefinedPixelTrait;
+          decoder=ReadUncompressedRGB;
         }
     }
   else if (dds_info.pixelformat.flags & DDPF_LUMINANCE)
    {
-      compression = NoCompression;
+      compression=NoCompression;
       if (dds_info.pixelformat.flags & DDPF_ALPHAPIXELS)
         {
-          /* Not sure how to handle this */
-          ThrowReaderException(CorruptImageError, "ImageTypeNotSupported");
+          alpha_trait=BlendPixelTrait;
+          decoder=ReadUncompressedRGBA;
         }
       else
         {
-          alpha_trait = UndefinedPixelTrait;
-          decoder = ReadUncompressedRGB;
+          alpha_trait=UndefinedPixelTrait;
+          decoder=ReadUncompressedRGB;
         }
     }
   else if (dds_info.pixelformat.flags & DDPF_FOURCC)
     {
       switch (dds_info.pixelformat.fourcc)
       {
+        case FOURCC_ATI2:
+        {
+          alpha_trait=UndefinedPixelTrait;
+          compression=BC5Compression;
+          decoder=ReadBC5;
+          break;
+        }
         case FOURCC_DXT1:
         {
-          alpha_trait = UndefinedPixelTrait;
-          compression = DXT1Compression;
-          decoder = ReadDXT1;
+          alpha_trait=UndefinedPixelTrait;
+          compression=DXT1Compression;
+          decoder=ReadDXT1;
           break;
         }
         case FOURCC_DXT3:
         {
-          alpha_trait = BlendPixelTrait;
-          compression = DXT3Compression;
-          decoder = ReadDXT3;
+          alpha_trait=BlendPixelTrait;
+          compression=DXT3Compression;
+          decoder=ReadDXT3;
           break;
         }
         case FOURCC_DXT5:
         {
-          alpha_trait = BlendPixelTrait;
-          compression = DXT5Compression;
-          decoder = ReadDXT5;
+          alpha_trait=BlendPixelTrait;
+          compression=DXT5Compression;
+          decoder=ReadDXT5;
           break;
         }
         case FOURCC_DX10:
         {
           if (dds_info.extDimension != DDSEXT_DIMENSION_TEX2D)
             {
-              ThrowReaderException(CorruptImageError, "ImageTypeNotSupported");
+              ThrowReaderException(CorruptImageError,"ImageTypeNotSupported");
             }
 
           switch (dds_info.extFormat)
           {
             case DXGI_FORMAT_R8_UNORM:
             {
-              compression = NoCompression;
-              alpha_trait = UndefinedPixelTrait;
-              decoder = ReadUncompressedRGB;
+              alpha_trait=UndefinedPixelTrait;
+              compression=NoCompression;
+              decoder=ReadUncompressedRGB;
               break;
             }
             case DXGI_FORMAT_B5G6R5_UNORM:
             {
-              compression = NoCompression;
-              alpha_trait = UndefinedPixelTrait;
-              decoder = ReadUncompressedRGB;
+              alpha_trait=UndefinedPixelTrait;
+              compression=NoCompression;
+              decoder=ReadUncompressedRGB;
               break;
             }
             case DXGI_FORMAT_B5G5R5A1_UNORM:
             {
-              compression = NoCompression;
-              alpha_trait = BlendPixelTrait;
-              decoder = ReadUncompressedRGBA;
+              alpha_trait=BlendPixelTrait;
+              compression=NoCompression;
+              decoder=ReadUncompressedRGBA;
               break;
             }
             case DXGI_FORMAT_B8G8R8A8_UNORM:
             {
-              compression = NoCompression;
-              alpha_trait = BlendPixelTrait;
-              decoder = ReadUncompressedRGBA;
+              alpha_trait=BlendPixelTrait;
+              compression=NoCompression;
+              decoder=ReadUncompressedRGBA;
               break;
             }
             case DXGI_FORMAT_R8G8B8A8_UNORM:
             {
-              compression = NoCompression;
-              alpha_trait = BlendPixelTrait;
-              decoder = ReadUncompressedRGBA;
+              alpha_trait=BlendPixelTrait;
+              compression=NoCompression;
+              decoder=ReadUncompressedRGBA;
+              break;
+            }
+            case DXGI_FORMAT_R10G10B10A2_UNORM:
+            {
+              compression=NoCompression;
+              alpha_trait=BlendPixelTrait;
+              decoder=ReadUncompressedRGBA;
               break;
             }
             case DXGI_FORMAT_B8G8R8X8_UNORM:
             {
-              compression = NoCompression;
-              alpha_trait = UndefinedPixelTrait;
-              decoder = ReadUncompressedRGB;
+              alpha_trait=UndefinedPixelTrait;
+              compression=NoCompression;
+              decoder=ReadUncompressedRGB;
               break;
             }
             case DXGI_FORMAT_BC1_UNORM:
@@ -2693,9 +2853,9 @@ static Image *ReadDDSImage(const ImageInfo *image_info,ExceptionInfo *exception)
             }
             case DXGI_FORMAT_BC2_UNORM:
             {
-              alpha_trait = BlendPixelTrait;
-              compression = DXT3Compression;
-              decoder = ReadDXT3;
+              alpha_trait=BlendPixelTrait;
+              compression=DXT3Compression;
+              decoder=ReadDXT3;
               break;
             }
             case DXGI_FORMAT_BC3_UNORM:
@@ -2705,38 +2865,45 @@ static Image *ReadDDSImage(const ImageInfo *image_info,ExceptionInfo *exception)
               decoder = ReadDXT5;
               break;
             }
+            case DXGI_FORMAT_BC5_UNORM:
+            {
+              alpha_trait=UndefinedPixelTrait;
+              compression=BC5Compression;
+              decoder=ReadBC5;
+              break;
+            }
             case DXGI_FORMAT_BC7_UNORM:
             case DXGI_FORMAT_BC7_UNORM_SRGB:
             {
-              alpha_trait = BlendPixelTrait;
-              compression = BC7Compression;
-              decoder = ReadBC7;
+              alpha_trait=BlendPixelTrait;
+              compression=BC7Compression;
+              decoder=ReadBC7;
               break;
             }
             default:
             {
               /* Unknown format */
-              ThrowReaderException(CorruptImageError, "ImageTypeNotSupported");
+              ThrowReaderException(CorruptImageError,"ImageTypeNotSupported");
             }
           }
 
           if (dds_info.extFlags & DDSEXTFLAGS_CUBEMAP)
-            cubemap = MagickTrue;
+            cubemap=MagickTrue;
 
-          num_images = dds_info.extArraySize;
+          num_images=dds_info.extArraySize;
           break;
         }
         default:
         {
           /* Unknown FOURCC */
-          ThrowReaderException(CorruptImageError, "ImageTypeNotSupported");
+          ThrowReaderException(CorruptImageError,"ImageTypeNotSupported");
         }
       }
     }
   else
     {
       /* Neither compressed nor uncompressed... thus unsupported */
-      ThrowReaderException(CorruptImageError, "ImageTypeNotSupported");
+      ThrowReaderException(CorruptImageError,"ImageTypeNotSupported");
     }
   
   num_images = 1;
@@ -2930,9 +3097,6 @@ static size_t CompressAlpha(const size_t min, const size_t max,
   unsigned char
     codes[8];
 
-  ssize_t
-    i;
-
   size_t
     error,
     index,
@@ -2940,13 +3104,17 @@ static size_t CompressAlpha(const size_t min, const size_t max,
     least,
     value;
 
+  ssize_t
+    i;
+
   codes[0] = (unsigned char) min;
   codes[1] = (unsigned char) max;
   codes[6] = 0;
   codes[7] = 255;
 
   for (i=1; i <  (ssize_t) steps; i++)
-    codes[i+1] = (unsigned char) (((steps-i)*min + i*max) / steps);
+    codes[i+1] = (unsigned char) ((((ssize_t) steps-i)*(ssize_t) min +
+      i*(ssize_t) max) / (ssize_t) steps);
 
   error = 0;
   for (i=0; i<16; i++)
@@ -2957,7 +3125,7 @@ static size_t CompressAlpha(const size_t min, const size_t max,
         continue;
       }
 
-    value = alphas[i];
+    value = (size_t) alphas[i];
     least = SIZE_MAX;
     index = 0;
     for (j=0; j<8; j++)
@@ -2991,9 +3159,7 @@ static MagickBooleanType ConstructOrdering(const size_t count,
      f;
 
   ssize_t
-    i;
-
-  size_t
+    i,
     j;
 
   unsigned char
@@ -3031,7 +3197,7 @@ static MagickBooleanType ConstructOrdering(const size_t count,
     p = order + (16*i);
     same = MagickTrue;
 
-    for (j=0; j < count; j++)
+    for (j=0; j < (ssize_t) count; j++)
     {
       if (o[j] != p[j])
         {
@@ -3054,7 +3220,7 @@ static MagickBooleanType ConstructOrdering(const size_t count,
     DDSVector4
       v;
 
-    j = (size_t) o[i];
+    j = (ssize_t) o[i];
 
     v.x = points[j].w * points[j].x;
     v.y = points[j].w * points[j].y;
@@ -3092,12 +3258,12 @@ static void CompressClusterFit(const size_t count,
 
   size_t
     bestIteration = 0,
-    besti = 0,
-    bestj = 0,
-    bestk = 0,
     iterationIndex;
 
   ssize_t
+    besti = 0,
+    bestj = 0,
+    bestk = 0,
     i;
 
   unsigned char
@@ -3144,18 +3310,18 @@ static void CompressClusterFit(const size_t count,
         part1,
         part2;
 
-      size_t
+      ssize_t
         ii,
         j,
         k,
         kmin;
 
       VectorInit(part0,0.0f);
-      for(ii=0; ii < (size_t) i; ii++)
+      for (ii=0; ii < i; ii++)
         VectorAdd(pointsWeights[ii],part0,&part0);
 
       VectorInit(part1,0.0f);
-      for (j=(size_t) i;;)
+      for (j=i; ; )
       {
         if (j == 0)
           {
@@ -3258,14 +3424,14 @@ static void CompressClusterFit(const size_t count,
               }
             }
 
-          if (k == count)
+          if (k == (ssize_t) count)
             break;
 
           VectorAdd(pointsWeights[k],part2,&part2);
           k++;
         }
 
-        if (j == count)
+        if (j == (ssize_t) count)
           break;
 
         VectorAdd(pointsWeights[j],part1,&part1);
@@ -3567,12 +3733,12 @@ static void ComputeWeightedCovariance(const size_t count,
 static void WriteAlphas(Image *image, const ssize_t *alphas, size_t min5,
   size_t max5, size_t min7, size_t max7)
 {
-  ssize_t
-    i;
-
   size_t
     err5,
-    err7,
+    err7;
+
+  ssize_t
+    i,
     j;
 
   unsigned char
@@ -3738,13 +3904,11 @@ static void WriteFourCC(Image *image, const size_t compression,
   ExceptionInfo *exception)
 {
   ssize_t
-    x;
-
-  ssize_t
+    bx,
+    by,
     i,
     y,
-    bx,
-    by;
+    x;
 
   const Quantum
     *p;
@@ -3758,7 +3922,7 @@ static void WriteFourCC(Image *image, const size_t compression,
 
       DDSVector4
         point,
-        points[16] = { 0 };
+        points[16] = { { 0, 0, 0, 0 } };
 
       size_t
         count = 0,
@@ -3776,11 +3940,11 @@ static void WriteFourCC(Image *image, const size_t compression,
       unsigned char
         alpha;
 
-      if (x + columns >= image->columns)
-        columns = image->columns - x;
+      if ((size_t) (x+(ssize_t) columns) >= image->columns)
+        columns = (size_t) ((ssize_t) image->columns-x);
 
-      if (y + rows >= image->rows)
-        rows = image->rows - y;
+      if ((size_t) (y+(ssize_t) rows) >= image->rows)
+        rows = (size_t) ((ssize_t) image->rows-y);
 
       p=GetVirtualPixels(image,x,y,columns,rows,exception);
       if (p == (const Quantum *) NULL)
@@ -3813,7 +3977,7 @@ static void WriteFourCC(Image *image, const size_t compression,
                 max5 = alpha;
             }
           
-          alphas[4*by + bx] = (size_t)alpha;
+          alphas[4*by + bx] = (ssize_t)alpha;
 
           point.x = (float)ScaleQuantumToChar(GetPixelRed(image,p)) / 255.0f;
           point.y = (float)ScaleQuantumToChar(GetPixelGreen(image,p)) / 255.0f;
@@ -3843,7 +4007,7 @@ static void WriteFourCC(Image *image, const size_t compression,
           points[count].y = point.y;
           points[count].z = point.z;
           points[count].w = point.w;
-          map[4*by + bx] = count;
+          map[4*by + bx] = (ssize_t) count;
           count++;
         }
       }
@@ -4113,7 +4277,7 @@ static MagickBooleanType WriteDDSImage(const ImageInfo *image_info,
     (void) TransformImageColorspace(image,sRGBColorspace,exception);
   pixelFormat=DDPF_FOURCC;
   compression=FOURCC_DXT5;
-  if (image->alpha_trait == UndefinedPixelTrait)
+  if ((image->alpha_trait & BlendPixelTrait) == 0)
     compression=FOURCC_DXT1;
   if (LocaleCompare(image_info->magick,"dxt1") == 0)
     compression=FOURCC_DXT1;

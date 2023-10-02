@@ -17,7 +17,7 @@
 %                                March 2000                                   %
 %                                                                             %
 %                                                                             %
-%  Copyright @ 2000 ImageMagick Studio LLC, a non-profit organization         %
+%  Copyright @ 1999 ImageMagick Studio LLC, a non-profit organization         %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -34,7 +34,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  Use the mogrify program to resize an image, blur, crop, despeckle, dither,
-%  draw on, flip, join, re-sample, and much more. This tool is similiar to
+%  draw on, flip, join, re-sample, and much more. This tool is similar to
 %  convert except that the original image file is overwritten (unless you
 %  change the file suffix with the -format option) with any changes you
 %  request.
@@ -56,6 +56,7 @@
 #include "MagickCore/blob-private.h"
 #include "MagickCore/color-private.h"
 #include "MagickCore/composite-private.h"
+#include "MagickCore/geometry-private.h"
 #include "MagickCore/image-private.h"
 #include "MagickCore/monitor-private.h"
 #include "MagickCore/string-private.h"
@@ -75,236 +76,6 @@ static const char
   Define declarations.
 */
 #define UndefinedCompressionQuality  0UL
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%     M a g i c k C o m m a n d G e n e s i s                                 %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  MagickCommandGenesis() applies image processing options to an image as
-%  prescribed by command line options.
-%
-%  It wiil look for special options like "-debug", "-bench", and
-%  "-distribute-cache" that needs to be applied even before the main
-%  processing begins, and may completely overrule normal command processing.
-%  Such 'Genesis' Options can only be given on the CLI, (not in a script)
-%  and are typically ignored (as they have been handled) if seen later.
-%
-%  The format of the MagickCommandGenesis method is:
-%
-%      MagickBooleanType MagickCommandGenesis(ImageInfo *image_info,
-%        MagickCommand command,int argc,char **argv,char **metadata,
-%        ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o command: Choose from ConvertImageCommand, IdentifyImageCommand,
-%      MogrifyImageCommand, CompositeImageCommand, CompareImagesCommand,
-%      ConjureImageCommand, StreamImageCommand, ImportImageCommand,
-%      DisplayImageCommand, or AnimateImageCommand.
-%
-%    o argc: Specifies a pointer to an integer describing the number of
-%      elements in the argument vector.
-%
-%    o argv: Specifies a pointer to a text array containing the command line
-%      arguments.
-%
-%    o metadata: any metadata is returned here.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-WandExport MagickBooleanType MagickCommandGenesis(ImageInfo *image_info,
-  MagickCommand command,int argc,char **argv,char **metadata,
-  ExceptionInfo *exception)
-{
-  char
-    client_name[MagickPathExtent],
-    *option;
-
-  double
-    duration,
-    serial;
-
-  MagickBooleanType
-    concurrent,
-    regard_warnings,
-    status;
-
-  ssize_t
-    i;
-
-  size_t
-    iterations,
-    number_threads;
-
-  ssize_t
-    n;
-
-  (void) setlocale(LC_ALL,"");
-  (void) setlocale(LC_NUMERIC,"C");
-  GetPathComponent(argv[0],TailPath,client_name);
-  (void) SetClientName(client_name);
-  concurrent=MagickFalse;
-  duration=(-1.0);
-  iterations=1;
-  status=MagickTrue;
-  regard_warnings=MagickFalse;
-  for (i=1; i < (ssize_t) (argc-1); i++)
-  {
-    option=argv[i];
-    if ((strlen(option) == 1) || ((*option != '-') && (*option != '+')))
-      continue;
-    if (LocaleCompare("-bench",option) == 0)
-      iterations=StringToUnsignedLong(argv[++i]);
-    if (LocaleCompare("-concurrent",option) == 0)
-      concurrent=MagickTrue;
-    if (LocaleCompare("-debug",option) == 0)
-      (void) SetLogEventMask(argv[++i]);
-    if (LocaleCompare("-distribute-cache",option) == 0)
-      {
-        DistributePixelCacheServer(StringToInteger(argv[++i]),exception);
-        exit(0);
-      }
-    if (LocaleCompare("-duration",option) == 0)
-      duration=StringToDouble(argv[++i],(char **) NULL);
-    if (LocaleCompare("-regard-warnings",option) == 0)
-      regard_warnings=MagickTrue;
-  }
-  if (iterations == 1)
-    {
-      char
-        *text;
-
-      text=(char *) NULL;
-      status=command(image_info,argc,argv,&text,exception);
-      if (exception->severity != UndefinedException)
-        {
-          if ((exception->severity > ErrorException) ||
-              (regard_warnings != MagickFalse))
-            status=MagickFalse;
-          CatchException(exception);
-        }
-      if (text != (char *) NULL)
-        {
-          if (metadata != (char **) NULL)
-            (void) ConcatenateString(&(*metadata),text);
-          text=DestroyString(text);
-        }
-      return(status);
-    }
-  number_threads=GetOpenMPMaximumThreads();
-  serial=0.0;
-  for (n=1; n <= (ssize_t) number_threads; n++)
-  {
-    double
-      e,
-      parallel,
-      user_time;
-
-    TimerInfo
-      *timer;
-
-    (void) SetMagickResourceLimit(ThreadResource,(MagickSizeType) n);
-    timer=AcquireTimerInfo();
-    if (concurrent == MagickFalse)
-      {
-        for (i=0; i < (ssize_t) iterations; i++)
-        {
-          char
-            *text;
-
-          text=(char *) NULL;
-          if (status == MagickFalse)
-            continue;
-          if (duration > 0)
-            {
-              if (GetElapsedTime(timer) > duration)
-                continue;
-              (void) ContinueTimer(timer);
-            }
-          status=command(image_info,argc,argv,&text,exception);
-          if (exception->severity != UndefinedException)
-            {
-              if ((exception->severity > ErrorException) ||
-                  (regard_warnings != MagickFalse))
-                status=MagickFalse;
-              CatchException(exception);
-            }
-          if (text != (char *) NULL)
-            {
-              if (metadata != (char **) NULL)
-                (void) ConcatenateString(&(*metadata),text);
-              text=DestroyString(text);
-            }
-          }
-      }
-    else
-      {
-        SetOpenMPNested(1);
-#if defined(MAGICKCORE_OPENMP_SUPPORT)
-        # pragma omp parallel for shared(status)
-#endif
-        for (i=0; i < (ssize_t) iterations; i++)
-        {
-          char
-            *text;
-
-          text=(char *) NULL;
-          if (status == MagickFalse)
-            continue;
-          if (duration > 0)
-            {
-              if (GetElapsedTime(timer) > duration)
-                continue;
-              (void) ContinueTimer(timer);
-            }
-          status=command(image_info,argc,argv,&text,exception);
-#if defined(MAGICKCORE_OPENMP_SUPPORT)
-          # pragma omp critical (MagickCore_MagickCommandGenesis)
-#endif
-          {
-            if (exception->severity != UndefinedException)
-              {
-                if ((exception->severity > ErrorException) ||
-                    (regard_warnings != MagickFalse))
-                  status=MagickFalse;
-                CatchException(exception);
-              }
-            if (text != (char *) NULL)
-              {
-                if (metadata != (char **) NULL)
-                  (void) ConcatenateString(&(*metadata),text);
-                text=DestroyString(text);
-              }
-          }
-        }
-      }
-    user_time=GetUserTime(timer);
-    parallel=GetElapsedTime(timer);
-    e=1.0;
-    if (n == 1)
-      serial=parallel;
-    else
-      e=((1.0/(1.0/((serial/(serial+parallel))+(1.0-(serial/(serial+parallel)))/
-        (double) n)))-(1.0/(double) n))/(1.0-1.0/(double) n);
-    (void) FormatLocaleFile(stderr,
-      "  Performance[%.20g]: %.20gi %0.3fips %0.6fe %0.6fu %lu:%02lu.%03lu\n",
-      (double) n,(double) iterations,(double) iterations/parallel,e,user_time,
-      (unsigned long) (parallel/60.0),(unsigned long) floor(fmod(parallel,
-      60.0)),(unsigned long) (1000.0*(parallel-floor(parallel))+0.5));
-    timer=DestroyTimerInfo(timer);
-  }
-  return(status);
-}
 
 /*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -428,7 +199,8 @@ static MagickBooleanType MonitorProgress(const char *text,
     return(MagickTrue);
   if ((offset != (MagickOffsetType) (extent-1)) && ((offset % 50) != 0))
     return(MagickTrue);
-  (void) CopyMagickString(tag,text,MagickPathExtent);
+  (void) CopyMagickString(tag,text == (const char *) NULL ? "null" : text,
+     MagickPathExtent);
   p=strrchr(tag,'/');
   if (p != (char *) NULL)
     *p='\0';
@@ -439,11 +211,11 @@ static MagickBooleanType MonitorProgress(const char *text,
   if (p == (char *) NULL)
     (void) FormatLocaleFile(stderr,"%s: %ld of %lu, %02ld%% complete\r",
       locale_message,(long) offset,(unsigned long) extent,(long)
-      (100L*offset/(extent-1)));
+      (100.0*offset*PerceptibleReciprocal(extent-1.0)));
   else
     (void) FormatLocaleFile(stderr,"%s[%s]: %ld of %lu, %02ld%% complete\r",
       locale_message,p+1,(long) offset,(unsigned long) extent,(long)
-      (100L*offset/(extent-1)));
+      (100.0*offset*PerceptibleReciprocal(extent-1.0)));
   if (offset == (MagickOffsetType) (extent-1))
     (void) FormatLocaleFile(stderr,"\n");
   (void) fflush(stderr);
@@ -466,11 +238,11 @@ static Image *SparseColorOption(const Image *image,
   Image
     *sparse_image;
 
-  PixelInfo
-    color;
-
   MagickBooleanType
     error;
+
+  PixelInfo
+    color;
 
   size_t
     x;
@@ -482,7 +254,7 @@ static Image *SparseColorOption(const Image *image,
   /*
     SparseColorOption() parses the complex -sparse-color argument into an an
     array of floating point values then calls SparseColorImage().  Argument is
-    a complex mix of floating-point pixel coodinates, and color specifications
+    a complex mix of floating-point pixel coordinates, and color specifications
     (or direct floating point numbers).  The number of floats needed to
     represent a color varies depending on the current channel setting.
   */
@@ -1403,7 +1175,7 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             */
             (void) SyncImageSettings(mogrify_info,*image,exception);
             if (*option == '+')
-              threshold=40.0*QuantumRange/100.0;
+              threshold=40.0*(double) QuantumRange/100.0;
             else
               threshold=StringToDoubleInterval(argv[i+1],(double) QuantumRange+
                 1.0);
@@ -1631,6 +1403,7 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
                   draw_info->family=DestroyString(draw_info->family);
                 break;
               }
+            (void) SetImageOption(image_info,option+1,argv[i+1]);
             (void) CloneString(&draw_info->family,argv[i+1]);
             break;
           }
@@ -1804,13 +1577,6 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             parameters=(double *) RelinquishMagickMemory(parameters);
             break;
           }
-        if (LocaleCompare("fx",option+1) == 0)
-          {
-            (void) SyncImageSettings(mogrify_info,*image,exception);
-            (void) ParseGeometry(argv[i+1],&geometry_info);
-            mogrify_image=FxImage(*image,argv[i+1],exception);
-            break;
-          }
         break;
       }
       case 'g':
@@ -1924,8 +1690,7 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
                   exception);
                 break;
               }
-            text=InterpretImageProperties(mogrify_info,*image,format,
-              exception);
+            text=InterpretImageProperties(mogrify_info,*image,format,exception);
             if (text == (char *) NULL)
               break;
             (void) fputs(text,stdout);
@@ -2069,8 +1834,8 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
               gamma=geometry_info.xi;
             if ((flags & PercentValue) != 0)
               {
-                black_point*=(double) (QuantumRange/100.0);
-                white_point*=(double) (QuantumRange/100.0);
+                black_point*=(double) QuantumRange/100.0;
+                white_point*=(double) QuantumRange/100.0;
               }
             if ((flags & SigmaValue) == 0)
               white_point=(double) QuantumRange-black_point;
@@ -2247,7 +2012,7 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             if ((flags & SigmaValue) == 0)
               geometry_info.sigma=geometry_info.rho;
             if ((flags & XiValue) == 0)
-              geometry_info.xi=0.10*QuantumRange;
+              geometry_info.xi=0.10*(double) QuantumRange;
             if ((flags & PercentValue) != 0)
               geometry_info.xi=(double) QuantumRange*geometry_info.xi/100.0;
             mogrify_image=MeanShiftImage(*image,(size_t) geometry_info.rho,
@@ -2651,8 +2416,8 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
               max_threshold=min_threshold;
             if (strchr(argv[i+1],'%') != (char *) NULL)
               {
-                max_threshold*=(double) (0.01*QuantumRange);
-                min_threshold*=(double) (0.01*QuantumRange);
+                max_threshold*=0.01*(double) QuantumRange;
+                min_threshold*=0.01*(double) QuantumRange;
               }
             (void) RandomThresholdImage(*image,min_threshold,max_threshold,
               exception);
@@ -2673,10 +2438,10 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
               geometry_info.psi=geometry_info.xi;
             if (strchr(argv[i+1],'%') != (char *) NULL)
               {
-                geometry_info.rho*=(double) (0.01*QuantumRange);
-                geometry_info.sigma*=(double) (0.01*QuantumRange);
-                geometry_info.xi*=(double) (0.01*QuantumRange);
-                geometry_info.psi*=(double) (0.01*QuantumRange);
+                geometry_info.rho*=0.01*(double) QuantumRange;
+                geometry_info.sigma*=0.01*(double) QuantumRange;
+                geometry_info.xi*=0.01*(double) QuantumRange;
+                geometry_info.psi*=0.01*(double) QuantumRange;
               }
             (void) RangeThresholdImage(*image,geometry_info.rho,
               geometry_info.sigma,geometry_info.xi,geometry_info.psi,exception);
@@ -2769,6 +2534,17 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
               geometry_info.sigma=geometry_info.rho;
             mogrify_image=ResampleImage(*image,geometry_info.rho,
               geometry_info.sigma,(*image)->filter,exception);
+            break;
+          }
+        if (LocaleCompare("reshape",option+1) == 0)
+          {
+            /*
+              Reshape image.
+            */
+            (void) SyncImageSettings(mogrify_info,*image,exception);
+            (void) ParseRegionGeometry(*image,argv[i+1],&geometry,exception);
+            (void) ReshapePixelCache(*image,geometry.width,geometry.height,
+              exception);
             break;
           }
         if (LocaleCompare("resize",option+1) == 0)
@@ -2936,7 +2712,24 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
                   (void) SetImageArtifact(*image,argv[i+1]+7,value);
                 }
               else
-                (void) SetImageProperty(*image,argv[i+1],value,exception);
+                if (LocaleCompare(argv[i+1],"profile") == 0)
+                  {
+                    StringInfo
+                      *profile = (StringInfo *) NULL;
+
+                    (void) CopyMagickString(image_info->filename,value,MagickPathExtent);
+                    (void) SetImageInfo(image_info,1,exception);
+                    if (LocaleCompare(image_info->filename,"-") != 0)
+                      profile=FileToStringInfo(image_info->filename,~0UL,exception);
+                    if (profile != (StringInfo *) NULL)
+                      {
+                        status=SetImageProfile(*image,image_info->magick,profile,
+                          exception);
+                        profile=DestroyStringInfo(profile);
+                      }
+                  }
+                else
+                  (void) SetImageProperty(*image,argv[i+1],value,exception);
             value=DestroyString(value);
             break;
           }
@@ -3433,8 +3226,9 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
             flags=ParseGeometry(argv[i+1],&geometry_info);
             if ((flags & PercentValue) != 0)
               {
-                geometry_info.rho=QuantumRange*geometry_info.rho/100.0;
-                geometry_info.sigma=QuantumRange*geometry_info.sigma/100.0;
+                geometry_info.rho=(double) QuantumRange*geometry_info.rho/100.0;
+                geometry_info.sigma=(double) QuantumRange*geometry_info.sigma/
+                  100.0;
               }
             if ((flags & SigmaValue) == 0)
               geometry_info.sigma=0.0;
@@ -3495,6 +3289,11 @@ WandExport MagickBooleanType MogrifyImage(ImageInfo *image_info,const int argc,
               break;
             (void) SetImageMask(*image,WritePixelMask,mask,exception);
             mask=DestroyImage(mask);
+            break;
+          }
+        if (LocaleCompare("word-break",option+1) == 0)
+          {
+            (void) SetImageOption(image_info,option+1,argv[i+1]);
             break;
           }
         break;
@@ -3701,6 +3500,7 @@ static MagickBooleanType MogrifyUsage(void)
       "  -render              render vector graphics\n"
       "  -repage geometry     size and location of an image canvas\n"
       "  -resample geometry   change the resolution of an image\n"
+      "  -reshape geometry    reshape the image\n"
       "  -resize geometry     resize the image\n"
       "  -roll geometry       roll an image vertically or horizontally\n"
       "  -rotate degrees      apply Paeth rotation to the image\n"
@@ -3873,6 +3673,7 @@ static MagickBooleanType MogrifyUsage(void)
       "                       virtual pixel access method\n"
       "  -weight type         render text with this font weight\n"
       "  -white-point point   chromaticity white point\n"
+      "  -word-break type     sets whether line breaks appear wherever the text would otherwise overflow"
       "  -write-mask filename associate a write mask with the image",
     stack_operators[] =
       "  -delete indexes      delete the image from the image sequence\n"
@@ -3885,27 +3686,27 @@ static MagickBooleanType MogrifyUsage(void)
   ListMagickVersion(stdout);
   (void) printf("Usage: %s [options ...] file [ [options ...] file ...]\n",
     GetClientName());
-  (void) printf("\nImage Settings:\n");
-  (void) puts(settings);
-  (void) printf("\nImage Operators:\n");
-  (void) puts(operators);
-  (void) printf("\nImage Channel Operators:\n");
-  (void) puts(channel_operators);
-  (void) printf("\nImage Sequence Operators:\n");
-  (void) puts(sequence_operators);
-  (void) printf("\nImage Stack Operators:\n");
-  (void) puts(stack_operators);
-  (void) printf("\nMiscellaneous Options:\n");
-  (void) puts(miscellaneous);
-  (void) printf(
+  (void) fprintf(stdout,"\nImage Settings:\n");
+  (void) fputs(settings,stdout);
+  (void) fprintf(stdout,"\nImage Operators:\n");
+  (void) fputs(operators,stdout);
+  (void) fprintf(stdout,"\nImage Channel Operators:\n");
+  (void) fputs(channel_operators,stdout);
+  (void) fprintf(stdout,"\nImage Sequence Operators:\n");
+  (void) fputs(sequence_operators,stdout);
+  (void) fprintf(stdout,"\nImage Stack Operators:\n");
+  (void) fputs(stack_operators,stdout);
+  (void) fprintf(stdout,"\nMiscellaneous Options:\n");
+  (void) fputs(miscellaneous,stdout);
+  (void) fprintf(stdout,
     "\nBy default, the image format of 'file' is determined by its magic\n");
-  (void) printf(
+  (void) fprintf(stdout,
     "number.  To specify a particular image format, precede the filename\n");
-  (void) printf(
+  (void) fprintf(stdout,
     "with an image format name and a colon (i.e. ps:image) or specify the\n");
-  (void) printf(
+  (void) fprintf(stdout,
     "image type as the filename suffix (i.e. image.ps).  Specify 'file' as\n");
-  (void) printf("'-' for standard input or output.\n");
+  (void) fprintf(stdout,"'-' for standard input or output.\n");
   return(MagickTrue);
 }
 
@@ -3988,7 +3789,12 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
         }
     }
   if (argc < 2)
-    return(MogrifyUsage());
+    {
+      (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
+        "MissingArgument","%s","");
+      (void) MogrifyUsage();
+      return(MagickFalse);
+    }
   format=(char *) NULL;
   path=(char *) NULL;
   global_colormap=MagickFalse;
@@ -4048,7 +3854,7 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
         if ((LocaleCompare(filename,"--") == 0) && (i < (ssize_t) (argc-1)))
           filename=argv[++i];
         images=ReadImages(image_info,filename,exception);
-        status&=(images != (Image *) NULL) &&
+        status&=(MagickStatusType) (images != (Image *) NULL) &&
           (exception->severity < ErrorException);
         if (images == (Image *) NULL)
           continue;
@@ -4085,6 +3891,8 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
             char
               name[MagickPathExtent];
 
+            if (format != (char *) NULL)
+              (void) CopyMagickString(magic,format,MagickPathExtent);
             (void) FormatLocaleString(name,MagickPathExtent,"%s:%s",magic,
               image->filename);
             (void) CopyMagickString(image->filename,name,MagickPathExtent);
@@ -4112,7 +3920,8 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
           Write transmogrified image to disk.
         */
         image_info->synchronize=MagickTrue;
-        status&=WriteImages(image_info,image,image->filename,exception);
+        status&=(MagickStatusType) WriteImages(image_info,image,image->filename,
+          exception);
         if (status != MagickFalse)
           {
 #if defined(MAGICKCORE_HAVE_UTIME)
@@ -4129,6 +3938,9 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
             if (*backup_filename != '\0')
               (void) remove_utf8(backup_filename);
           }
+        else
+          if (*backup_filename != '\0')
+            (void) rename_utf8(backup_filename,image->filename);
         RemoveAllImageStack();
         continue;
       }
@@ -4765,6 +4577,11 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
             i++;
             if (i == (ssize_t) argc)
               ThrowMogrifyException(OptionError,"MissingArgument",option);
+            if (LocaleNCompare(argv[i],"registry:",9) == 0)
+              {
+                (void) DeleteImageRegistry(argv[i]+9);
+                break;
+              }
             if (IsGeometry(argv[i]) == MagickFalse)
               ThrowMogrifyInvalidArgumentException(option,argv[i]);
             break;
@@ -6071,6 +5888,17 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
               ThrowMogrifyInvalidArgumentException(option,argv[i]);
             break;
           }
+        if (LocaleCompare("reshape",option+1) == 0)
+          {
+            if (*option == '+')
+              break;
+            i++;
+            if (i == (ssize_t) argc)
+              ThrowMogrifyException(OptionError,"MissingArgument",option);
+            if (IsGeometry(argv[i]) == MagickFalse)
+              ThrowMogrifyInvalidArgumentException(option,argv[i]);
+            break;
+          }
         if (LocaleCompare("resize",option+1) == 0)
           {
             if (*option == '+')
@@ -6687,6 +6515,22 @@ WandExport MagickBooleanType MogrifyImageCommand(ImageInfo *image_info,
             i++;
             if (i == (ssize_t) argc)
               ThrowMogrifyException(OptionError,"MissingArgument",option);
+            break;
+          }
+        if (LocaleCompare("word-break",option+1) == 0)
+          {
+            ssize_t
+              word_break;
+
+            if (*option == '+')
+              break;
+            i++;
+            if (i == (ssize_t) argc)
+              ThrowMogrifyException(OptionError,"MissingArgument",option);
+            word_break=ParseCommandOption(MagickWordBreakOptions,MagickFalse,
+              argv[i]);
+            if (word_break < 0)
+              ThrowMogrifyException(OptionError,"UnrecognizedArgument",argv[i]);
             break;
           }
         if (LocaleCompare("white-balance",option+1) == 0)
@@ -7400,6 +7244,11 @@ WandExport MagickBooleanType MogrifyImageInfo(ImageInfo *image_info,
                 (void) ListModuleInfo((FILE *) NULL,exception);
                 break;
               }
+              case MagickPagesizeOptions:
+              {
+                (void) ListPagesizes((FILE *) NULL,exception);
+                break;
+              }
               case MagickPolicyOptions:
               {
                 (void) ListPolicyInfo((FILE *) NULL,exception);
@@ -7505,6 +7354,7 @@ WandExport MagickBooleanType MogrifyImageInfo(ImageInfo *image_info,
             (void) SetImageOption(image_info,option+1,argv[i+1]);
             break;
           }
+        break;
       }
       case 'p':
       {
@@ -7841,6 +7691,16 @@ WandExport MagickBooleanType MogrifyImageInfo(ImageInfo *image_info,
               (void) SetImageOption(image_info,option+1,"0.0");
             else
               (void) SetImageOption(image_info,option+1,argv[i+1]);
+            break;
+          }
+        if (LocaleCompare("word-break",option+1) == 0)
+          {
+            if (*option == '+')
+              {
+                (void) SetImageOption(image_info,option+1,"undefined");
+                break;
+              }
+            (void) SetImageOption(image_info,option+1,argv[i+1]);
             break;
           }
         break;
@@ -8220,8 +8080,8 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
               new_images->gravity,&geometry);
             mask_image=RemoveFirstImageFromList(images);
             if (mask_image == (Image *) NULL)
-              status&=CompositeImage(new_images,source_image,compose,
-                clip_to_self,geometry.x,geometry.y,exception);
+              status&=(MagickStatusType) CompositeImage(new_images,source_image,
+                compose,clip_to_self,geometry.x,geometry.y,exception);
             else
               {
                 Image
@@ -8234,30 +8094,33 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
                 {
                   case BlendCompositeOp:
                   {
-                    status&=CompositeImage(new_images,source_image,compose,
-                      clip_to_self,geometry.x,geometry.y,exception);
-                    status&=CompositeImage(new_images,mask_image,
-                      CopyAlphaCompositeOp,MagickTrue,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(new_images,
+                      source_image,compose,clip_to_self,geometry.x,geometry.y,
+                      exception);
+                    status&=(MagickStatusType) CompositeImage(new_images,
+                      mask_image,CopyAlphaCompositeOp,MagickTrue,0,0,exception);
                     break;
                   }
                   case DisplaceCompositeOp:
                   case DistortCompositeOp:
                   {
-                    status&=CompositeImage(source_image,mask_image,
-                      CopyGreenCompositeOp,MagickTrue,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(source_image,
+                      mask_image,CopyGreenCompositeOp,MagickTrue,0,0,exception);
                     (void) SetImageColorspace(source_image,sRGBColorspace,
                       exception);
-                    status&=CompositeImage(new_images,source_image,compose,
-                      clip_to_self,geometry.x,geometry.y,exception);
+                    status&=(MagickStatusType) CompositeImage(new_images,
+                      source_image,compose,clip_to_self,geometry.x,geometry.y,
+                      exception);
                     break;
                   }
                   case SaliencyBlendCompositeOp:
                   case SeamlessBlendCompositeOp:
                   {
-                    status&=CompositeImage(source_image,mask_image,
-                      CopyAlphaCompositeOp,MagickTrue,0,0,exception);
-                    status&=CompositeImage(new_images,source_image,compose,
-                      clip_to_self,geometry.x,geometry.y,exception);
+                    status&=(MagickStatusType) CompositeImage(source_image,
+                      mask_image,CopyAlphaCompositeOp,MagickTrue,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(new_images,
+                      source_image,compose,clip_to_self,geometry.x,geometry.y,
+                      exception);
                     break;
                   }
                   default:
@@ -8268,12 +8131,13 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
                     clone_image=CloneImage(new_images,0,0,MagickTrue,exception);
                     if (clone_image == (Image *) NULL)
                       break;
-                    status&=CompositeImage(new_images,source_image,compose,
-                      clip_to_self,geometry.x,geometry.y,exception);
-                    status&=CompositeImage(new_images,mask_image,
-                      CopyAlphaCompositeOp,MagickTrue,0,0,exception);
-                    status&=CompositeImage(clone_image,new_images,
-                      OverCompositeOp,clip_to_self,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(new_images,
+                      source_image,compose,clip_to_self,geometry.x,geometry.y,
+                      exception);
+                    status&=(MagickStatusType) CompositeImage(new_images,
+                      mask_image,CopyAlphaCompositeOp,MagickTrue,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(clone_image,
+                      new_images,OverCompositeOp,clip_to_self,0,0,exception);
                     new_images=DestroyImageList(new_images);
                     new_images=clone_image;
                     break;
@@ -8284,14 +8148,14 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
                   case DisplaceCompositeOp:
                   case DistortCompositeOp:
                   { 
-                    status&=CompositeImage(canvas_image,new_images,
-                      CopyCompositeOp,clip_to_self,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(canvas_image,
+                      new_images,CopyCompositeOp,clip_to_self,0,0,exception);
                     break;
                   }
                   default:
                   {
-                    status&=CompositeImage(canvas_image,new_images,
-                      OverCompositeOp,clip_to_self,0,0,exception);
+                    status&=(MagickStatusType) CompositeImage(canvas_image,
+                      new_images,OverCompositeOp,clip_to_self,0,0,exception);
                     break;
                   }
                 }
@@ -8463,6 +8327,7 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
             Image
               *fx_image;
 
+puts("list");
             (void) SyncImagesSettings(mogrify_info,*images,exception);
             fx_image=FxImage(*images,argv[i+1],exception);
             if (fx_image == (Image *) NULL)
@@ -8931,7 +8796,7 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
 
             (void) SyncImagesSettings(mogrify_info,*images,exception);
             arguments=StringToArgv(argv[i+1],&number_arguments);
-            if (arguments == (char **) NULL)
+            if ((arguments == (char **) NULL) || (number_arguments == 1))
               break;
             if ((argc > 1) && (strchr(arguments[1],'=') != (char *) NULL))
               {
@@ -9096,7 +8961,8 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
             (void) DeleteImageRegistry(key);
             write_images=CloneImageList(*images,exception);
             write_info=CloneImageInfo(mogrify_info);
-            status&=WriteImages(write_info,write_images,argv[i+1],exception);
+            status&=(MagickStatusType) WriteImages(write_info,write_images,
+              argv[i+1],exception);
             write_info=DestroyImageInfo(write_info);
             write_images=DestroyImageList(write_images);
             break;
@@ -9110,7 +8976,7 @@ WandExport MagickBooleanType MogrifyImageList(ImageInfo *image_info,
   }
   quantize_info=DestroyQuantizeInfo(quantize_info);
   mogrify_info=DestroyImageInfo(mogrify_info);
-  status&=MogrifyImageInfo(image_info,argc,argv,exception);
+  status&=(MagickStatusType) MogrifyImageInfo(image_info,argc,argv,exception);
   return(status != 0 ? MagickTrue : MagickFalse);
 }
 
@@ -9191,7 +9057,8 @@ WandExport MagickBooleanType MogrifyImages(ImageInfo *image_info,
     Pre-process multi-image sequence operators
   */
   if (post == MagickFalse)
-    status&=MogrifyImageList(image_info,argc,argv,images,exception);
+    status&=(MagickStatusType) MogrifyImageList(image_info,argc,argv,images,
+      exception);
   /*
     For each image, process simple single image operators
   */
@@ -9203,7 +9070,8 @@ WandExport MagickBooleanType MogrifyImages(ImageInfo *image_info,
   (void) FormatLocaleFile(stderr,"mogrify %ld of %ld\n",(long)
     GetImageIndexInList(*images),(long)GetImageListLength(*images));
 #endif
-    status&=MogrifyImage(image_info,argc,argv,images,exception);
+    status&=(MagickStatusType) MogrifyImage(image_info,argc,argv,images,
+      exception);
     proceed=SetImageProgress(*images,MogrifyImageTag,(MagickOffsetType) i, n);
     if (proceed == MagickFalse)
       break;
@@ -9222,6 +9090,7 @@ WandExport MagickBooleanType MogrifyImages(ImageInfo *image_info,
   */
   *images=GetFirstImageInList(*images);
   if (post != MagickFalse)
-    status&=MogrifyImageList(image_info,argc,argv,images,exception);
+    status&=(MagickStatusType) MogrifyImageList(image_info,argc,argv,images,
+      exception);
   return(status != 0 ? MagickTrue : MagickFalse);
 }

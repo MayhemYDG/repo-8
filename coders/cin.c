@@ -226,7 +226,7 @@ typedef struct CINInfo
 } CINInfo;
 
 /*
-  Forward declaractions.
+  Forward declarations.
 */
 static MagickBooleanType
   WriteCINImage(const ImageInfo *,Image *,ExceptionInfo *);
@@ -687,7 +687,7 @@ static Image *ReadCINImage(const ImageInfo *image_info,ExceptionInfo *exception)
       offset+=4;
       if (IsFloatDefined(cin.film.frame_rate) != MagickFalse)
         (void) FormatImageProperty(image,"dpx:film.frame_rate","%g",
-          cin.film.frame_rate);
+          (double) cin.film.frame_rate);
       offset+=ReadBlob(image,sizeof(cin.film.frame_id),(unsigned char *)
         cin.film.frame_id);
       (void) CopyMagickString(property,cin.film.frame_id,

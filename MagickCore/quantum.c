@@ -250,24 +250,26 @@ static void DestroyQuantumPixels(QuantumInfo *quantum_info)
   ssize_t
     i;
 
-  ssize_t
-    extent;
-
   assert(quantum_info != (QuantumInfo *) NULL);
   assert(quantum_info->signature == MagickCoreSignature);
   assert(quantum_info->pixels != (MemoryInfo **) NULL);
-  extent=(ssize_t) quantum_info->extent;
   for (i=0; i < (ssize_t) quantum_info->number_threads; i++)
     if (quantum_info->pixels[i] != (MemoryInfo *) NULL)
       {
+#ifndef NDEBUG
+        ssize_t
+          extent;
+
         unsigned char
           *pixels;
 
         /*
           Did we overrun our quantum buffer?
         */
+        extent=(ssize_t) quantum_info->extent;
         pixels=(unsigned char *) GetVirtualMemoryBlob(quantum_info->pixels[i]);
         assert(pixels[extent] == QuantumSignature);
+#endif
         quantum_info->pixels[i]=RelinquishVirtualMemory(
           quantum_info->pixels[i]);
       }
@@ -307,31 +309,33 @@ MagickExport size_t GetQuantumExtent(const Image *image,
   const QuantumInfo *quantum_info,const QuantumType quantum_type)
 {
   size_t
-    packet_size;
+    channels;
 
   assert(quantum_info != (QuantumInfo *) NULL);
   assert(quantum_info->signature == MagickCoreSignature);
-  packet_size=1;
+  channels=1;
   switch (quantum_type)
   {
-    case GrayAlphaQuantum: packet_size=2; break;
-    case IndexAlphaQuantum: packet_size=2; break;
-    case RGBQuantum: packet_size=3; break;
-    case BGRQuantum: packet_size=3; break;
-    case RGBAQuantum: packet_size=4; break;
-    case RGBOQuantum: packet_size=4; break;
-    case BGRAQuantum: packet_size=4; break;
-    case CMYKQuantum: packet_size=4; break;
-    case CMYKAQuantum: packet_size=5; break;
-    case MultispectralQuantum: packet_size=6; break;
-    case CbYCrAQuantum: packet_size=4; break;
-    case CbYCrQuantum: packet_size=3; break;
-    case CbYCrYQuantum: packet_size=4; break;
+    case GrayAlphaQuantum: channels=2; break;
+    case IndexAlphaQuantum: channels=2; break;
+    case RGBQuantum: channels=3; break;
+    case BGRQuantum: channels=3; break;
+    case RGBAQuantum: channels=4; break;
+    case RGBOQuantum: channels=4; break;
+    case BGRAQuantum: channels=4; break;
+    case CMYKQuantum: channels=4; break;
+    case CMYKAQuantum: channels=5; break;
+    case MultispectralQuantum: channels=GetImageChannels(image); break;
+    case CbYCrAQuantum: channels=4; break;
+    case CbYCrQuantum: channels=3; break;
+    case CbYCrYQuantum: channels=4; break;
     default: break;
   }
   if (quantum_info->pack == MagickFalse)
-    return((size_t) (packet_size*image->columns*((quantum_info->depth+7)/8)));
-  return((size_t) ((packet_size*image->columns*quantum_info->depth+7)/8));
+    return((size_t) (channels*image->columns*((quantum_info->depth+7)/8))+
+      (quantum_info->pad*image->columns));
+  return((size_t) ((channels*image->columns*quantum_info->depth+7)/8)+
+    (quantum_info->pad*image->columns));
 }
 
 /*
@@ -927,6 +931,8 @@ MagickExport MagickBooleanType SetQuantumPad(const Image *image,
   assert(quantum_info->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+  if (pad >= (MAGICK_SSIZE_MAX/GetImageChannels(image)))
+    return(MagickFalse);
   quantum_info->pad=pad;
   return(SetQuantumDepth(image,quantum_info,quantum_info->depth));
 }

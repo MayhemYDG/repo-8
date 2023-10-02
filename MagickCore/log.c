@@ -47,6 +47,7 @@
 #include "MagickCore/exception.h"
 #include "MagickCore/exception-private.h"
 #include "MagickCore/linked-list.h"
+#include "MagickCore/linked-list-private.h"
 #include "MagickCore/log.h"
 #include "MagickCore/log-private.h"
 #include "MagickCore/memory_.h"
@@ -293,8 +294,8 @@ static LinkedListInfo *AcquireLogCache(const char *filename,
     option=(const StringInfo *) GetNextValueInLinkedList(options);
     while (option != (const StringInfo *) NULL)
     {
-      status&=LoadLogCache(cache,(const char *) GetStringInfoDatum(option),
-        GetStringInfoPath(option),0,exception);
+      status&=(MagickStatusType) LoadLogCache(cache,(const char *)
+        GetStringInfoDatum(option),GetStringInfoPath(option),0,exception);
       option=(const StringInfo *) GetNextValueInLinkedList(options);
     }
     options=DestroyConfigureOptions(options);
@@ -329,7 +330,7 @@ static LinkedListInfo *AcquireLogCache(const char *filename,
     log_info->filename=ConstantString(p->filename);
     log_info->format=ConstantString(p->format);
     log_info->signature=MagickCoreSignature;
-    status&=AppendValueToLinkedList(cache,log_info);
+    status&=(MagickStatusType) AppendValueToLinkedList(cache,log_info);
     if (status == MagickFalse)
       (void) ThrowMagickException(exception,GetMagickModule(),
         ResourceLimitError,"MemoryAllocationFailed","`%s'",log_info->name);
@@ -440,6 +441,9 @@ MagickExport LogEventType GetLogEventMask(void)
 static LogInfo *GetLogInfo(const char *name,ExceptionInfo *exception)
 {
   LogInfo
+    *log_info;
+
+  ElementInfo
     *p;
 
   assert(exception != (ExceptionInfo *) NULL);
@@ -448,25 +452,29 @@ static LogInfo *GetLogInfo(const char *name,ExceptionInfo *exception)
   /*
     Search for log tag.
   */
+  log_info=(LogInfo *) NULL;
   LockSemaphoreInfo(log_semaphore);
-  ResetLinkedListIterator(log_cache);
-  p=(LogInfo *) GetNextValueInLinkedList(log_cache);
+  p=GetHeadElementInLinkedList(log_cache);
   if ((name == (const char *) NULL) || (LocaleCompare(name,"*") == 0))
     {
+      if (p != (ElementInfo *) NULL)
+        log_info=(LogInfo *) p->value;
       UnlockSemaphoreInfo(log_semaphore);
-      return(p);
+      return(log_info);
     }
-  while (p != (LogInfo *) NULL)
+  while (p != (ElementInfo *) NULL)
   {
-    if (LocaleCompare(name,p->name) == 0)
+    log_info=(LogInfo* ) p->value;
+    if (LocaleCompare(name,log_info->name) == 0)
       break;
-    p=(LogInfo *) GetNextValueInLinkedList(log_cache);
+    p=p->next;
   }
-  if (p != (LogInfo *) NULL)
-    (void) InsertValueInLinkedList(log_cache,0,
-      RemoveElementByValueFromLinkedList(log_cache,p));
+  if (p == (ElementInfo *) NULL)
+    log_info=(LogInfo *) NULL;
+  else
+    SetHeadElementInLinkedList(log_cache,p);
   UnlockSemaphoreInfo(log_semaphore);
-  return(p);
+  return(log_info);
 }
 
 /*
@@ -523,43 +531,44 @@ MagickExport const LogInfo **GetLogInfoList(const char *pattern,
   const LogInfo
     **preferences;
 
-  const LogInfo
+  ElementInfo
     *p;
 
   ssize_t
     i;
 
-  /*
-    Allocate log list.
-  */
   assert(pattern != (char *) NULL);
   assert(number_preferences != (size_t *) NULL);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",pattern);
   *number_preferences=0;
-  p=GetLogInfo("*",exception);
-  if (p == (const LogInfo *) NULL)
+  if (IsLogCacheInstantiated(exception) == MagickFalse)
     return((const LogInfo **) NULL);
   preferences=(const LogInfo **) AcquireQuantumMemory((size_t)
     GetNumberOfElementsInLinkedList(log_cache)+1UL,sizeof(*preferences));
   if (preferences == (const LogInfo **) NULL)
     return((const LogInfo **) NULL);
-  /*
-    Generate log list.
-  */
   LockSemaphoreInfo(log_semaphore);
-  ResetLinkedListIterator(log_cache);
-  p=(const LogInfo *) GetNextValueInLinkedList(log_cache);
-  for (i=0; p != (const LogInfo *) NULL; )
+  p=GetHeadElementInLinkedList(log_cache);
+  for (i=0; p != (ElementInfo *) NULL; )
   {
-    if ((p->stealth == MagickFalse) &&
-        (GlobExpression(p->name,pattern,MagickFalse) != MagickFalse))
-      preferences[i++]=p;
-    p=(const LogInfo *) GetNextValueInLinkedList(log_cache);
+    const LogInfo
+      *log_info;
+
+    log_info=(const LogInfo *) p->value;
+    if ((log_info->stealth == MagickFalse) &&
+        (GlobExpression(log_info->name,pattern,MagickFalse) != MagickFalse))
+      preferences[i++]=log_info;
+    p=p->next;
   }
   UnlockSemaphoreInfo(log_semaphore);
-  qsort((void *) preferences,(size_t) i,sizeof(*preferences),LogInfoCompare);
-  preferences[i]=(LogInfo *) NULL;
+  if (i == 0)
+    preferences=(const LogInfo **) RelinquishMagickMemory((void*) preferences);
+  else
+    {
+      qsort((void *) preferences,(size_t) i,sizeof(*preferences),LogInfoCompare);
+      preferences[i]=(LogInfo *) NULL;
+    }
   *number_preferences=(size_t) i;
   return(preferences);
 }
@@ -617,43 +626,44 @@ MagickExport char **GetLogList(const char *pattern,size_t *number_preferences,
   char
     **preferences;
 
-  const LogInfo
+  ElementInfo
     *p;
 
   ssize_t
     i;
 
-  /*
-    Allocate log list.
-  */
   assert(pattern != (char *) NULL);
   assert(number_preferences != (size_t *) NULL);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",pattern);
   *number_preferences=0;
-  p=GetLogInfo("*",exception);
-  if (p == (const LogInfo *) NULL)
+  if (IsLogCacheInstantiated(exception) == MagickFalse)
     return((char **) NULL);
   preferences=(char **) AcquireQuantumMemory((size_t)
     GetNumberOfElementsInLinkedList(log_cache)+1UL,sizeof(*preferences));
   if (preferences == (char **) NULL)
     return((char **) NULL);
-  /*
-    Generate log list.
-  */
   LockSemaphoreInfo(log_semaphore);
-  ResetLinkedListIterator(log_cache);
-  p=(const LogInfo *) GetNextValueInLinkedList(log_cache);
-  for (i=0; p != (const LogInfo *) NULL; )
+  p=GetHeadElementInLinkedList(log_cache);
+  for (i=0; p != (ElementInfo *) NULL; )
   {
-    if ((p->stealth == MagickFalse) &&
-        (GlobExpression(p->name,pattern,MagickFalse) != MagickFalse))
-      preferences[i++]=ConstantString(p->name);
-    p=(const LogInfo *) GetNextValueInLinkedList(log_cache);
+    const LogInfo
+      *log_info;
+
+    log_info=(const LogInfo *) p->value;
+    if ((log_info->stealth == MagickFalse) &&
+        (GlobExpression(log_info->name,pattern,MagickFalse) != MagickFalse))
+      preferences[i++]=ConstantString(log_info->name);
+    p=p->next;
   }
   UnlockSemaphoreInfo(log_semaphore);
-  qsort((void *) preferences,(size_t) i,sizeof(*preferences),LogCompare);
-  preferences[i]=(char *) NULL;
+  if (i == 0)
+    preferences=(char **) RelinquishMagickMemory(preferences);
+  else
+    {
+      qsort((void *) preferences,(size_t) i,sizeof(*preferences),LogCompare);
+      preferences[i]=(char *) NULL;
+    }
   *number_preferences=(size_t) i;
   return(preferences);
 }
@@ -705,7 +715,7 @@ MagickExport const char *GetLogName(void)
 %
 */
 
-static inline void CheckEventLogging()
+static inline void CheckEventLogging(void)
 {
   /*
     Are we logging events?
@@ -714,13 +724,13 @@ static inline void CheckEventLogging()
     event_logging=MagickFalse;
   else
     {
-      LogInfo
+      ElementInfo
         *p;
 
-      ResetLinkedListIterator(log_cache);
-      p=(LogInfo *) GetNextValueInLinkedList(log_cache);
-      event_logging=(p != (LogInfo *) NULL) && (p->event_mask != NoEvents) ?
-        MagickTrue: MagickFalse;
+      p=GetHeadElementInLinkedList(log_cache);
+      event_logging=(p != (ElementInfo *) NULL) &&
+        (((LogInfo *) p->value)->event_mask != NoEvents) ?
+          MagickTrue: MagickFalse;
     }
 }
 
@@ -837,7 +847,7 @@ MagickExport MagickBooleanType ListLogInfo(FILE *file,ExceptionInfo *exception)
             break;
           mask=1;
           mask<<=j;
-          if ((log_info[i]->handler_mask & mask) != 0)
+          if (((size_t) log_info[i]->handler_mask & mask) != 0)
             {
               (void) FormatLocaleFile(file,"%s ",LogHandlers[j].name);
               length+=strlen(LogHandlers[j].name);
@@ -986,8 +996,8 @@ static MagickBooleanType LoadLogCache(LinkedListInfo *cache,const char *xml,
                   file_xml=FileToXML(path,~0UL);
                   if (file_xml != (char *) NULL)
                     {
-                      status&=LoadLogCache(cache,file_xml,path,depth+1,
-                        exception);
+                      status&=(MagickStatusType) LoadLogCache(cache,file_xml,
+                        path,depth+1,exception);
                       file_xml=DestroyString(file_xml);
                     }
                 }
@@ -1258,7 +1268,7 @@ static char *TranslateEvent(const char *module,const char *function,
     seconds;
 
   exception=AcquireExceptionInfo();
-  log_info=(LogInfo *) GetLogInfo("*",exception);
+  log_info=GetLogInfo("*",exception);
   exception=DestroyExceptionInfo(exception);
   seconds=GetMagickTime();
   elapsed_time=GetElapsedTime(&log_info->timer);
@@ -1803,24 +1813,31 @@ MagickExport LogEventType SetLogEventMask(const char *events)
   ExceptionInfo
     *exception;
 
+  LogEventType
+    event_mask;
+
   LogInfo
     *log_info;
 
   ssize_t
     option;
 
+  event_mask=UndefinedEvents;
   exception=AcquireExceptionInfo();
-  log_info=(LogInfo *) GetLogInfo("*",exception);
+  log_info=GetLogInfo("*",exception);
   exception=DestroyExceptionInfo(exception);
+  if (log_info == (LogInfo *) NULL)
+    return(event_mask);
   option=ParseCommandOption(MagickLogEventOptions,MagickTrue,events);
   LockSemaphoreInfo(log_semaphore);
-  log_info=(LogInfo *) GetValueFromLinkedList(log_cache,0);
-  log_info->event_mask=(LogEventType) option;
+  event_mask=log_info->event_mask;
   if (option == -1)
     log_info->event_mask=UndefinedEvents;
+  else
+    log_info->event_mask=(LogEventType) option;
   CheckEventLogging();
   UnlockSemaphoreInfo(log_semaphore);
-  return(log_info->event_mask);
+  return(event_mask);
 }
 
 /*
@@ -1856,6 +1873,8 @@ MagickExport void SetLogFormat(const char *format)
   exception=AcquireExceptionInfo();
   log_info=(LogInfo *) GetLogInfo("*",exception);
   exception=DestroyExceptionInfo(exception);
+  if (log_info == (LogInfo *) NULL)
+    return;
   LockSemaphoreInfo(log_semaphore);
   if (log_info->format != (char *) NULL)
     log_info->format=DestroyString(log_info->format);

@@ -122,7 +122,7 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
   { \
     if (p >= (buffer+0x800)) \
       { \
-        count=ReadBlob(image,0x800,buffer); \
+        (void) ReadBlob(image,0x800,buffer); \
         p=buffer; \
       } \
     sum|=(((unsigned int) (*p)) << (24-bits)); \
@@ -167,7 +167,6 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
     sum;
 
   ssize_t
-    count,
     quantum;
 
   unsigned char
@@ -247,7 +246,6 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
   /*
     Recover the Huffman encoded luminance and chrominance deltas.
   */
-  count=0;
   length=0;
   plane=0;
   row=0;
@@ -270,20 +268,17 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
           case 0:
           {
             q=luma+row*image->columns;
-            count=(ssize_t) image->columns;
             break;
           }
           case 2:
           {
             q=chroma1+(row >> 1)*image->columns;
-            count=(ssize_t) (image->columns >> 1);
             plane--;
             break;
           }
           case 3:
           {
             q=chroma2+(row >> 1)*image->columns;
-            count=(ssize_t) (image->columns >> 1);
             plane--;
             break;
           }
@@ -322,7 +317,6 @@ static MagickBooleanType DecodeImage(Image *image,unsigned char *luma,
     *q=(unsigned char) ((quantum < 0) ? 0 : (quantum > 255) ? 255 : quantum);
     q++;
     PCDGetBits(r->length);
-    count--;
   }
   /*
     Relinquish resources.
@@ -444,8 +438,8 @@ static void Upsample(const size_t width,const size_t height,
   assert(pixels != (unsigned char *) NULL);
   for (y=0; y < (ssize_t) height; y++)
   {
-    p=pixels+(height-1-y)*scaled_width+(width-1);
-    q=pixels+((height-1-y) << 1)*scaled_width+((width-1) << 1);
+    p=pixels+(height-1-(size_t) y)*scaled_width+(width-1);
+    q=pixels+((height-1-(size_t) y) << 1)*scaled_width+((width-1) << 1);
     *q=(*p);
     *(q+1)=(*(p));
     for (x=1; x < (ssize_t) width; x++)
@@ -1001,9 +995,9 @@ static MagickBooleanType WritePCDTile(Image *image,const char *page_geometry,
   (void) ParseMetaGeometry(page_geometry,&geometry.x,&geometry.y,
     &geometry.width,&geometry.height);
   if ((geometry.width % 2) != 0)
-    geometry.width--;
+    geometry.width=MagickMax(geometry.width-1,1);
   if ((geometry.height % 2) != 0)
-    geometry.height--;
+    geometry.height=MagickMax(geometry.height-1,1);
   tile_image=ResizeImage(image,geometry.width,geometry.height,TriangleFilter,
     exception);
   if (tile_image == (Image *) NULL)

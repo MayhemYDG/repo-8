@@ -19,7 +19,7 @@
   <meta name="author" content="ImageMagick Studio LLC" />
   <meta name="revisit-after" content="2 DAYS" />
   <meta name="resource-type" content="document" />
-  <meta name="copyright" content="Copyright (c) 1999-2020 ImageMagick Studio LLC" />
+  <meta name="copyright" content="Copyright (c) 1999 ImageMagick Studio LLC" />
   <meta name="distribution" content="Global" />
   <meta name="magick-serial" content="P131-S030410-R485315270133-P82224-A6668-G1245-1" />
   <meta property='og:url' content='../' />
@@ -29,7 +29,7 @@
   <meta property='og:site_name' content='ImageMagick' />
   <meta property='og:description' content="Create, Edit, Compose, or Convert Digital Images" />
   <meta name="google-site-verification" content="_bMOCDpkx9ZAzBwb2kF3PRHbfUUdFj2uO8Jd1AXArz4" />
-  <link href="formats.html" rel="canonical" />
+  <link href="../www/formats.html" rel="canonical" />
   <link href="../images/wand.png" rel="icon" />
   <link href="../images/wand.ico" rel="shortcut icon" />
   <link href="assets/magick.css" rel="stylesheet" />
@@ -44,9 +44,6 @@
 
     <div class="collapse navbar-collapse" id="magick-navbars">
       <ul class="navbar-nav me-auto mb-2 mb-md-0">
-        <li class="nav-item">
-          <a class="nav-link " href="index.html">Home</a>
-        </li>
         <li class="nav-item">
           <a class="nav-link " href="download.html">Download</a>
         </li>
@@ -66,7 +63,7 @@
           <iframe src="https://github.com/sponsors/ImageMagick/button" title="Sponsor ImageMagick" height="35" width="107" style="border: 0;"></iframe>
         </li>
       </ul>
-      <form class="d-flex form-inline" action="search.html">
+      <form class="d-flex form-inline" action="../www/search.html">
         <input class="form-control me-2" type="text" name="q" placeholder="Search" aria-label="Search">
         <button class="btn btn-outline-success" type="submit" name="sa">Search</button>
       </form>
@@ -75,7 +72,7 @@
   </nav>
 
   <div class="container">
-    <script async="async" src="https://localhost/pagead/js/adsbygoogle.js"></script>
+    <script async="async" src="http://localhost/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
       style="display:block"
       data-ad-client="ca-pub-3129977114552745"
@@ -98,7 +95,7 @@
 
 <p>To get a complete listing of which image formats are supported on your system, type</p>
 
-<pre class="bg-light text-dark mx-4"><samp>magick identify -list format </samp></pre>
+<pre class="bg-light text-dark mx-4 cli"><samp>magick identify -list format </samp></pre>
 
 <p>On some platforms, ImageMagick automagically processes these extensions: .gz for Zip compression, .Z for Linux compression, .bz2 for block compression, and .pgp for PGP encryption. For example, a PNM image called image.pnm.gz is automagically uncompressed.</p>
 
@@ -127,14 +124,14 @@ satisfactory results processing in the sRGB colorspace, you may get improved
 results in linear RGB (essentially sRGB with the gamma function removed).  For
 example,</p>
 
-<pre class="bg-light text-dark mx-4"><samp>magick image.jpg -colorspace RGB -resize 50% -colorspace sRGB resize.jpg </samp></pre>
+<pre class="bg-light text-dark mx-4 cli"><samp>magick image.jpg -colorspace RGB -resize 50% -colorspace sRGB resize.jpg </samp></pre>
 
 <p>As of IM 6.7.8-2 one can properly work in LAB colorspace whether or not
 Imagemagick is <a href="high-dynamic-range.html">HDRI</a>-enabled.  Essentially the A and
 B channels are stored with a 50% gray bias, to allow it to handle the
 negatives required by the format.</p>
 
-<pre class="bg-light text-dark mx-4"><samp>magick lab.tif -resize 50% resize.jpg </samp></pre> </ul>
+<pre class="bg-light text-dark mx-4 cli"><samp>magick lab.tif -resize 50% resize.jpg </samp></pre> </ul>
 
 <p>Again, it may not make sense for some image processing operators to work
 directly in LAB space, but ImageMagick permits it and generally returns
@@ -146,8 +143,8 @@ reasonable results.</p>
 including sub-formats). The following table provides a summary of
 the supported image formats.</p>
 
-<div class="pre-scrollable bg-light text-dark table-responsive" style="font-size:smaller !important;">
-<table class="table table-sm table-hover">
+<div class="pre-scrollable">
+<table class="table table-sm table-hover table-striped table-responsive">
   <tbody>
   <tr>
     <th>Tag</th>
@@ -203,6 +200,13 @@ the supported image formats.</p>
     <td>RW</td>
     <td>AVS X image</td>
     <td> </td>
+  </tr>
+
+  <tr>
+    <td>BAYER</td>
+    <td>RW</td>
+    <td>Raw mosaiced samples</td>
+    <td>Use <a href="command-line-options.html#size">-size</a> and <a href="command-line-options.html#depth">-depth</a> to specify the image width, height, and depth.  To specify a single precision floating-point format, use <samp>-define quantum:format=floating-point</samp>.  Set the depth to 32 for single precision floats, 64 for double precision, and 16 for half-precision.  For signed pixel data, use <samp>-define quantum:format=signed</samp>.</td>
   </tr>
 
   <tr>
@@ -276,9 +280,9 @@ the supported image formats.</p>
   </tr>
 
   <tr>
-    <td><a href="https://wwwimages2.adobe.com/content/dam/acom/en/products/speedgrade/cc/pdfs/cube-lut-specification-1.0.pdf">CUBE</a></td>
+    <td>CUBE</td>
     <td>R</td>
-    <td>Cube Color lookup table converted to a HALD image</td>
+    <td>A lookup table containing math instructions to replace a color (based on RGB value) by another one. It's like a color grading preset.  This process is done pixel by pixel with a very high accuracy.</td>
     <td>Select levels like this: cube:Vibrant.cube[8] for level 8</td>
   </tr>
 
@@ -344,6 +348,13 @@ the supported image formats.</p>
     <td>R</td>
     <td></td>
     <td></td>
+  </tr>
+
+  <tr>
+    <td><a href="https://github.com/ImageMagick/MagickCache">DMR</a></td>
+    <td>RW</td>
+    <td>Digital media repository</td>
+    <td>Requires the <a href="https://gitlab.com/ImageMagick/MagickCache">MagickCache</a> delegate library.  Supported options include <samp>dmr:path</samp> (location of repository), <samp>dmr:passkey</samp> (key to open digital media repository), <samp>dmr:passphrase</samp> (optionally scramble or unscramble media resource), and <samp>dmr:ttl</samp> (time-to-live); Set the <samp>dmr:meta</samp> (metadata) property to store the resource as meta data.</td>
   </tr>
 
   <tr>
@@ -476,7 +487,7 @@ the supported image formats.</p>
     <td>FPX</td>
     <td>RW</td>
     <td>FlashPix Format</td>
-    <td>FlashPix has the option to store mega- and giga-pixel images at various resolutions in a single file which permits conservative bandwidth and fast reveal times when displayed within a Web browser.  Requires the <a href="https://download.imagemagick.org/ImageMagick/download/delegates">FlashPix SDK</a>. Specify the FlashPix viewing parameters with the <a href="command-line-options.html#define">-define fpx:view</a>.</td>
+    <td>FlashPix has the option to store mega- and giga-pixel images at various resolutions in a single file which permits conservative bandwidth and fast reveal times when displayed within a Web browser.  Requires the <a href="../archive/delegates">FlashPix SDK</a>. Specify the FlashPix viewing parameters with the <a href="command-line-options.html#define">-define fpx:view</a>.</td>
   </tr>
 
   <tr>
@@ -504,7 +515,7 @@ the supported image formats.</p>
     <td>GRAY</td>
     <td>RW</td>
     <td>Raw gray samples</td>
-    <td>Use <a href="command-line-options.html#size">-size</a> and <a href="command-line-options.html#depth">-depth</a> to specify the image width, height, and depth.  To specify a single precision floating-point format, use <samp>-define quantum:format=floating-point</samp>.  Set the depth to 32 for single precision floats, 64 for double precision, and 16 for half-precision.  For signed pixel data, use <samp>-define quantum:format=signed</samp>.</td>
+    <td>Use <a href="command-line-options.html#size">-size</a> and <a href="command-line-options.html#depth">-depth</a> to specify the image width, height, and depth.  To specify a single precision floating-point format, use <samp>-define quantum:format=floating-point</samp>.  Set the depth to 32 for single precision floats, 64 for double precision, and 16 for half-precision.  For signed pixel data, use <samp>-define quantum:format=signed</samp>. ImageMagick supports scanline padding.  If your image is not padded, you can instead read the image as a 1-D vector and reshape it:  <samp>magick -size 38700x1 -depth 1 gray:image.bin -reshape 180x215 image.png</samp>.</td>
   </tr>
 
   <tr>
@@ -651,7 +662,7 @@ the supported image formats.</p>
     <td><a href="https://jpeg.org/jpegxl">JXL</a></td>
     <td>RW</td>
     <td>JPEG XL image coding system</td>
-    <td>Requires the <a href="https://gitlab.com/wg1/jpeg-xl.git">JPEG XL</a> delegate library. Use <samp>-define jxl:effort=<i>integer</i></samp> to set the effort and <samp>-define jxl:decoding-speed=<i>integer</i></samp> to set the decoding speed.</td>
+    <td>Requires the <a href="https://gitlab.com/wg1/jpeg-xl.git">JPEG XL</a> delegate library. Use <samp>-define jxl:effort=<i>integer</i></samp> to set the effort and <samp>-define jxl:decoding-speed=<i>integer</i></samp> to set the decoding speed. To specify a single precision floating-point format, use <samp>-define quantum:format=floating-point</samp>.  Set the depth to 32 for single precision floats and 16 for half-precision.</td>
   </tr>
 
   <tr>
@@ -718,13 +729,20 @@ the supported image formats.</p>
   </tr>
 
   <tr>
+    <td>MPO</td>
+    <td>R</td>
+    <td>Multi-picture Object</td>
+    <td> </td>
+  </tr>
+
+  <tr>
     <td>MPR</td>
     <td>RW</td>
     <td>Magick Persistent Registry</td>
-    <td>This format permits you to write to and read images from memory.  The image persists until the program exits.  For example, let's use the MPR to create a checkerboard:
-<pre class="bg-light text-dark mx-4"><samp>magick \( -size 15x15 canvas:black canvas:white -append \) \
+    <td>This format permits you to write to and read images from memory.  The filename is the registry key.  The image persists until you explicity delete it or the program exits.  For example, let's use the MPR to create a checkerboard:
+<pre class="bg-light text-dark mx-4 cli"><samp>magick \( -size 15x15 canvas:black canvas:white -append \) \
   \( +clone -flip \) +append -write mpr:checkers +delete \
-  -size 240x240 tile:mpr:checkers board.png </samp></pre>
+  -size 240x240 tile:mpr:checkers -delete registry:checkers board.png </samp></pre>
   </td>
   </tr>
 
@@ -857,7 +875,7 @@ the supported image formats.</p>
     <td>PDF</td>
     <td>RW</td>
     <td>Portable Document Format</td>
-    <td>Requires <a href="https://www.ghostscript.com/download.html">Ghostscript</a> to read.  By default, ImageMagick sets the page size to the MediaBox. Some PDF files, however, have a CropBox or TrimBox that is smaller than the MediaBox and may include white space, registration or cutting marks outside the CropBox or TrimBox. To force ImageMagick to use the CropBox or TrimBox rather than the MediaBox, use <a href="command-line-options.html#define">-define</a> (e.g. <samp>-define pdf:use-cropbox=true</samp> or <samp>-define pdf:use-trimbox=true</samp>).  Use <a href="command-line-options.html#density">-density</a> to improve the appearance of your PDF rendering (e.g. -density 300x300).  To specify direct conversion from  Postscript to PDF, use <samp>-define delegate:bimodel=true</samp>. Use <samp>-define pdf:fit-page=true</samp> to scale to the page size. To immediately stop processing upon an error, set <samp>-define pdf:stop-on-error</samp> to <samp>true</samp>. To set the page direction preferences to right-to-left, try  <samp>-define pdf:page-direction=right-to-left</samp>. Use <a href="command-line-options.html#alpha">-alpha remove </a> to remove transparency.  When writing to a PDF, thumbnails are included by default.  To skip generating thumbnails, <samp>-define pdf:thumbnail=false</samp>. To enable interpolation when rendering, use <samp>-define pdf:interpolate=true</samp>.</td>
+    <td>Requires <a href="https://www.ghostscript.com/download.html">Ghostscript</a> to read.  By default, ImageMagick sets the page size to the MediaBox. Some PDF files, however, have a CropBox or TrimBox that is smaller than the MediaBox and may include white space, registration or cutting marks outside the CropBox or TrimBox. To force ImageMagick to use the CropBox or TrimBox rather than the MediaBox, use <a href="command-line-options.html#define">-define</a> (e.g. <samp>-define pdf:use-cropbox=true</samp> or <samp>-define pdf:use-trimbox=true</samp>).  Use <a href="command-line-options.html#density">-density</a> to improve the appearance of your PDF rendering (e.g. -density 300x300).  To specify direct conversion from  Postscript to PDF, use <samp>-define delegate:bimodel=true</samp>. Use <samp>-define pdf:fit-page=true</samp> to scale to the page size. To immediately stop processing upon an error, set <samp>-define pdf:stop-on-error</samp> to <samp>true</samp>. To set the page direction preferences to right-to-left, try  <samp>-define pdf:page-direction=right-to-left</samp>. By default, the PDF is printed using "screen" for annotations and images.  Use <samp>-define pdf:printed=true</samp> to instead utilize the printer options. Use <a href="command-line-options.html#alpha">-alpha remove </a> to remove transparency.  When writing to a PDF, thumbnails are included by default.  To skip generating thumbnails, <samp>-define pdf:thumbnail=false</samp>. To enable interpolation when rendering, use <samp>-define pdf:interpolate=true</samp>.</td>
   </tr>
 
   <tr>
@@ -1039,7 +1057,7 @@ the supported image formats.</p>
     <td>PTIF</td>
     <td>RW</td>
     <td>Pyramid encoded <a href="formats.html#TIFF">TIFF</a></td>
-    <td>Multi-resolution <a href="formats.html#TIFF">TIFF</a> containing successively smaller versions of the image down to the size of an icon.</td>
+    <td>Multi-resolution <a href="formats.html#TIFF">TIFF</a> containing successively smaller versions of the image down to the size of an icon.  Use <samp>-define ptif:pyramid</samp> to specify the min-base and levels of the pyramid, e.g. 64x4.</td>
   </tr>
 
   <tr>
@@ -1179,7 +1197,7 @@ the supported image formats.</p>
     <td><a href="http://www.w3.org/Graphics/SVG">SVG</a></td>
     <td>RW</td>
     <td>Scalable Vector Graphics</td>
-    <td>ImageMagick utilizes <a href="http://www.inkscape.org/">inkscape</a> if its in your execution path otherwise <a href="http://developer.gnome.org/rsvg/">RSVG</a>. If neither are available, ImageMagick reverts to its internal SVG renderer. The default resolution is 96 DPI. Use <a href="command-line-options.html#size">-size</a> command line option to specify the maximum width and height. If you want to render a very large SVG and you trust the source, enable this option: <samp>-define svg:xml-parse-huge=true</samp>.</td>
+    <td>ImageMagick utilizes <a href="http://www.inkscape.org/">inkscape</a> if its in your execution path otherwise <a href="http://developer.gnome.org/rsvg/">RSVG</a>. If neither are available, ImageMagick reverts to its internal SVG renderer. The default resolution is 96 DPI. Use <a href="command-line-options.html#size">-size</a> command line option to specify the maximum width and height. If you want to substitute entities and you trust the SVG source, enable this option: <samp>-define svg:substitute-entities=true</samp>. If you want to render a very large SVG and you trust the source, enable this option: <samp>-define svg:parse-huge=true</samp>.</td>
   </tr>
 
   <tr>
@@ -1193,7 +1211,7 @@ the supported image formats.</p>
     <td>TGA</td>
     <td>RW</td>
     <td>Truevision Targa image</td>
-    <td>Also known as formats <samp>ICB</samp>, <samp>VDA</samp>, and <samp>VST</samp>.</td>
+    <td>Also known as formats <samp>ICB</samp>, <samp>VDA</samp>, and <samp>VST</samp>. Use <samp>-define tga:preserve-orientation=true</samp> to preserve the image orientation.</td>
   </tr>
 
   <tr>
@@ -1291,7 +1309,7 @@ the supported image formats.</p>
     <td><a href="http://en.wikipedia.org/wiki/WebP">WEBP</a></td>
     <td>RW</td>
     <td>Weppy image format</td>
-    <td>Requires the <a href="https://developers.google.com/speed/webp/download">WEBP</a> delegate library.  Specify the encoding options with the <a href="command-line-options.html#define">-define</a> option  See <a href="webp.html">WebP Encoding Options</a> for more details.</td>
+    <td>Requires the <a href="https://developers.google.com/speed/webp/download">WEBP</a> delegate library.  The muxing delegate library is required to read animated Webp image containers. Specify the encoding options with the <a href="command-line-options.html#define">-define</a> option  See <a href="webp.html">WebP Encoding Options</a> for more details.</td>
   </tr>
 
   <tr>
@@ -1385,8 +1403,8 @@ the supported image formats.</p>
 
 <p>ImageMagick supports a number of image format specifications which refer to images prepared via an algorithm, or input/output targets. The following table lists these pseudo-image formats:</p>
 
-<div class="pre-scrollable bg-light text-dark table-responsive" style="font-size:smaller !important;">
-<table class="table table-sm table-hover">
+<div class="pre-scrollable">
+<table class="table table-sm table-hover table-striped table-responsive">
   <tr>
     <th>Tag</th>
     <th>Mode</th>
@@ -1485,13 +1503,13 @@ the supported image formats.</p>
     <td>MAP</td>
     <td>RW</td>
     <td>Colormap intensities and indices</td>
-    <td>Set -depth to set the sample size of the intensities; indices are 16-bit if colors &gt; 256.</td>
+    <td>Set <a href="command-line-options.html#depth">-depth</a> to set the sample size of the intensities; indices are 16-bit if colors &gt; 256.</td>
   </tr>
 
   <tr>
     <td>MASK</td>
     <td>RW</td>
-    <td>Image mask</td>
+    <td>Grayscale image mask.  A sequence is emitted if the source image has more than one mask.</td>
     <td> </td>
   </tr>
 
@@ -1626,8 +1644,8 @@ the supported image formats.</p>
 
 <p>ImageMagick includes a number of built-in (embedded) images which may be referenced as if they were an image file. The <samp>magick:</samp> format tag may be used via the syntax <samp>magick:</samp><var>name</var> to request an embedded image (e.g. <samp>magick:logo</samp>). For backwards compatibility, the image specifications <samp>GRANITE:</samp>, <samp>LOGO:</samp>, <samp>NETSCAPE:</samp>, and <samp>ROSE:</samp> may also be used to request images with those names.</p>
 
-<div class="pre-scrollable bg-light text-dark table-responsive" style="font-size:smaller !important;">
-<table class="table table-sm table-hover">
+<div class="pre-scrollable">
+<table class="table table-sm table-hover table-striped table-responsive">
   <tr>
     <th>Tag</th>
     <th>Mode</th>
@@ -1677,8 +1695,8 @@ the supported image formats.</p>
 
 <p>ImageMagick includes a number of built-in (embedded) patterns which may be referenced as if they were an image file. The <samp>pattern:</samp> format tag may be used via the syntax <samp>pattern:</samp><var>name</var> to request an embedded pattern (e.g. <samp>pattern:checkerboard</samp>). The pattern size is controlled with the <a href="command-line-options.html#size">-size</a> command line option.</p>
 
-<div class="pre-scrollable bg-light text-dark table-responsive" style="font-size:smaller !important;">
-<table class="table table-sm table-hover">
+<div class="pre-scrollable">
+<table class="table table-sm table-hover table-striped table-responsive">
   <tr>
     <th>Tag</th>
     <th>Mode</th>
@@ -2070,8 +2088,8 @@ the supported image formats.</p>
 
 <p>ImageMagick provides a number of format identifiers which are used to add, remove, and save embedded profiles for images which can support embedded profiles. Image types which may contain embedded profiles are TIFF, JPEG, and PDF.</p>
 
-<div class="pre-scrollable bg-light text-dark table-responsive" style="font-size:smaller !important;">
-<table class="table table-sm table-hover">
+<div class="pre-scrollable">
+<table class="table table-sm table-hover table-striped table-responsive">
   <tbody>
   <tr>
     <th>Tag</th>
@@ -2151,7 +2169,7 @@ the supported image formats.</p>
      <a href="https://imagemagick.org/script/contact.php">Contact Us</a>
    <br/>
      <a href="https://github.com/imagemagick/imagemagick" target="_blank" rel="noopener" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 499.36" width="2%" height="2%" role="img" focusable="false"><title>GitHub</title><path fill="currentColor" fill-rule="evenodd" d="M256 0C114.64 0 0 114.61 0 256c0 113.09 73.34 209 175.08 242.9 12.8 2.35 17.47-5.56 17.47-12.34 0-6.08-.22-22.18-.35-43.54-71.2 15.49-86.2-34.34-86.2-34.34-11.64-29.57-28.42-37.45-28.42-37.45-23.27-15.84 1.73-15.55 1.73-15.55 25.69 1.81 39.21 26.38 39.21 26.38 22.84 39.12 59.92 27.82 74.5 21.27 2.33-16.54 8.94-27.82 16.25-34.22-56.84-6.43-116.6-28.43-116.6-126.49 0-27.95 10-50.8 26.35-68.69-2.63-6.48-11.42-32.5 2.51-67.75 0 0 21.49-6.88 70.4 26.24a242.65 242.65 0 0 1 128.18 0c48.87-33.13 70.33-26.24 70.33-26.24 14 35.25 5.18 61.27 2.55 67.75 16.41 17.9 26.31 40.75 26.31 68.69 0 98.35-59.85 120-116.88 126.32 9.19 7.9 17.38 23.53 17.38 47.41 0 34.22-.31 61.83-.31 70.23 0 6.85 4.61 14.81 17.6 12.31C438.72 464.97 512 369.08 512 256.02 512 114.62 397.37 0 256 0z"/></svg></a> •
-     <a href="https://twitter.com/imagemagick" target="_blank" rel="noopener" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 416.32" width="2%" height="2%" role="img" focusable="false"><title>Twitter</title><path fill="currentColor" d="M160.83 416.32c193.2 0 298.92-160.22 298.92-298.92 0-4.51 0-9-.2-13.52A214 214 0 0 0 512 49.38a212.93 212.93 0 0 1-60.44 16.6 105.7 105.7 0 0 0 46.3-58.19 209 209 0 0 1-66.79 25.37 105.09 105.09 0 0 0-181.73 71.91 116.12 116.12 0 0 0 2.66 24c-87.28-4.3-164.73-46.3-216.56-109.82A105.48 105.48 0 0 0 68 159.6a106.27 106.27 0 0 1-47.53-13.11v1.43a105.28 105.28 0 0 0 84.21 103.06 105.67 105.67 0 0 1-47.33 1.84 105.06 105.06 0 0 0 98.14 72.94A210.72 210.72 0 0 1 25 370.84a202.17 202.17 0 0 1-25-1.43 298.85 298.85 0 0 0 160.83 46.92"/></svg></a>
+     <a href="https://twitter.com/imagemagick" target="_blank" rel="noopener" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 300 300" width="2%" height="2%" role="img" focusable="false"><title>Twitter</title><path d="M178.57 127.15 290.27 0h-26.46l-97.03 110.38L89.34 0H0l117.13 166.93L0 300.25h26.46l102.4-116.59 81.8 116.59h89.34M36.01 19.54H76.66l187.13 262.13h-40.66"/></svg></a>
     <br/>
     <small>Copyright © 1999 ImageMagick Studio LLC</small>
     </div>
@@ -2161,4 +2179,4 @@ the supported image formats.</p>
   <script src="assets/magick.js" ></script>
   </body>
 </html>
-<!-- Magick Cache 30th May 2022 15:27 -->
+<!-- Magick Cache 12th September 2023 23:57 -->

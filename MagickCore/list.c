@@ -254,7 +254,7 @@ MagickExport Image *CloneImages(const Image *images,const char *scenes,
     else
       if (first > (ssize_t) length)
         first=(ssize_t) length;
-    first%=(length << 1);
+    first%=(ssize_t) (length << 1);
     last=first;
     while (isspace((int) ((unsigned char) *p)) != 0)
       p++;
@@ -267,7 +267,7 @@ MagickExport Image *CloneImages(const Image *images,const char *scenes,
           if (last > (ssize_t) length)
             last=(ssize_t) length;
       }
-    last%=(length << 1);
+    last%=(ssize_t) (length << 1);
     match=MagickFalse;
     step=1;
     if (artifact != (const char *) NULL)
@@ -415,11 +415,17 @@ MagickExport void DeleteImages(Image **images,const char *scenes,
   /*
     Note which images will be deleted, avoid duplicates.
   */
-  for (p=(char *) scenes; *p != '\0';)
+  for (p=(char *) scenes; *p != '\0'; )
   {
+    char
+      *q;
+
     while ((isspace((int) ((unsigned char) *p)) != 0) || (*p == ','))
       p++;
-    first=strtol(p,&p,10);
+    first=strtol(p,&q,10);
+    if (p == q)
+      break;
+    p=q;
     if (first < 0)
       first+=(long) length;
     last=first;
@@ -427,7 +433,10 @@ MagickExport void DeleteImages(Image **images,const char *scenes,
       p++;
     if (*p == '-')
       {
-        last=strtol(p+1,&p,10);
+        last=strtol(p+1,&q,10);
+        if ((p+1) == q)
+          break;
+        p=q;
         if (last < 0)
           last+=(long) length;
       }

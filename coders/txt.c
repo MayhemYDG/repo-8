@@ -445,12 +445,12 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
           &max_value,colorspace);
       }
     if ((count < 4) || (width == 0) || (height == 0) || (max_value == 0.0) ||
-        (number_meta_channels >= (unsigned long) (MaxPixelChannels-MetaPixelChannel)))
+        (number_meta_channels >= (unsigned long) (MaxPixelChannels-MetaPixelChannels)))
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
     image->columns=width;
     image->rows=height;
     image->number_meta_channels=number_meta_channels;
-    if ((max_value == 0.0) || (max_value > 18446744073709551615.0))
+    if ((max_value == 0.0) || (max_value >= 18446744073709551615.0))
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
     for (depth=1; ((double) GetQuantumRange(depth)+1) < max_value; depth++) ;
     image->depth=depth;
@@ -508,8 +508,15 @@ static Image *ReadTXTImage(const ImageInfo *image_info,ExceptionInfo *exception)
             break;
           }
         n=0;
+        channels[0]=(double) x;
+        channels[1]=(double) y;
         for (p=text; (*p != ')') && (*p != '\0') && (n < MaxPixelChannels); )
         {
+          if (LocaleNCompare(p,"sRGB(",5) == 0)
+            {
+              p+=5;
+              n=2;
+            }
           (void) GetNextToken(p,&p,MagickPathExtent,token);
           if (isdigit((int) ((unsigned char) *token)) != 0)
             {
@@ -674,7 +681,7 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
     scene;
 
   size_t
-    number_images;
+    number_scenes;
 
   /*
     Open output image file.
@@ -689,7 +696,7 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
   if (status == MagickFalse)
     return(status);
   scene=0;
-  number_images=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     char
@@ -788,7 +795,7 @@ static MagickBooleanType WriteTXTImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,number_images);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

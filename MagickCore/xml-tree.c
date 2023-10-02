@@ -220,13 +220,11 @@ MagickPrivate XMLTreeInfo *AddPathToXMLTree(XMLTreeInfo *xml_info,
     subnode[MagickPathExtent],
     tag[MagickPathExtent];
 
-  ssize_t
-    i;
-
   size_t
     number_components;
 
   ssize_t
+    i,
     j;
 
   XMLTreeInfo
@@ -423,9 +421,7 @@ static void DestroyXMLTreeRoot(XMLTreeInfo *xml_info)
     **attributes;
 
   ssize_t
-    i;
-
-  ssize_t
+    i,
     j;
 
   XMLTreeRoot
@@ -533,9 +529,7 @@ MagickPrivate char *FileToXML(const char *filename,const size_t extent)
     offset;
 
   size_t
-    i;
-
-  size_t
+    i,
     length;
 
   ssize_t
@@ -570,7 +564,7 @@ MagickPrivate char *FileToXML(const char *filename,const size_t extent)
       if ((fstat(file,&file_stats) == 0) && (file_stats.st_size > 0))
         quantum=(size_t) MagickMin(file_stats.st_size,MagickMaxBufferExtent);
       xml=(char *) AcquireQuantumMemory(quantum,sizeof(*xml));
-      for (i=0; xml != (char *) NULL; i+=count)
+      for (i=0; xml != (char *) NULL; i+=(size_t) count)
       {
         count=read(file,xml+i,quantum);
         if (count <= 0)
@@ -585,7 +579,7 @@ MagickPrivate char *FileToXML(const char *filename,const size_t extent)
             break;
           }
         xml=(char *) ResizeQuantumMemory(xml,i+quantum+1,sizeof(*xml));
-        if ((size_t) (i+count) >= extent)
+        if ((i+(size_t) count) >= extent)
           break;
       }
       if (LocaleCompare(filename,"-") != 0)
@@ -597,7 +591,7 @@ MagickPrivate char *FileToXML(const char *filename,const size_t extent)
           xml=(char *) RelinquishMagickMemory(xml);
           return((char *) NULL);
         }
-      length=(size_t) MagickMin(i+count,extent);
+      length=MagickMin(i+(size_t) count,extent);
       xml[length]='\0';
       return(xml);
     }
@@ -619,9 +613,10 @@ MagickPrivate char *FileToXML(const char *filename,const size_t extent)
   else
     {
       (void) lseek(file,0,SEEK_SET);
-      for (i=0; i < length; i+=count)
+      for (i=0; i < length; i+=(size_t) count)
       {
-        count=read(file,xml+i,(size_t) MagickMin(length-i,(size_t) MAGICK_SSIZE_MAX));
+        count=read(file,xml+i,(size_t) MagickMin(length-i,(size_t)
+          MAGICK_SSIZE_MAX));
         if (count <= 0)
           {
             count=0;
@@ -705,9 +700,7 @@ MagickExport const char *GetXMLTreeAttribute(XMLTreeInfo *xml_info,
   const char *tag)
 {
   ssize_t
-    i;
-
-  ssize_t
+    i,
     j;
 
   XMLTreeRoot
@@ -933,13 +926,11 @@ MagickPrivate XMLTreeInfo *GetXMLTreePath(XMLTreeInfo *xml_info,
     subnode[MagickPathExtent],
     tag[MagickPathExtent];
 
-  ssize_t
-    i;
-
   size_t
     number_components;
 
   ssize_t
+    i,
     j;
 
   XMLTreeInfo
@@ -1223,13 +1214,11 @@ static char *ConvertUTF16ToUTF8(const char *content,size_t *length)
     c,
     encoding;
 
-  ssize_t
-    i;
-
   size_t
     extent;
 
   ssize_t
+    i,
     j;
 
   utf8=(char *) AcquireQuantumMemory(*length+1,sizeof(*utf8));
@@ -1282,7 +1271,7 @@ static char *ConvertUTF16ToUTF8(const char *content,size_t *length)
     while (bits != 0)
     {
       bits--;
-      utf8[j]=0x80 | ((c >> (6*bits)) & 0x3f);
+      utf8[j]=(char) (0x80 | ((c >> (6*bits)) & 0x3f));
       j++;
     }
   }
@@ -1296,24 +1285,20 @@ static char *ConvertUTF16ToUTF8(const char *content,size_t *length)
 static char *ParseEntities(char *xml,char **entities,int state)
 {
   char
-    *entity;
+    *entity,
+    *p,
+    *q;
 
   int
     byte,
     c;
-
-  char
-    *p,
-    *q;
-
-  ssize_t
-    i;
 
   size_t
     extent,
     length;
 
   ssize_t
+    i,
     offset;
 
   /*
@@ -1331,7 +1316,7 @@ static char *ParseEntities(char *xml,char **entities,int state)
   for (xml=p; ; )
   {
     while ((*xml != '\0') && (*xml != '&') && ((*xml != '%') ||
-           (state != '%')) && (isspace((int) ((unsigned char) *xml) == 0)))
+           (state != '%')) && (isspace((int) ((unsigned char) *xml)) == 0))
       xml++;
     if (*xml == '\0')
       break;
@@ -1407,7 +1392,7 @@ static char *ParseEntities(char *xml,char **entities,int state)
                     ((length-1L) >= (size_t) (entity-xml)))
                   {
                     offset=(ssize_t) (xml-p);
-                    extent=(size_t) (offset+length+strlen(entity));
+                    extent=((size_t) offset+length+strlen(entity));
                     if (p != q)
                       {
                         p=(char *) ResizeQuantumMemory(p,extent+1,sizeof(*p));
@@ -1441,7 +1426,7 @@ static char *ParseEntities(char *xml,char **entities,int state)
         }
       else
         if (((state == ' ') || (state == '*')) &&
-            (isspace((int) ((unsigned char) *xml) != 0)))
+            (isspace((int) ((unsigned char) *xml)) != 0))
           *(xml++)=' ';
         else
           xml++;
@@ -1546,9 +1531,7 @@ static void ParseProcessingInstructions(XMLTreeRoot *root,char *xml,
     *target;
 
   ssize_t
-    i;
-
-  ssize_t
+    i,
     j;
 
   target=xml;
@@ -1621,22 +1604,20 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
     *c,
     **entities,
     *n,
-    **predefined_entitites,
+    **predefined_entities,
     q,
     *t,
     *v;
 
   ssize_t
-    i;
-
-  ssize_t
+    i,
     j;
 
   n=(char *) NULL;
-  predefined_entitites=(char **) AcquireMagickMemory(sizeof(sentinel));
-  if (predefined_entitites == (char **) NULL)
+  predefined_entities=(char **) AcquireMagickMemory(sizeof(sentinel));
+  if (predefined_entities == (char **) NULL)
     ThrowFatalException(ResourceLimitError,"MemoryAllocationFailed");
-  (void) memcpy(predefined_entitites,sentinel,sizeof(sentinel));
+  (void) memcpy(predefined_entities,sentinel,sizeof(sentinel));
   for (xml[length]='\0'; xml != (char *) NULL; )
   {
     while ((*xml != '\0') && (*xml != '<') && (*xml != '%'))
@@ -1670,14 +1651,14 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
             xml=strchr(xml,'>');
             continue;
           }
-        entities=(*c == '%') ? predefined_entitites : root->entities;
+        entities=(*c == '%') ? predefined_entities : root->entities;
         for (i=0; entities[i] != (char *) NULL; i++) ;
         entities=(char **) ResizeQuantumMemory(entities,(size_t) (i+3),
           sizeof(*entities));
         if (entities == (char **) NULL)
           ThrowFatalException(ResourceLimitFatalError,"MemoryAllocationFailed");
         if (*c == '%')
-          predefined_entitites=entities;
+          predefined_entities=entities;
         else
           root->entities=entities;
         xml++;
@@ -1688,7 +1669,7 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
             *xml='\0';
             xml++;
           }
-        entities[i+1]=ParseEntities(v,predefined_entitites,'%');
+        entities[i+1]=ParseEntities(v,predefined_entities,'%');
         entities[i+2]=(char *) NULL;
         if (ValidateEntities(n,entities[i+1],0,entities) != MagickFalse)
           entities[i]=n;
@@ -1698,8 +1679,8 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
               entities[i+1]=DestroyString(entities[i+1]);
             (void) ThrowMagickException(exception,GetMagickModule(),
               OptionWarning,"ParseError","circular entity declaration &%s",n);
-            predefined_entitites=(char **) RelinquishMagickMemory(
-              predefined_entitites);
+            predefined_entities=(char **) RelinquishMagickMemory(
+              predefined_entities);
             return(MagickFalse);
           }
         }
@@ -1714,8 +1695,8 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
               {
                 (void) ThrowMagickException(exception,GetMagickModule(),
                   OptionWarning,"ParseError","unclosed <!ATTLIST");
-                predefined_entitites=(char **) RelinquishMagickMemory(
-                  predefined_entitites);
+                predefined_entities=(char **) RelinquishMagickMemory(
+                  predefined_entities);
                 return(MagickFalse);
               }
             xml=t+strcspn(t,XMLWhitespace ">");
@@ -1737,8 +1718,8 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
                 {
                   (void) ThrowMagickException(exception,GetMagickModule(),
                     OptionWarning,"ParseError","malformed <!ATTLIST");
-                  predefined_entitites=(char **) RelinquishMagickMemory(
-                    predefined_entitites);
+                  predefined_entities=(char **) RelinquishMagickMemory(
+                    predefined_entities);
                   return(MagickFalse);
                 }
               xml+=strspn(xml+1,XMLWhitespace)+1;
@@ -1751,8 +1732,8 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
                 {
                   (void) ThrowMagickException(exception,GetMagickModule(),
                     OptionWarning,"ParseError","malformed <!ATTLIST");
-                  predefined_entitites=(char **) RelinquishMagickMemory(
-                    predefined_entitites);
+                  predefined_entities=(char **) RelinquishMagickMemory(
+                    predefined_entities);
                   return(MagickFalse);
                 }
               xml+=strspn(xml,XMLWhitespace ")");
@@ -1773,8 +1754,8 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
                   {
                     (void) ThrowMagickException(exception,GetMagickModule(),
                       OptionWarning,"ParseError","malformed <!ATTLIST");
-                    predefined_entitites=(char **) RelinquishMagickMemory(
-                      predefined_entitites);
+                    predefined_entities=(char **) RelinquishMagickMemory(
+                      predefined_entities);
                     return(MagickFalse);
                   }
               if (root->attributes[i] == (char **) NULL)
@@ -1836,7 +1817,7 @@ static MagickBooleanType ParseInternalDoctype(XMLTreeRoot *root,char *xml,
                if ((*(xml++) == '%') && (root->standalone == MagickFalse))
                  break;
     }
-  predefined_entitites=(char **) RelinquishMagickMemory(predefined_entitites);
+  predefined_entities=(char **) RelinquishMagickMemory(predefined_entities);
   return(MagickTrue);
 }
 
@@ -1883,6 +1864,7 @@ MagickExport XMLTreeInfo *NewXMLTree(const char *xml,ExceptionInfo *exception)
   char
     **attribute,
     **attributes,
+    *p,
     *tag,
     *utf8;
 
@@ -1893,17 +1875,12 @@ MagickExport XMLTreeInfo *NewXMLTree(const char *xml,ExceptionInfo *exception)
   MagickBooleanType
     status;
 
-  char
-    *p;
-
-  ssize_t
-    i;
-
   size_t
     ignore_depth,
     length;
 
   ssize_t
+    i,
     j,
     l;
 
@@ -2418,9 +2395,7 @@ MagickPrivate XMLTreeInfo *SetXMLTreeAttribute(XMLTreeInfo *xml_info,
   const char *tag,const char *value)
 {
   ssize_t
-    i;
-
-  ssize_t
+    i,
     j;
 
   assert(xml_info != (XMLTreeInfo *) NULL);
@@ -2571,7 +2546,7 @@ static char *EncodePredefinedEntities(const char *source,ssize_t offset,
       if (*destination == (char *) NULL)
         return(*destination);
     }
-  *length+=FormatLocaleString(*destination+(*length),*extent,"%s",
+  *length+=(size_t) FormatLocaleString(*destination+(*length),*extent,"%s",
     canonical_content);
   canonical_content=DestroyString(canonical_content);
   return(*destination);
@@ -2586,13 +2561,11 @@ static char *XMLTreeTagToXML(XMLTreeInfo *xml_info,char **source,size_t *length,
   const char
     *attribute;
 
-  ssize_t
-    i;
-
   size_t
     offset;
 
   ssize_t
+    i,
     j;
 
   content=(char *) "";
@@ -2608,7 +2581,8 @@ static char *XMLTreeTagToXML(XMLTreeInfo *xml_info,char **source,size_t *length,
       if (*source == (char *) NULL)
         return(*source);
     }
-  *length+=FormatLocaleString(*source+(*length),*extent,"<%s",xml_info->tag);
+  *length+=(size_t) FormatLocaleString(*source+(*length),*extent,
+    "<%s",xml_info->tag);
   for (i=0; xml_info->attributes[i]; i+=2)
   {
     attribute=GetXMLTreeAttribute(xml_info,xml_info->attributes[i]);
@@ -2621,11 +2595,11 @@ static char *XMLTreeTagToXML(XMLTreeInfo *xml_info,char **source,size_t *length,
         if (*source == (char *) NULL)
           return((char *) NULL);
       }
-    *length+=FormatLocaleString(*source+(*length),*extent," %s=\"",
+    *length+=(size_t) FormatLocaleString(*source+(*length),*extent," %s=\"",
       xml_info->attributes[i]);
     (void) EncodePredefinedEntities(xml_info->attributes[i+1],-1,source,length,
       extent,MagickTrue);
-    *length+=FormatLocaleString(*source+(*length),*extent,"\"");
+    *length+=(size_t) FormatLocaleString(*source+(*length),*extent,"\"");
   }
   i=0;
   while ((attributes[i] != (char **) NULL) &&
@@ -2648,15 +2622,15 @@ static char *XMLTreeTagToXML(XMLTreeInfo *xml_info,char **source,size_t *length,
         if (*source == (char *) NULL)
           return((char *) NULL);
       }
-    *length+=FormatLocaleString(*source+(*length),*extent," %s=\"",
+    *length+=(size_t) FormatLocaleString(*source+(*length),*extent," %s=\"",
       attributes[i][j]);
     (void) EncodePredefinedEntities(attributes[i][j+1],-1,source,length,extent,
       MagickTrue);
-    *length+=FormatLocaleString(*source+(*length),*extent,"\"");
+    *length+=(size_t) FormatLocaleString(*source+(*length),*extent,"\"");
     j+=3;
   }
-  *length+=FormatLocaleString(*source+(*length),*extent,*xml_info->content ?
-    ">" : "/>");
+  *length+=(size_t) FormatLocaleString(*source+(*length),*extent,
+    *xml_info->content ? ">" : "/>");
   if (xml_info->child != (XMLTreeInfo *) NULL)
     *source=XMLTreeTagToXML(xml_info->child,source,length,extent,0,attributes);
   else
@@ -2670,7 +2644,7 @@ static char *XMLTreeTagToXML(XMLTreeInfo *xml_info,char **source,size_t *length,
         return((char *) NULL);
     }
   if (*xml_info->content != '\0')
-    *length+=FormatLocaleString(*source+(*length),*extent,"</%s>",
+    *length+=(size_t) FormatLocaleString(*source+(*length),*extent,"</%s>",
       xml_info->tag);
   while ((offset < xml_info->offset) && (content[offset] != '\0'))
     offset++;
@@ -2686,20 +2660,16 @@ static char *XMLTreeTagToXML(XMLTreeInfo *xml_info,char **source,size_t *length,
 MagickExport char *XMLTreeInfoToXML(XMLTreeInfo *xml_info)
 {
   char
-    *xml;
-
-  char
     *p,
-    *q;
-
-  ssize_t
-    i;
+    *q,
+    *xml;
 
   size_t
     extent,
     length;
 
   ssize_t
+    i,
     j,
     k;
 
@@ -2747,7 +2717,7 @@ MagickExport char *XMLTreeInfoToXML(XMLTreeInfo *xml_info)
             if (xml == (char *) NULL)
               return(xml);
           }
-        length+=FormatLocaleString(xml+length,extent,"<?%s%s%s?>\n",q,
+        length+=(size_t) FormatLocaleString(xml+length,extent,"<?%s%s%s?>\n",q,
           *p != '\0' ? " " : "",p);
         p=root->processing_instructions[i][j];
       }
@@ -2781,7 +2751,7 @@ MagickExport char *XMLTreeInfoToXML(XMLTreeInfo *xml_info)
             if (xml == (char *) NULL)
               return(xml);
           }
-        length+=FormatLocaleString(xml+length,extent,"\n<?%s%s%s?>",q,
+        length+=(size_t) FormatLocaleString(xml+length,extent,"\n<?%s%s%s?>",q,
           *p != '\0' ? " " : "",p);
         p=root->processing_instructions[i][j];
       }

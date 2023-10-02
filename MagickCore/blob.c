@@ -93,6 +93,7 @@
 #include <io.h>
 #define _O_BINARY O_BINARY
 #endif
+
 /*
   Typedef declarations.
 */
@@ -369,7 +370,7 @@ MagickExport MagickBooleanType BlobToFile(char *filename,const void *blob,
       ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
       return(MagickFalse);
     }
-  for (i=0; i < length; i+=count)
+  for (i=0; i < length; i+=(size_t) count)
   {
     count=write(file,(const char *) blob+i,MagickMin(length-i,(size_t)
       MAGICK_SSIZE_MAX));
@@ -761,7 +762,7 @@ MagickExport MagickBooleanType CloseBlob(Image *image)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  CustomStreamToImage() is the equivalent of ReadImage(), but reads the
-%  formatted "file" from the suplied method rather than to an actual file.
+%  formatted "file" from the supplied method rather than to an actual file.
 %
 %  The format of the CustomStreamToImage method is:
 %
@@ -1137,7 +1138,7 @@ MagickExport void DisassociateBlob(Image *image)
 MagickExport MagickBooleanType DiscardBlobBytes(Image *image,
   const MagickSizeType length)
 {
-  MagickOffsetType
+  MagickSizeType
     i;
 
   size_t
@@ -1154,7 +1155,7 @@ MagickExport MagickBooleanType DiscardBlobBytes(Image *image,
   if (length != (MagickSizeType) ((MagickOffsetType) length))
     return(MagickFalse);
   count=0;
-  for (i=0; i < (MagickOffsetType) length; i+=count)
+  for (i=0; i < length; i+=(MagickSizeType) count)
   {
     quantum=(size_t) MagickMin(length-i,sizeof(buffer));
     (void) ReadBlobStream(image,quantum,buffer,&count);
@@ -1165,7 +1166,7 @@ MagickExport MagickBooleanType DiscardBlobBytes(Image *image,
           break;
       }
   }
-  return(i < (MagickOffsetType) length ? MagickFalse : MagickTrue);
+  return(i < (MagickSizeType) length ? MagickFalse : MagickTrue);
 }
 
 /*
@@ -1421,6 +1422,7 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
 
   assert(filename != (const char *) NULL);
   assert(exception != (ExceptionInfo *) NULL);
+  assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",filename);
   *length=0;
@@ -1467,7 +1469,7 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
       if ((fstat(file,&file_stats) == 0) && (file_stats.st_size > 0))
         quantum=(size_t) MagickMin(file_stats.st_size,MagickMaxBufferExtent);
       blob=(unsigned char *) AcquireQuantumMemory(quantum,sizeof(*blob));
-      for (i=0; blob != (unsigned char *) NULL; i+=count)
+      for (i=0; blob != (unsigned char *) NULL; i+=(size_t) count)
       {
         count=read(file,blob+i,quantum);
         if (count <= 0)
@@ -1476,14 +1478,14 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
             if (errno != EINTR)
               break;
           }
-        if (~((size_t) i) < (quantum+1))
+        if (~i < ((size_t) count+quantum+1))
           {
             blob=(unsigned char *) RelinquishMagickMemory(blob);
             break;
           }
-        blob=(unsigned char *) ResizeQuantumMemory(blob,i+quantum+1,
-          sizeof(*blob));
-        if ((size_t) (i+count) >= extent)
+        blob=(unsigned char *) ResizeQuantumMemory(blob,i+(size_t) count+
+          quantum+1,sizeof(*blob));
+        if ((i+(size_t) count) >= extent)
           break;
       }
       if (LocaleCompare(filename,"-") != 0)
@@ -1500,7 +1502,7 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
           ThrowFileException(exception,BlobError,"UnableToReadBlob",filename);
           return(NULL);
         }
-      *length=(size_t) MagickMin(i+count,extent);
+      *length=(size_t) MagickMin(i+(size_t) count,extent);
       blob[*length]='\0';
       return(blob);
     }
@@ -1526,7 +1528,7 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
   else
     {
       (void) lseek(file,0,SEEK_SET);
-      for (i=0; i < *length; i+=count)
+      for (i=0; i < *length; i+=(size_t) count)
       {
         count=read(file,blob+i,(size_t) MagickMin(*length-i,(size_t)
           MAGICK_SSIZE_MAX));
@@ -1608,7 +1610,7 @@ static inline ssize_t WriteBlobStream(Image *image,const size_t length,
     }
   q=blob_info->data+blob_info->offset;
   (void) memcpy(q,data,length);
-  blob_info->offset+=length;
+  blob_info->offset+=(MagickOffsetType) length;
   if (blob_info->offset >= (MagickOffsetType) blob_info->length)
     blob_info->length=(size_t) blob_info->offset;
   return((ssize_t) length);
@@ -2040,6 +2042,7 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
   assert(exception != (ExceptionInfo *) NULL);
+  assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
       image_info->filename);
@@ -2054,7 +2057,7 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
   if (magick_info == (const MagickInfo *) NULL)
     {
       (void) ThrowMagickException(exception,GetMagickModule(),
-        MissingDelegateError,"NoDecodeDelegateForThisImageFormat","`%s'",
+        MissingDelegateError,"NoEncodeDelegateForThisImageFormat","`%s'",
         image->magick);
       blob_info=DestroyImageInfo(blob_info);
       return(blob);
@@ -2079,12 +2082,15 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
           status=WriteImage(blob_info,image,exception);
           *length=image->blob->length;
           blob=DetachBlob(image->blob);
-          if (blob == (void *) NULL)
-            blob_info->blob=RelinquishMagickMemory(blob_info->blob);
+          if (blob != (void *) NULL)
+            {
+              if (status == MagickFalse)
+                blob=RelinquishMagickMemory(blob);
+              else
+                blob=ResizeQuantumMemory(blob,*length+1,sizeof(unsigned char));
+            }
           else if (status == MagickFalse)
-            blob=RelinquishMagickMemory(blob);
-          else
-            blob=ResizeQuantumMemory(blob,*length+1,sizeof(unsigned char));
+            blob_info->blob=RelinquishMagickMemory(blob_info->blob);
         }
     }
   else
@@ -2115,7 +2121,7 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
               (void) CloseBlob(image);
               (void) fclose(blob_info->file);
               if (status != MagickFalse)
-                blob=FileToBlob(unique,~0UL,length,exception);
+                blob=FileToBlob(unique,SIZE_MAX,length,exception);
             }
           (void) RelinquishUniqueFileResource(unique);
         }
@@ -2360,7 +2366,7 @@ MagickExport MagickBooleanType ImageToFile(Image *image,char *filename,
   for (i=0; count > 0; )
   {
     length=(size_t) count;
-    for (i=0; i < length; i+=count)
+    for (i=0; i < length; i+=(size_t) count)
     {
       count=write(file,p+i,(size_t) (length-i));
       if (count <= 0)
@@ -2429,7 +2435,7 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
     *magick_info;
 
   ImageInfo
-    *clone_info;
+    *blob_info;
 
   MagickBooleanType
     status;
@@ -2447,35 +2453,35 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
       image_info->filename);
   *length=0;
   blob=(unsigned char *) NULL;
-  clone_info=CloneImageInfo(image_info);
-  (void) SetImageInfo(clone_info,(unsigned int) GetImageListLength(images),
+  blob_info=CloneImageInfo(image_info);
+  (void) SetImageInfo(blob_info,(unsigned int) GetImageListLength(images),
     exception);
-  if (*clone_info->magick != '\0')
-    (void) CopyMagickString(images->magick,clone_info->magick,MagickPathExtent);
+  if (*blob_info->magick != '\0')
+    (void) CopyMagickString(images->magick,blob_info->magick,MagickPathExtent);
   magick_info=GetMagickInfo(images->magick,exception);
   if (magick_info == (const MagickInfo *) NULL)
     {
       (void) ThrowMagickException(exception,GetMagickModule(),
-        MissingDelegateError,"NoDecodeDelegateForThisImageFormat","`%s'",
+        MissingDelegateError,"NoEncodeDelegateForThisImageFormat","`%s'",
         images->magick);
-      clone_info=DestroyImageInfo(clone_info);
+      blob_info=DestroyImageInfo(blob_info);
       return(blob);
     }
   if (GetMagickAdjoin(magick_info) == MagickFalse)
     {
-      clone_info=DestroyImageInfo(clone_info);
+      blob_info=DestroyImageInfo(blob_info);
       return(ImageToBlob(image_info,images,length,exception));
     }
-  (void) CopyMagickString(clone_info->magick,images->magick,MagickPathExtent);
+  (void) CopyMagickString(blob_info->magick,images->magick,MagickPathExtent);
   if (GetMagickBlobSupport(magick_info) != MagickFalse)
     {
       /*
         Native blob support for this images format.
       */
-      clone_info->length=0;
-      clone_info->blob=(void *) AcquireQuantumMemory(MagickMaxBlobExtent,
+      blob_info->length=0;
+      blob_info->blob=AcquireQuantumMemory(MagickMaxBlobExtent,
         sizeof(unsigned char));
-      if (clone_info->blob == (void *) NULL)
+      if (blob_info->blob == (void *) NULL)
         (void) ThrowMagickException(exception,GetMagickModule(),
           ResourceLimitError,"MemoryAllocationFailed","`%s'",images->filename);
       else
@@ -2483,15 +2489,18 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
           (void) CloseBlob(images);
           images->blob->exempt=MagickTrue;
           *images->filename='\0';
-          status=WriteImages(clone_info,images,images->filename,exception);
+          status=WriteImages(blob_info,images,images->filename,exception);
           *length=images->blob->length;
           blob=DetachBlob(images->blob);
-          if (blob == (void *) NULL)
-            clone_info->blob=RelinquishMagickMemory(clone_info->blob);
+          if (blob != (void *) NULL)
+            {
+              if (status == MagickFalse)
+                blob=RelinquishMagickMemory(blob);
+              else
+                blob=ResizeQuantumMemory(blob,*length+1,sizeof(unsigned char));
+            }
           else if (status == MagickFalse)
-            blob=RelinquishMagickMemory(blob);
-          else
-            blob=ResizeQuantumMemory(blob,*length+1,sizeof(unsigned char));
+            blob_info->blob=RelinquishMagickMemory(blob_info->blob);
         }
     }
   else
@@ -2514,21 +2523,21 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
         }
       else
         {
-          clone_info->file=fdopen(file,"wb");
-          if (clone_info->file != (FILE *) NULL)
+          blob_info->file=fdopen(file,"wb");
+          if (blob_info->file != (FILE *) NULL)
             {
               (void) FormatLocaleString(filename,MagickPathExtent,"%s:%s",
                 images->magick,unique);
-              status=WriteImages(clone_info,images,filename,exception);
+              status=WriteImages(blob_info,images,filename,exception);
               (void) CloseBlob(images);
-              (void) fclose(clone_info->file);
+              (void) fclose(blob_info->file);
               if (status != MagickFalse)
-                blob=FileToBlob(unique,~0UL,length,exception);
+                blob=FileToBlob(unique,SIZE_MAX,length,exception);
             }
           (void) RelinquishUniqueFileResource(unique);
         }
     }
-  clone_info=DestroyImageInfo(clone_info);
+  blob_info=DestroyImageInfo(blob_info);
   return(blob);
 }
 
@@ -3170,9 +3179,9 @@ MagickExport void MSBOrderShort(unsigned char *p,const size_t length)
 %
 %  OpenBlob() opens a file associated with the image.  A file name of '-' sets
 %  the file to stdin for type 'r' and stdout for type 'w'.  If the filename
-%  suffix is '.gz' or '.Z', the image is decompressed for type 'r' and
-%  compressed for type 'w'.  If the filename prefix is '|', it is piped to or
-%  from a system command.
+%  suffix is '.gz', the image is decompressed for type 'r' and compressed for
+%  type 'w'.  If the filename prefix is '|', it is piped to or from a system
+%  command.
 %
 %  The format of the OpenBlob method is:
 %
@@ -3329,7 +3338,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       char
         fileMode[2];
 
-      *fileMode =(*type);
+      *fileMode=(*type);
       fileMode[1]='\0';
       blob_info->file_info.file=fdopen(StringToLong(filename+3),fileMode);
       if (blob_info->file_info.file == (FILE *) NULL)
@@ -3359,7 +3368,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       if (*type == 'w')
         (void) signal(SIGPIPE,SIG_IGN);
 #endif
-      *fileMode =(*type);
+      *fileMode=(*type);
       fileMode[1]='\0';
       sanitize_command=SanitizeString(filename+1);
       blob_info->file_info.file=(FILE *) popen_utf8(sanitize_command,fileMode);
@@ -3528,8 +3537,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       }
     else
 #if defined(MAGICKCORE_ZLIB_DELEGATE)
-      if ((LocaleCompare(extension,"Z") == 0) ||
-          (LocaleCompare(extension,"gz") == 0) ||
+      if ((LocaleCompare(extension,"gz") == 0) ||
           (LocaleCompare(extension,"wmz") == 0) ||
           (LocaleCompare(extension,"svgz") == 0))
         {
@@ -3557,7 +3565,7 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
               }
           }
   blob_info->status=MagickFalse;
-  blob_info->error_number=MagickFalse;
+  blob_info->error_number=0;
   if (blob_info->type != UndefinedStream)
     blob_info->size=GetBlobSize(image);
   else
@@ -3733,8 +3741,8 @@ MagickExport Image *PingBlob(const ImageInfo *image_info,const void *blob,
 %
 %  ReadBlob() reads data from the blob or image file and returns it.  It
 %  returns the number of bytes read. If length is zero, ReadBlob() returns
-%  zero and has no other results. If length is greater than MAGICK_SSIZE_MAX, the
-%  result is unspecified.
+%  zero and has no other results. If length is greater than MAGICK_SSIZE_MAX,
+%  the result is unspecified.
 %
 %  The format of the ReadBlob method is:
 %
@@ -3759,11 +3767,11 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
   int
     c;
 
-  unsigned char
-    *q;
-
   ssize_t
     count;
+
+  unsigned char
+    *q;
 
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
@@ -3797,6 +3805,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 3:
         {
@@ -3805,6 +3814,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 2:
         {
@@ -3813,6 +3823,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 1:
         {
@@ -3821,6 +3832,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 0:
           break;
@@ -3840,10 +3852,10 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
       {
         default:
         {
-          ssize_t
+          size_t
             i;
 
-          for (i=0; i < (ssize_t) length; i+=count)
+          for (i=0; i < length; i+=(size_t) count)
           {
             count=(ssize_t) gzread(blob_info->file_info.gzfile,q+i,
               (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
@@ -3854,7 +3866,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
                   break;
               }
           }
-          count=i;
+          count=(ssize_t) i;
           break;
         }
         case 4:
@@ -3864,6 +3876,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 3:
         {
@@ -3872,6 +3885,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 2:
         {
@@ -3880,6 +3894,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
             break;
           *q++=(unsigned char) c;
           count++;
+          magick_fallthrough;
         }
         case 1:
         {
@@ -3908,13 +3923,13 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
       int
         status;
 
-      ssize_t
+      size_t
         i;
 
-      for (i=0; i < (ssize_t) length; i+=count)
+      for (i=0; i < length; i+=(size_t) count)
       {
-        count=(ssize_t) BZ2_bzread(blob_info->file_info.bzfile,q+i,
-          (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
+        count=(ssize_t) BZ2_bzread(blob_info->file_info.bzfile,q+i,(int)
+          MagickMin(length-i,MagickMaxBufferExtent));
         if (count <= 0)
           {
             count=0;
@@ -3922,7 +3937,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
               break;
           }
       }
-      count=i;
+      count=(ssize_t) i;
       status=BZ_OK;
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&status);
       if ((count != (ssize_t) length) && (status != BZ_OK))
@@ -3989,11 +4004,8 @@ MagickExport int ReadBlobByte(Image *image)
   BlobInfo
     *magick_restrict blob_info;
 
-  const unsigned char
-    *p;
-
-  unsigned char
-    buffer[1];
+  int
+    c;
 
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
@@ -4006,14 +4018,24 @@ MagickExport int ReadBlobByte(Image *image)
     case FileStream:
     case PipeStream:
     {
-      int
-        c;
-
-      p=(const unsigned char *) buffer;
       c=getc(blob_info->file_info.file);
       if (c == EOF)
-        return(EOF);
-      *buffer=(unsigned char) c;
+        {
+          if (ferror(blob_info->file_info.file) != 0)
+            ThrowBlobException(blob_info);
+          return(EOF);
+        }
+      break;
+    }
+    case BlobStream:
+    {
+      if (blob_info->offset >= (MagickOffsetType) blob_info->length)
+        {
+          blob_info->eof=MagickTrue;
+          return(EOF);
+        }
+      c=(int) (*((unsigned char *) blob_info->data+blob_info->offset));
+      blob_info->offset++;
       break;
     }
     default:
@@ -4021,13 +4043,17 @@ MagickExport int ReadBlobByte(Image *image)
       ssize_t
         count;
 
-      p=(const unsigned char *) ReadBlobStream(image,1,buffer,&count);
+      unsigned char
+        buffer[1];
+
+      count=ReadBlob(image,1,buffer);
       if (count != 1)
         return(EOF);
+      c=(int) *buffer;
       break;
     }
   }
-  return((int) (*p));
+  return(c);
 }
 
 /*
@@ -4859,32 +4885,84 @@ MagickExport magick_hot_spot const void *ReadBlobStream(Image *image,
 */
 MagickExport char *ReadBlobString(Image *image,char *string)
 {
-  int
-    c;
+  BlobInfo
+    *magick_restrict blob_info;
 
-  ssize_t
-    i;
+  int
+    c = -1;
+
+  size_t
+    i = 0;
 
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
-  for (i=0; i < (MagickPathExtent-1L); i++)
+  assert(image->blob != (BlobInfo *) NULL);
+  assert(image->blob->type != UndefinedStream);
+  if (IsEventLogging() != MagickFalse)
+    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+  *string='\0';
+  blob_info=image->blob;
+  switch (blob_info->type)
   {
-    c=ReadBlobByte(image);
-    if (c == EOF)
-      {
-        if (i == 0)
+    case UndefinedStream:
+      break;
+    case StandardStream:
+    case FileStream:
+    {
+      char *p = fgets(string,MagickPathExtent,blob_info->file_info.file);
+      if (p == (char *) NULL)
+        {
+          if (ferror(blob_info->file_info.file) != 0)
+            ThrowBlobException(blob_info);
           return((char *) NULL);
-        break;
-      }
-    string[i]=c;
-    if (c == '\n')
+        }
+      i=strlen(string);
+      break;
+    }
+    case ZipStream:
+    {
+#if defined(MAGICKCORE_ZLIB_DELEGATE)
+      char *p = gzgets(blob_info->file_info.gzfile,string,MagickPathExtent);
+      if (p == (char *) NULL)
+        {
+          int status = Z_OK;
+          (void) gzerror(blob_info->file_info.gzfile,&status);
+          if (status != Z_OK)
+            ThrowBlobException(blob_info);
+          return((char *) NULL);
+        }
+      i=strlen(string);
+      break;
+#endif
+    }
+    default:
+    {
+      do
       {
-        if ((i > 0) && (string[i-1] == '\r'))
-          i--;
-        break;
-      }
+        c=ReadBlobByte(image);
+        if (c == EOF)
+          {
+            blob_info->eof=MagickTrue;
+            break;
+          }
+        string[i++]=c;
+        if (c == '\n')
+          break;
+      } while (i < (MaxTextExtent-2));
+      string[i]='\0';
+      break;
+    }
   }
-  string[i]='\0';
+  /*
+    Strip trailing newline.
+  */
+  if ((string[i] == '\r') || (string[i] == '\n'))
+    string[i]='\0';
+  if (i >= 1)
+    if ((string[i-1] == '\r') || (string[i-1] == '\n'))
+      string[i-1]='\0';
+  if ((*string == '\0') && (blob_info->eof != MagickFalse))
+    return((char *) NULL);
   return(string);
 }
 
@@ -5027,7 +5105,7 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
         {
           if (((MagickOffsetType) blob_info->length+offset) < 0)
             return(-1);
-          blob_info->offset=blob_info->length+offset;
+          blob_info->offset=(MagickOffsetType) blob_info->length+offset;
           break;
         }
       }
@@ -5160,7 +5238,7 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
           file=fileno(blob_info->file_info.file);
           if ((file == -1) || (offset < 0))
             return(MagickFalse);
-          (void) posix_fallocate(file,offset,extent-offset);
+          (void) posix_fallocate(file,offset,(MagickOffsetType) extent-offset);
         }
 #endif
       offset=SeekBlob(image,offset,SEEK_SET);
@@ -5208,7 +5286,8 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
               file=fileno(blob_info->file_info.file);
               if ((file == -1) || (offset < 0))
                 return(MagickFalse);
-              (void) posix_fallocate(file,offset,extent-offset);
+              (void) posix_fallocate(file,offset,(MagickOffsetType) extent-
+                offset);
             }
 #endif
           offset=SeekBlob(image,offset,SEEK_SET);
@@ -5672,6 +5751,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 3:
         {
@@ -5679,6 +5759,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 2:
         {
@@ -5686,6 +5767,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 1:
         {
@@ -5693,6 +5775,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 0:
           break;
@@ -5712,10 +5795,10 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
       {
         default:
         {
-          ssize_t
+          size_t
             i;
 
-          for (i=0; i < (ssize_t) length; i+=count)
+          for (i=0; i < length; i+=(size_t) count)
           {
             count=(ssize_t) gzwrite(blob_info->file_info.gzfile,q+i,
               (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
@@ -5726,7 +5809,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
                   break;
               }
           }
-          count=i;
+          count=(ssize_t) i;
           break;
         }
         case 4:
@@ -5735,6 +5818,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 3:
         {
@@ -5742,6 +5826,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 2:
         {
@@ -5749,6 +5834,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 1:
         {
@@ -5756,6 +5842,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           if (c == EOF)
             break;
           count++;
+          magick_fallthrough;
         }
         case 0:
           break;
@@ -5773,10 +5860,10 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
       int
         status;
 
-      ssize_t
+      size_t
         i;
 
-      for (i=0; i < (ssize_t) length; i+=count)
+      for (i=0; i < length; i+=(size_t) count)
       {
         count=(ssize_t) BZ2_bzwrite(blob_info->file_info.bzfile,q+i,
           (int) MagickMin(length-i,MagickMaxBufferExtent));
@@ -5787,7 +5874,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
               break;
           }
       }
-      count=i;
+      count=(ssize_t) i;
       status=BZ_OK;
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&status);
       if ((count != (ssize_t) length) && (status != BZ_OK))
@@ -5820,7 +5907,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
         }
       q=blob_info->data+blob_info->offset;
       (void) memcpy(q,p,length);
-      blob_info->offset+=length;
+      blob_info->offset+=(MagickOffsetType) length;
       if (blob_info->offset >= (MagickOffsetType) blob_info->length)
         blob_info->length=(size_t) blob_info->offset;
       count=(ssize_t) length;

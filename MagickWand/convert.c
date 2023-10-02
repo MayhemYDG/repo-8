@@ -269,6 +269,7 @@ static MagickBooleanType ConvertUsage(void)
       "  -region geometry     apply options to a portion of the image\n"
       "  -render              render vector graphics\n"
       "  -resample geometry   change the resolution of an image\n"
+      "  -reshape geometry    reshape the image\n"
       "  -resize geometry     resize the image\n"
       "  -roll geometry       roll an image vertically or horizontally\n"
       "  -rotate degrees      apply Paeth rotation to the image\n"
@@ -446,7 +447,8 @@ static MagickBooleanType ConvertUsage(void)
       "                       virtual pixel access method\n"
       "  -weight type         render text with this font weight\n"
       "  -white-point point   chromaticity white point\n"
-      "  -write-mask filename associate a write mask with the image",
+      "  -write-mask filename associate a write mask with the image"
+      "  -word-break type     sets whether line breaks appear wherever the text would otherwise overflow",
     stack_operators[] =
       "  -clone indexes       clone an image\n"
       "  -delete indexes      delete the image from the image sequence\n"
@@ -517,7 +519,7 @@ WandExport MagickBooleanType ConvertImageCommand(ImageInfo *image_info,
     *format;
 
   Image
-    *image;
+    *image = (Image *) NULL;
 
   ImageStack
     image_stack[MaxImageStackDepth+1];
@@ -556,7 +558,12 @@ WandExport MagickBooleanType ConvertImageCommand(ImageInfo *image_info,
         }
     }
   if (argc < 3)
-    return(ConvertUsage());
+    {
+      (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
+        "MissingArgument","%s","");
+      (void) ConvertUsage();
+      return(MagickFalse);
+    }
   filename=(char *) NULL;
   format="%w,%h,%m";
   j=1;
@@ -612,7 +619,7 @@ WandExport MagickBooleanType ConvertImageCommand(ImageInfo *image_info,
           images=PingImages(image_info,filename,exception);
         else
           images=ReadImages(image_info,filename,exception);
-        status&=(images != (Image *) NULL) &&
+        status&=(MagickStatusType) (images != (Image *) NULL) &&
           (exception->severity < ErrorException);
         if (images == (Image *) NULL)
           continue;
@@ -2644,6 +2651,17 @@ WandExport MagickBooleanType ConvertImageCommand(ImageInfo *image_info,
               ThrowConvertInvalidArgumentException(option,argv[i]);
             break;
           }
+        if (LocaleCompare("reshape",option+1) == 0)
+          {
+            if (*option == '+')
+              break;
+            i++;
+            if (i == (ssize_t) argc)
+              ThrowConvertException(OptionError,"MissingArgument",option);
+            if (IsGeometry(argv[i]) == MagickFalse)
+              ThrowConvertInvalidArgumentException(option,argv[i]);
+            break;
+          }
         if (LocaleCompare("resize",option+1) == 0)
           {
             if (*option == '+')
@@ -3288,6 +3306,22 @@ WandExport MagickBooleanType ConvertImageCommand(ImageInfo *image_info,
               ThrowConvertInvalidArgumentException(option,argv[i]);
             break;
           }
+        if (LocaleCompare("word-break",option+1) == 0)
+          {
+            ssize_t
+              word_break;
+
+            if (*option == '+')
+              break;
+            i++;
+            if (i == (ssize_t) argc)
+              ThrowConvertException(OptionError,"MissingArgument",option);
+            word_break=ParseCommandOption(MagickWordBreakOptions,MagickFalse,
+              argv[i]);
+            if (word_break < 0)
+              ThrowConvertException(OptionError,"UnrecognizedArgument",argv[i]);
+            break;
+          }
         if (LocaleCompare("write",option+1) == 0)
           {
             i++;
@@ -3327,7 +3361,8 @@ WandExport MagickBooleanType ConvertImageCommand(ImageInfo *image_info,
     ThrowConvertException(OptionError,"MissingAnImageFilename",argv[argc-1]);
   if (LocaleCompare(" ",argv[argc-1]) == 0)  /* common line continuation error */
     ThrowConvertException(OptionError,"MissingAnImageFilename",argv[argc-1]);
-  status&=WriteImages(image_info,image,argv[argc-1],exception);
+  status&=(MagickStatusType) WriteImages(image_info,image,argv[argc-1],
+    exception);
   if (metadata != (char **) NULL)
     {
       char

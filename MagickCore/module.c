@@ -103,7 +103,7 @@ static const ModuleInfo
 
 static MagickBooleanType
   GetMagickModulePath(const char *,MagickModuleType,char *,ExceptionInfo *),
-  IsModuleTreeInstantiated(),
+  IsModuleTreeInstantiated(void),
   UnregisterModule(const ModuleInfo *,ExceptionInfo *);
 
 static void
@@ -639,7 +639,7 @@ static MagickBooleanType GetMagickModulePath(const char *filename,
 #if defined(MAGICKCORE_WINDOWS_SUPPORT)
     {
       const char
-        *registery_key;
+        *registry_key;
 
       unsigned char
         *key_value;
@@ -652,20 +652,20 @@ static MagickBooleanType GetMagickModulePath(const char *filename,
         case MagickImageCoderModule:
         default:
         {
-          registery_key="CoderModulesPath";
+          registry_key="CoderModulesPath";
           break;
         }
         case MagickImageFilterModule:
         {
-          registery_key="FilterModulesPath";
+          registry_key="FilterModulesPath";
           break;
         }
       }
-      key_value=NTRegistryKeyLookup(registery_key);
+      key_value=NTRegistryKeyLookup(registry_key);
       if (key_value == (unsigned char *) NULL)
         {
           ThrowMagickException(exception,GetMagickModule(),ConfigureError,
-            "RegistryKeyLookupFailed","`%s'",registery_key);
+            "RegistryKeyLookupFailed","`%s'",registry_key);
           return(MagickFalse);
         }
       (void) FormatLocaleString(path,MagickPathExtent,"%s%s%s",(char *)
@@ -867,7 +867,7 @@ static void *DestroyModuleNode(void *module_info)
   return(RelinquishMagickMemory(p));
 }
 
-static MagickBooleanType IsModuleTreeInstantiated()
+static MagickBooleanType IsModuleTreeInstantiated(void)
 {
   if (module_list == (SplayTreeInfo *) NULL)
     {
@@ -893,9 +893,11 @@ static MagickBooleanType IsModuleTreeInstantiated()
           if (status == MagickFalse)
             ThrowFatalException(ResourceLimitFatalError,
               "MemoryAllocationFailed");
+#if defined(MAGICKCORE_LTDL_DELEGATE)
           if (lt_dlinit() != 0)
             ThrowFatalException(ModuleFatalError,
               "UnableToInitializeModuleLoader");
+#endif
           module_list=splay_tree;
         }
       UnlockSemaphoreInfo(module_semaphore);
@@ -1257,6 +1259,7 @@ MagickPrivate MagickBooleanType OpenModule(const char *module,
   p=GetCoderInfo(module,exception);
   if (p != (CoderInfo *) NULL)
     (void) CopyMagickString(module_name,p->name,MagickPathExtent);
+  LocaleUpper(module_name);
   rights=(PolicyRights) (ReadPolicyRights | WritePolicyRights);
   if (IsRightsAuthorized(ModulePolicyDomain,rights,module_name) == MagickFalse)
     {

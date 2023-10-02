@@ -145,6 +145,9 @@ static Image *ReadGRAYImage(const ImageInfo *image_info,
   image=AcquireImage(image_info,exception);
   if ((image->columns == 0) || (image->rows == 0))
     ThrowReaderException(OptionError,"MustSpecifyImageSize");
+  status=SetImageExtent(image,image->columns,image->rows,exception);
+  if (status == MagickFalse)
+    return(DestroyImageList(image));
   (void) SetImageColorspace(image,GRAYColorspace,exception);
   if (image_info->interlace != PartitionInterlace)
     {
@@ -814,8 +817,8 @@ static MagickBooleanType WriteGRAYImage(const ImageInfo *image_info,
     quantum_type;
 
   size_t
-    imageListLength,
-    length;
+    length,
+    number_scenes;
 
   ssize_t
     count,
@@ -846,7 +849,7 @@ static MagickBooleanType WriteGRAYImage(const ImageInfo *image_info,
   if (LocaleCompare(image_info->magick,"GRAYA") == 0)
     quantum_type=GrayAlphaQuantum;
   scene=0;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     /*
@@ -854,7 +857,7 @@ static MagickBooleanType WriteGRAYImage(const ImageInfo *image_info,
     */
     (void) TransformImageColorspace(image,GRAYColorspace,exception);
     if ((LocaleCompare(image_info->magick,"GRAYA") == 0) &&
-        (image->alpha_trait == UndefinedPixelTrait))
+        ((image->alpha_trait & BlendPixelTrait) == 0))
       (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
     quantum_info=AcquireQuantumInfo(image_info,image);
     if (quantum_info == (QuantumInfo *) NULL)
@@ -1062,7 +1065,7 @@ static MagickBooleanType WriteGRAYImage(const ImageInfo *image_info,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

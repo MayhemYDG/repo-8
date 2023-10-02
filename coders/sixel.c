@@ -18,7 +18,7 @@
 %                    Based on kmiya's sixel (2014-03-28)                      %
 %                                                                             %
 %                                                                             %
-%  Copyright @ 2014 ImageMagick Studio LLC, a non-profit organization         %
+%  Copyright @ 1999 ImageMagick Studio LLC, a non-profit organization         %
 %  dedicated to making software imaging solutions freely available.           %
 %                                                                             %
 %  You may not use this file except in compliance with the License.  You may  %
@@ -57,6 +57,7 @@
 #include "MagickCore/image.h"
 #include "MagickCore/image-private.h"
 #include "MagickCore/list.h"
+#include "MagickCore/locale_.h"
 #include "MagickCore/magick.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/monitor.h"
@@ -120,7 +121,7 @@ typedef struct sixel_output {
     *node_top;
 
   unsigned char
-    buffer[SIXEL_OUTPUT_PACKET_SIZE*2],
+    buffer[MagickMax(SIXEL_OUTPUT_PACKET_SIZE*2,MagickPathExtent)],
     has_8bit_control; /* 0: 7bit terminal, 1: 8bit terminal */
 } sixel_output_t;
 
@@ -181,19 +182,19 @@ static int hls_to_rgb(int hue, int lum, int sat)
     r;
 
   if (sat == 0)
-    r=g=b=(lum*RGBMAX)/HLSMAX;
+    r=g=b=(lum*(ssize_t) RGBMAX)/HLSMAX;
   else
     {
       if (lum <= (HLSMAX / 2))
         magic2=(int) (((ssize_t) lum*((ssize_t) HLSMAX+sat)+(HLSMAX/2))/HLSMAX);
       else
         magic2=(int) (lum+sat-(((ssize_t) lum*sat)+(HLSMAX/2))/HLSMAX);
-      magic1=2*lum-magic2;
-      r=(hue_to_rgb(magic1,magic2,(ssize_t) hue+(HLSMAX/3))*RGBMAX+(HLSMAX/2))/
-        HLSMAX;
-      g=(hue_to_rgb(magic1,magic2,hue)*RGBMAX+(ssize_t) (HLSMAX/2))/HLSMAX;
-      b=(hue_to_rgb(magic1,magic2,(ssize_t) hue-(HLSMAX/3))*RGBMAX+(HLSMAX/2))/
-        HLSMAX;
+      magic1=(int) (2*(ssize_t) lum-magic2);
+      b=(hue_to_rgb(magic1,magic2,(ssize_t) hue+(HLSMAX/3))*(ssize_t) RGBMAX+
+        (HLSMAX/2))/HLSMAX;
+      r=(hue_to_rgb(magic1,magic2,hue)*RGBMAX+(ssize_t) (HLSMAX/2))/HLSMAX;
+      g=(hue_to_rgb(magic1,magic2,(ssize_t) hue-(HLSMAX/3))*(ssize_t) RGBMAX+
+        (HLSMAX/2))/HLSMAX;
     }
   return(SIXEL_RGB(r,g,b));
 }
@@ -259,8 +260,8 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
     max_x,
     max_y,
     param[10],
-    posision_x,
-    posision_y,
+    position_x,
+    position_y,
     r,
     repeat_count,
     sixel_palet[SIXEL_PALETTE_MAX],
@@ -277,7 +278,7 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
     offset;
 
   extent=strlen((char *) p);
-  posision_x=posision_y=0;
+  position_x=position_y=0;
   max_x=max_y=0;
   attributed_pan=2;
   attributed_pad=1;
@@ -289,9 +290,9 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
   memset(param,0,sizeof(param));
   imsx=2048;
   imsy=2048;
-  if (SetImageExtent(image,imsx,imsy,exception) == MagickFalse)
+  if (SetImageExtent(image,(size_t) imsx,(size_t) imsy,exception) == MagickFalse)
     return(MagickFalse);
-  imbuf=(sixel_pixel_t *) AcquireQuantumMemory(imsx,imsy*sizeof(sixel_pixel_t));
+  imbuf=(sixel_pixel_t *) AcquireQuantumMemory((size_t) imsx,(size_t) imsy*sizeof(sixel_pixel_t));
   if (imbuf == (sixel_pixel_t *) NULL)
     return(MagickFalse);
   for (n = 0; n < 16; n++)
@@ -395,19 +396,19 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
           {
             dmsx=imsx > attributed_ph ? imsx : attributed_ph;
             dmsy=imsy > attributed_pv ? imsy : attributed_pv;
-            if (SetImageExtent(image,dmsx,dmsy,exception) == MagickFalse)
+            if (SetImageExtent(image,(size_t) dmsx,(size_t) dmsy,exception) == MagickFalse)
               break;
-            dmbuf=(sixel_pixel_t *) AcquireQuantumMemory(dmsx,dmsy*
-              sizeof(sixel_pixel_t));
+            dmbuf=(sixel_pixel_t *) AcquireQuantumMemory((size_t) dmsx,(size_t)
+              dmsy*sizeof(sixel_pixel_t));
             if (dmbuf == (sixel_pixel_t *) NULL)
               {
                 imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
                 return(MagickFalse);
               }
-            (void) memset(dmbuf,background_color_index,(size_t) dmsx*dmsy*
-              sizeof(sixel_pixel_t));
+            (void) memset(dmbuf,background_color_index,(size_t) dmsx*(size_t)
+              dmsy*sizeof(sixel_pixel_t));
             for (y = 0; y < imsy; ++y)
-              (void) memcpy(dmbuf+dmsx*y,imbuf+imsx*y,imsx*
+              (void) memcpy(dmbuf+dmsx*y,imbuf+imsx*y,(size_t) imsx*
                 sizeof(sixel_pixel_t));
             imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
             imsx=dmsx;
@@ -470,20 +471,20 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
       {
         /* DECGCR Graphics Carriage Return */
         p++;
-        posision_x=0;
+        position_x=0;
         repeat_count=1;
       }
     else if (*p == '-')
       {
         /* DECGNL Graphics Next Line */
         p++;
-        posision_x=0;
-        posision_y+=6;
+        position_x=0;
+        position_y+=6;
         repeat_count=1;
       }
     else if ((*p >= '?') && (*p <= '\177'))
       {
-        if ((imsx < (posision_x + repeat_count)) || (imsy < (posision_y + 6)))
+        if ((imsx < (position_x + repeat_count)) || (imsy < (position_y + 6)))
           {
             int
               nx,
@@ -492,7 +493,7 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
             nx=imsx*2;
             ny=imsy*2;
 
-            while ((nx < (posision_x + repeat_count)) || (ny < (posision_y + 6)))
+            while ((nx < (position_x + repeat_count)) || (ny < (position_y + 6)))
             {
               nx *= 2;
               ny *= 2;
@@ -500,19 +501,19 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
 
             dmsx=nx;
             dmsy=ny;
-            if (SetImageExtent(image,dmsx,dmsy,exception) == MagickFalse)
+            if (SetImageExtent(image,(size_t) dmsx,(size_t) dmsy,exception) == MagickFalse)
               break;
-            dmbuf=(sixel_pixel_t *) AcquireQuantumMemory(dmsx,dmsy*
-              sizeof(sixel_pixel_t));
+            dmbuf=(sixel_pixel_t *) AcquireQuantumMemory((size_t) dmsx,(size_t)
+              dmsy*sizeof(sixel_pixel_t));
             if (dmbuf == (sixel_pixel_t *) NULL)
               {
                 imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
                 return(MagickFalse);
               }
-            (void) memset(dmbuf,background_color_index,(size_t) dmsx*dmsy*
-              sizeof(sixel_pixel_t));
+            (void) memset(dmbuf,background_color_index,(size_t) dmsx*(size_t)
+              dmsy*sizeof(sixel_pixel_t));
             for (y = 0; y < imsy; ++y)
-              (void) memcpy(dmbuf+dmsx*y,imbuf+imsx*y,imsx*
+              (void) memcpy(dmbuf+dmsx*y,imbuf+imsx*y,(size_t) imsx*
                 sizeof(sixel_pixel_t));
             imbuf = (sixel_pixel_t *) RelinquishMagickMemory(imbuf);
             imsx=dmsx;
@@ -522,7 +523,7 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
         if (color_index > max_color_index)
           max_color_index = color_index;
         if ((b = *(p++) - '?') == 0)
-          posision_x += repeat_count;
+          position_x += repeat_count;
         else
           {
             sixel_vertical_mask=0x01;
@@ -532,21 +533,22 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
                 {
                   if ((b & sixel_vertical_mask) != 0)
                     {
-                      offset=(size_t) imsx*(posision_y+i)+posision_x;
-                      if (offset >= (size_t) imsx * imsy)
+                      offset=(size_t) (imsx*((ssize_t) position_y+i)+
+                        (ssize_t) position_x);
+                      if (offset >= (size_t) (imsx*imsy))
                         {
                           imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
                           return(MagickFalse);
                         }
                       imbuf[offset]=color_index;
-                      if (max_x < posision_x)
-                          max_x = posision_x;
-                      if (max_y < (posision_y + i))
-                          max_y = posision_y + i;
+                      if (max_x < position_x)
+                          max_x = position_x;
+                      if (max_y < (position_y + i))
+                          max_y = position_y + i;
                     }
                   sixel_vertical_mask <<= 1;
                 }
-                posision_x += 1;
+                position_x += 1;
               }
             else  /* repeat_count > 1 */
               {
@@ -561,27 +563,27 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
                           break;
                         c <<= 1;
                       }
-                      for (y = posision_y + i; y < posision_y + i + n; ++y)
+                      for (y = position_y + i; y < position_y + i + n; ++y)
                       {
-                        offset=(size_t) imsx*y+posision_x;
-                        if (offset+repeat_count >= (size_t) imsx*imsy)
+                        offset=(size_t) ((ssize_t) imsx*y+(ssize_t) position_x);
+                        if ((offset+(size_t) repeat_count) >= (size_t) (imsx*imsy))
                           {
                             imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
                             return(MagickFalse);
                           }
                         for (x = 0; x < repeat_count; x++)
-                          imbuf[offset+x] = color_index;
+                          imbuf[(int) offset+x] = color_index;
                       }
-                      if (max_x < (posision_x+repeat_count-1))
-                        max_x = posision_x+repeat_count-1;
-                      if (max_y < (posision_y+i+n-1))
-                        max_y = posision_y+i+n-1;
+                      if (max_x < (position_x+repeat_count-1))
+                        max_x = position_x+repeat_count-1;
+                      if (max_y < (position_y+i+n-1))
+                        max_y = position_y+i+n-1;
                       i+=(n-1);
                       sixel_vertical_mask <<= (n-1);
                     }
                   sixel_vertical_mask <<= 1;
                 }
-                posision_x += repeat_count;
+                position_x += repeat_count;
               }
           }
           repeat_count = 1;
@@ -597,12 +599,12 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
     {
       dmsx=max_x;
       dmsy=max_y;
-      if (SetImageExtent(image,dmsx,dmsy,exception) == MagickFalse)
+      if (SetImageExtent(image,(size_t) dmsx,(size_t) dmsy,exception) == MagickFalse)
         {
           imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
           return(MagickFalse);
         }
-      dmbuf=(sixel_pixel_t *) AcquireQuantumMemory(dmsx,dmsy*
+      dmbuf=(sixel_pixel_t *) AcquireQuantumMemory((size_t) dmsx,(size_t) dmsy*
         sizeof(sixel_pixel_t));
       if (dmbuf == (sixel_pixel_t *) NULL)
         {
@@ -610,7 +612,8 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
           return(MagickFalse);
         }
       for (y=0; y < dmsy; ++y)
-        (void) memcpy(dmbuf+dmsx*y,imbuf+imsx*y,dmsx*sizeof(sixel_pixel_t));
+        (void) memcpy(dmbuf+dmsx*y,imbuf+imsx*y,(size_t) dmsx*
+          sizeof(sixel_pixel_t));
       imbuf=(sixel_pixel_t *) RelinquishMagickMemory(imbuf);
       imsx=dmsx;
       imsy=dmsy;
@@ -618,8 +621,8 @@ static MagickBooleanType sixel_decode(Image *image,unsigned char *p,
     }
 
   *pixels=imbuf;
-  *pwidth=imsx;
-  *pheight=imsy;
+  *pwidth=(size_t) imsx;
+  *pheight=(size_t) imsy;
   *ncolors=(size_t) max_color_index+1;
   *palette=(unsigned char *) AcquireQuantumMemory(*ncolors,4);
   if (*palette == (unsigned char *) NULL)
@@ -659,7 +662,7 @@ static void sixel_advance(sixel_output_t *context, int nwrite)
     {
       WriteBlob(context->image,SIXEL_OUTPUT_PACKET_SIZE,context->buffer);
       memmove(context->buffer,
-              context->buffer + SIXEL_OUTPUT_PACKET_SIZE,
+              context->buffer + SIXEL_OUTPUT_PACKET_SIZE,(size_t)
               (context->pos -= SIXEL_OUTPUT_PACKET_SIZE));
     }
 }
@@ -673,17 +676,18 @@ static int sixel_put_flash(sixel_output_t *const context)
   if (context->save_count > 3)
     {
       /* DECGRI Graphics Repeat Introducer ! Pn Ch */
-      nwrite=sprintf((char *) context->buffer+context->pos,"!%d%c",
-        context->save_count,context->save_pixel);
+      nwrite=FormatLocaleString((char *) context->buffer+context->pos,
+        sizeof(context->buffer),"!%d%c",context->save_count,
+        context->save_pixel);
       if (nwrite <= 0)
-        return (-1);
+        return(-1);
       sixel_advance(context,nwrite);
     }
   else
     {
       for (n = 0; n < context->save_count; n++)
       {
-        context->buffer[context->pos]=(char)context->save_pixel;
+        context->buffer[context->pos]=(unsigned char)context->save_pixel;
         sixel_advance(context,1);
       }
     }
@@ -741,8 +745,8 @@ static int sixel_put_node(sixel_output_t *const context,int x,sixel_node_t *np,
       /* designate palette index */
       if (context->active_palette != np->color)
         {
-          nwrite=sprintf((char *) context->buffer+context->pos,"#%d",
-            np->color);
+          nwrite=FormatLocaleString((char *) context->buffer+context->pos,
+            sizeof(context->buffer),"#%d",np->color);
           sixel_advance(context,nwrite);
           context->active_palette=np->color;
         }
@@ -799,14 +803,16 @@ static MagickBooleanType sixel_encode_impl(sixel_pixel_t *pixels,size_t width,
     return (MagickFalse);
   (void) memset(map,0,len*sizeof(sixel_pixel_t));
   if (context->has_8bit_control)
-    nwrite=sprintf((char *)context->buffer,"\x90" "0;0;0" "q");
+    nwrite=FormatLocaleString((char *) context->buffer,sizeof(context->buffer),
+      "\x90" "0;0;0" "q");
   else
-    nwrite=sprintf((char *)context->buffer,"\x1bP" "0;0;0" "q");
+    nwrite=FormatLocaleString((char *) context->buffer,sizeof(context->buffer),
+      "\x1bP" "0;0;0" "q");
   if (nwrite <= 0)
     return(MagickFalse);
   sixel_advance(context,nwrite);
-  nwrite=sprintf((char *)context->buffer+context->pos,"\"1;1;%d;%d",
-    (int) width,(int) height);
+  nwrite=FormatLocaleString((char *) context->buffer+context->pos,
+    sizeof(context->buffer),"\"1;1;%d;%d",(int) width,(int) height);
   if (nwrite <= 0)
     {
       RelinquishNodesAndMap;
@@ -817,9 +823,9 @@ static MagickBooleanType sixel_encode_impl(sixel_pixel_t *pixels,size_t width,
     for (n = 0; n < (ssize_t) ncolors; n++)
     {
         /* DECGCI Graphics Color Introducer  # Pc ; Pu; Px; Py; Pz */
-        nwrite=sprintf((char *)context->buffer+context->pos,
-          "#%d;2;%d;%d;%d",n,(palette[n*3+0]*100+127)/255,
-          (palette[n*3+1]*100+127)/255,(palette[n*3+2]*100+127)/255);
+        nwrite=FormatLocaleString((char *) context->buffer+context->pos,
+          sizeof(context->buffer),"#%d;2;%d;%d;%d",n,(palette[n*3+0]*100+127)/
+          255,(palette[n*3+1]*100+127)/255,(palette[n*3+2]*100+127)/255);
         if (nwrite <= 0)
           {
             RelinquishNodesAndMap;
@@ -836,9 +842,9 @@ static MagickBooleanType sixel_encode_impl(sixel_pixel_t *pixels,size_t width,
   {
     for (x=0; x < (int) width; x++)
     {
-      pix=pixels[y*width+x];
+      pix=pixels[y*(ssize_t) width+x];
       if ((pix >= 0) && (pix < (int) ncolors) && (pix != keycolor))
-        map[pix*width+x]|=(1 << i);
+        map[pix*(ssize_t) width+x]|=(1 << i);
     }
     if (++i < 6 && (y + 1) < (int) height)
       continue;
@@ -846,15 +852,15 @@ static MagickBooleanType sixel_encode_impl(sixel_pixel_t *pixels,size_t width,
     {
       for (left=0; left < (int) width; left++)
       {
-        if (*(map+c*width+left) == 0)
+        if (*(map+c*(ssize_t) width+left) == 0)
           continue;
         for (right=left+1; right < (int) width; right++)
         {
-          if (*(map+c*width+right) != 0)
+          if (*(map+c*(ssize_t) width+right) != 0)
             continue;
           for (n = 1; (right+n) < (int) width; n++)
           {
-            if (*(map+c*width+right+n) != 0)
+            if (*(map+c*(ssize_t) width+right+n) != 0)
               break;
           }
           if ((n >= 10) || (right+n >= (int) width))
@@ -874,7 +880,7 @@ static MagickBooleanType sixel_encode_impl(sixel_pixel_t *pixels,size_t width,
         np->color=c;
         np->left=left;
         np->right=right;
-        np->map=map+c*width;
+        np->map=map+c*(ssize_t) width;
         top.next=context->node_top;
         tp=&top;
         while (tp->next != (struct sixel_node *) NULL)
@@ -944,7 +950,7 @@ static MagickBooleanType sixel_encode_impl(sixel_pixel_t *pixels,size_t width,
     }
   /* flush buffer */
   if (context->pos > 0)
-    WriteBlob(context->image,context->pos,context->buffer);
+    WriteBlob(context->image,(size_t) context->pos,context->buffer);
   RelinquishNodesAndMap;
   return(MagickTrue);
 }
@@ -1042,13 +1048,13 @@ static Image *ReadSIXELImage(const ImageInfo *image_info,
   size_t
     length;
 
+  sixel_pixel_t
+    *sixel_pixels;
+
   ssize_t
     i,
     j,
     y;
-
-  sixel_pixel_t
-    *sixel_pixels;
 
   unsigned char
     *sixel_palette;
@@ -1080,30 +1086,35 @@ static Image *ReadSIXELImage(const ImageInfo *image_info,
   if (sixel_buffer != (char *) NULL)
     while (ReadBlobString(image,p) != (char *) NULL)
     {
+      ssize_t
+       offset;
+
       if ((*p == '#') && ((p == sixel_buffer) || (*(p-1) == '\n')))
         continue;
       if ((*p == '}') && (*(p+1) == ';'))
         break;
       p+=strlen(p);
-      if ((size_t) (p-sixel_buffer+MagickPathExtent+1) < length)
+      offset=p-sixel_buffer;
+      if ((size_t) (offset+MagickPathExtent+1) < length)
         continue;
       length<<=1;
       sixel_buffer=(char *) ResizeQuantumMemory(sixel_buffer,length+
         MagickPathExtent+1,sizeof(*sixel_buffer));
       if (sixel_buffer == (char *) NULL)
         break;
-      p=sixel_buffer+strlen(sixel_buffer);
+      p=sixel_buffer+offset;
     }
   if (sixel_buffer == (char *) NULL)
     ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
   sixel_buffer[length]='\0';
   /*
-    Decode SIXEL
+    Decode SIXEL.
   */
   sixel_pixels=(sixel_pixel_t *) NULL;
-  if (sixel_decode(image,(unsigned char *) sixel_buffer,&sixel_pixels,
+  status=sixel_decode(image,(unsigned char *) sixel_buffer,&sixel_pixels,
     &image->columns,&image->rows,&sixel_palette,&image->colors,
-    exception) == MagickFalse)
+    exception);
+  if (status == MagickFalse)
     {
       sixel_buffer=(char *) RelinquishMagickMemory(sixel_buffer);
       if (sixel_pixels != (sixel_pixel_t *) NULL)
@@ -1126,10 +1137,11 @@ static Image *ReadSIXELImage(const ImageInfo *image_info,
       sixel_palette=(unsigned char *) RelinquishMagickMemory(sixel_palette);
       ThrowReaderException(ResourceLimitError,"MemoryAllocationFailed");
     }
-  for (i = 0; i < (ssize_t) image->colors; ++i) {
-    image->colormap[i].red   = ScaleCharToQuantum(sixel_palette[i * 4 + 0]);
-    image->colormap[i].green = ScaleCharToQuantum(sixel_palette[i * 4 + 1]);
-    image->colormap[i].blue  = ScaleCharToQuantum(sixel_palette[i * 4 + 2]);
+  for (i = 0; i < (ssize_t) image->colors; ++i)
+  {
+    image->colormap[i].red=ScaleCharToQuantum(sixel_palette[i * 4 + 0]);
+    image->colormap[i].green=ScaleCharToQuantum(sixel_palette[i * 4 + 1]);
+    image->colormap[i].blue=ScaleCharToQuantum(sixel_palette[i * 4 + 2]);
   }
   j=0;
   if (image_info->ping == MagickFalse)
@@ -1147,7 +1159,7 @@ static Image *ReadSIXELImage(const ImageInfo *image_info,
           break;
         for (x=0; x < (ssize_t) image->columns; x++)
         {
-          j=(ssize_t) sixel_pixels[y*image->columns+x];
+          j=(ssize_t) sixel_pixels[y*(ssize_t) image->columns+x];
           j=ConstrainColormapIndex(image,j,exception);
           SetPixelIndex(image,j,q);
           SetPixelRed(image,image->colormap[j].red,q);
@@ -1165,7 +1177,6 @@ static Image *ReadSIXELImage(const ImageInfo *image_info,
           ThrowReaderException(CorruptImageError,"NotEnoughPixelData");
         }
     }
-puts("d");
   /*
     Relinquish resources.
   */
@@ -1311,7 +1322,7 @@ static MagickBooleanType WriteSIXELImage(const ImageInfo *image_info,
   if (IssRGBCompatibleColorspace(image->colorspace) == MagickFalse)
     (void) TransformImageColorspace(image,sRGBColorspace,exception);
   opacity=(-1);
-  if (image->alpha_trait == UndefinedPixelTrait)
+  if ((image->alpha_trait & BlendPixelTrait) == 0)
     {
       if ((image->storage_class == DirectClass) || (image->colors > SIXEL_PALETTE_MAX))
         (void) SetImageType(image,PaletteType,exception);
@@ -1329,7 +1340,7 @@ static MagickBooleanType WriteSIXELImage(const ImageInfo *image_info,
           (image->colors > SIXEL_PALETTE_MAX))
         (void) SetImageType(image,PaletteBilevelAlphaType,exception);
       for (i=0; i < (ssize_t) image->colors; i++)
-        if (image->colormap[i].alpha != OpaqueAlpha)
+        if (image->colormap[i].alpha != (double) OpaqueAlpha)
           {
             if (opacity < 0)
               {
@@ -1345,7 +1356,7 @@ static MagickBooleanType WriteSIXELImage(const ImageInfo *image_info,
         {
           (void) SetImageType(image,PaletteBilevelAlphaType,exception);
           for (i=0; i < (ssize_t) image->colors; i++)
-            if (image->colormap[i].alpha != OpaqueAlpha)
+            if (image->colormap[i].alpha != (double) OpaqueAlpha)
               {
                 if (opacity < 0)
                   {
@@ -1394,7 +1405,8 @@ static MagickBooleanType WriteSIXELImage(const ImageInfo *image_info,
       break;
     for (x=0; x < (ssize_t) image->columns; x++)
     {
-      sixel_pixels[y*image->columns+x]=((ssize_t) GetPixelIndex(image,q));
+      sixel_pixels[y*(ssize_t) image->columns+x]=((ssize_t)
+        GetPixelIndex(image,q));
       q+=GetPixelChannels(image);
     }
   }

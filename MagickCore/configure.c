@@ -47,6 +47,7 @@
 #include "MagickCore/exception.h"
 #include "MagickCore/exception-private.h"
 #include "MagickCore/linked-list.h"
+#include "MagickCore/linked-list-private.h"
 #include "MagickCore/log.h"
 #include "MagickCore/memory_.h"
 #include "MagickCore/semaphore.h"
@@ -353,6 +354,9 @@ MagickExport const ConfigureInfo *GetConfigureInfo(const char *name,
   ExceptionInfo *exception)
 {
   const ConfigureInfo
+    *option;
+
+  ElementInfo
     *p;
 
   assert(exception != (ExceptionInfo *) NULL);
@@ -361,25 +365,29 @@ MagickExport const ConfigureInfo *GetConfigureInfo(const char *name,
   /*
     Search for configure tag.
   */
+  option=(const ConfigureInfo *) NULL;
   LockSemaphoreInfo(configure_semaphore);
-  ResetLinkedListIterator(configure_cache);
-  p=(const ConfigureInfo *) GetNextValueInLinkedList(configure_cache);
+  p=GetHeadElementInLinkedList(configure_cache);
   if ((name == (const char *) NULL) || (LocaleCompare(name,"*") == 0))
     {
       UnlockSemaphoreInfo(configure_semaphore);
-      return(p);
+      if (p != (ElementInfo *) NULL)
+        option=(const ConfigureInfo *) p->value;
+      return(option);
     }
-  while (p != (const ConfigureInfo *) NULL)
+  while (p != (ElementInfo *) NULL)
   {
-    if (LocaleCompare(name,p->name) == 0)
+    option=(const ConfigureInfo *) p->value;
+    if (LocaleCompare(name,option->name) == 0)
       break;
-    p=(const ConfigureInfo *) GetNextValueInLinkedList(configure_cache);
+    p=p->next;
   }
-  if (p != (ConfigureInfo *) NULL)
-    (void) InsertValueInLinkedList(configure_cache,0,
-      RemoveElementByValueFromLinkedList(configure_cache,p));
+  if (p == (ElementInfo *) NULL)
+    option=(const ConfigureInfo *) NULL;
+  else
+    SetHeadElementInLinkedList(configure_cache,p);
   UnlockSemaphoreInfo(configure_semaphore);
-  return(p);
+  return(option);
 }
 
 /*
@@ -439,43 +447,44 @@ MagickExport const ConfigureInfo **GetConfigureInfoList(const char *pattern,
   const ConfigureInfo
     **options;
 
-  const ConfigureInfo
+  ElementInfo
     *p;
 
   ssize_t
     i;
 
-  /*
-    Allocate configure list.
-  */
   assert(pattern != (char *) NULL);
   assert(number_options != (size_t *) NULL);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",pattern);
   *number_options=0;
-  p=GetConfigureInfo("*",exception);
-  if (p == (const ConfigureInfo *) NULL)
+  if (IsConfigureCacheInstantiated(exception) == MagickFalse)
     return((const ConfigureInfo **) NULL);
   options=(const ConfigureInfo **) AcquireQuantumMemory((size_t)
     GetNumberOfElementsInLinkedList(configure_cache)+1UL,sizeof(*options));
   if (options == (const ConfigureInfo **) NULL)
     return((const ConfigureInfo **) NULL);
-  /*
-    Generate configure list.
-  */
   LockSemaphoreInfo(configure_semaphore);
-  ResetLinkedListIterator(configure_cache);
-  p=(const ConfigureInfo *) GetNextValueInLinkedList(configure_cache);
-  for (i=0; p != (const ConfigureInfo *) NULL; )
+  p=GetHeadElementInLinkedList(configure_cache);
+  for (i=0; p != (ElementInfo *) NULL; )
   {
-    if ((p->stealth == MagickFalse) &&
-        (GlobExpression(p->name,pattern,MagickFalse) != MagickFalse))
-      options[i++]=p;
-    p=(const ConfigureInfo *) GetNextValueInLinkedList(configure_cache);
+    const ConfigureInfo
+      *option;
+
+    option=(const ConfigureInfo *) p->value;
+    if ((option->stealth == MagickFalse) &&
+        (GlobExpression(option->name,pattern,MagickFalse) != MagickFalse))
+      options[i++]=option;
+    p=p->next;
   }
   UnlockSemaphoreInfo(configure_semaphore);
-  qsort((void *) options,(size_t) i,sizeof(*options),ConfigureInfoCompare);
-  options[i]=(ConfigureInfo *) NULL;
+  if (i == 0)
+    options=(const ConfigureInfo **) RelinquishMagickMemory((void*) options);
+  else
+    {
+      qsort((void *) options,(size_t) i,sizeof(*options),ConfigureInfoCompare);
+      options[i]=(ConfigureInfo *) NULL;
+    }
   *number_options=(size_t) i;
   return(options);
 }
@@ -534,40 +543,44 @@ MagickExport char **GetConfigureList(const char *pattern,
   char
     **options;
 
-  const ConfigureInfo
+  ElementInfo
     *p;
 
   ssize_t
     i;
 
-  /*
-    Allocate configure list.
-  */
   assert(pattern != (char *) NULL);
   assert(number_options != (size_t *) NULL);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",pattern);
   *number_options=0;
-  p=GetConfigureInfo("*",exception);
-  if (p == (const ConfigureInfo *) NULL)
+  if (IsConfigureCacheInstantiated(exception) == MagickFalse)
     return((char **) NULL);
   options=(char **) AcquireQuantumMemory((size_t)
     GetNumberOfElementsInLinkedList(configure_cache)+1UL,sizeof(*options));
   if (options == (char **) NULL)
     return((char **) NULL);
   LockSemaphoreInfo(configure_semaphore);
-  ResetLinkedListIterator(configure_cache);
-  p=(const ConfigureInfo *) GetNextValueInLinkedList(configure_cache);
-  for (i=0; p != (const ConfigureInfo *) NULL; )
+  p=GetHeadElementInLinkedList(configure_cache);
+  for (i=0; p != (ElementInfo *) NULL; )
   {
-    if ((p->stealth == MagickFalse) &&
-        (GlobExpression(p->name,pattern,MagickFalse) != MagickFalse))
-      options[i++]=ConstantString(p->name);
-    p=(const ConfigureInfo *) GetNextValueInLinkedList(configure_cache);
+    const ConfigureInfo
+      *option;
+
+    option=(const ConfigureInfo *) p->value;
+    if ((option->stealth == MagickFalse) &&
+        (GlobExpression(option->name,pattern,MagickFalse) != MagickFalse))
+      options[i++]=ConstantString(option->name);
+    p=p->next;
   }
   UnlockSemaphoreInfo(configure_semaphore);
-  qsort((void *) options,(size_t) i,sizeof(*options),ConfigureCompare);
-  options[i]=(char *) NULL;
+  if (i == 0)
+    options=(char **) RelinquishMagickMemory(options);
+  else
+    {
+      qsort((void *) options,(size_t) i,sizeof(*options),ConfigureCompare);
+      options[i]=(char *) NULL;
+    }
   *number_options=(size_t) i;
   return(options);
 }
@@ -1232,8 +1245,8 @@ static MagickBooleanType LoadConfigureCache(LinkedListInfo *cache,
                   file_xml=FileToXML(path,~0UL);
                   if (file_xml != (char *) NULL)
                     {
-                      status&=LoadConfigureCache(cache,file_xml,path,depth+1,
-                        exception);
+                      status&=(MagickStatusType) LoadConfigureCache(cache,
+                        file_xml,path,depth+1,exception);
                       file_xml=DestroyString(file_xml);
                     }
                 }

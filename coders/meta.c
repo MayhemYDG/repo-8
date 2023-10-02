@@ -316,12 +316,6 @@ static ssize_t parse8BIM(Image *ifile, Image *ofile)
     state,
     next;
 
-  unsigned char
-    dataset;
-
-  unsigned int
-    recnum;
-
   MagickOffsetType
     savedpos,
     currentpos;
@@ -335,6 +329,12 @@ static ssize_t parse8BIM(Image *ifile, Image *ofile)
 
   TokenInfo
     *token_info;
+
+  unsigned char
+    dataset;
+
+  unsigned int
+    recnum;
 
   dataset = 0;
   recnum = 0;
@@ -381,11 +381,13 @@ static ssize_t parse8BIM(Image *ifile, Image *ofile)
                 recnum = (unsigned int) StringToUnsignedLong(newstr);
                 break;
               case 2:
-                name=(char *) AcquireQuantumMemory(strlen(newstr)+MagickPathExtent,
-                  sizeof(*name));
-                if (name)
-                  (void) strcpy(name,newstr);
+              {
+                size_t extent = strlen(newstr)+MagickPathExtent;
+                name=(char *) AcquireQuantumMemory(extent,sizeof(*name));
+                if (name != (char *) NULL)
+                  (void) CopyMagickString(name,newstr,extent);
                 break;
+              }
             }
             s++;
           }
@@ -416,7 +418,7 @@ static ssize_t parse8BIM(Image *ifile, Image *ofile)
                   if ((ssize_t) codes_length > len)
                     len=0;
                   else
-                    len-=codes_length;
+                    len-=(ssize_t) codes_length;
                 }
             }
 
@@ -726,7 +728,7 @@ static ssize_t parse8BIMW(Image *ifile, Image *ofile)
                   if ((ssize_t) codes_length > len)
                     len=0;
                   else
-                    len-=codes_length;
+                    len-=(ssize_t) codes_length;
                 }
             }
 
@@ -1616,21 +1618,19 @@ static size_t GetIPTCStream(unsigned char **info,size_t length)
   int
     c;
 
-  ssize_t
-    i;
+  size_t
+    extent,
+    info_length,
+    tag_length;
 
   unsigned char
     *p;
 
-  size_t
-    extent,
-    info_length;
+  ssize_t
+    i;
 
   unsigned int
     marker;
-
-  size_t
-    tag_length;
 
   p=(*info);
   extent=length;
@@ -1654,7 +1654,7 @@ static size_t GetIPTCStream(unsigned char **info,size_t length)
     if ((size_t) c >= extent)
       break;
     p+=c;
-    extent-=c;
+    extent=(size_t) ((ssize_t) extent-c);
     if (extent < 4)
       break;
     tag_length=(((size_t) *p) << 24) | (((size_t) *(p+1)) << 16) |
@@ -1757,13 +1757,13 @@ iptc_find:
         /*
           Short format.
         */
-        tag_length=((long) c) << 8;
+        tag_length=(size_t) (c << 8);
         c=(*p++);
         length--;
         if (length == 0)
           break;
         info_length++;
-        tag_length|=(long) c;
+        tag_length|=(unsigned int) c;
       }
     if (tag_length > (length+1))
       break;
@@ -2335,6 +2335,8 @@ static MagickBooleanType WriteMETAImage(const ImageInfo *image_info,
       assert(exception != (ExceptionInfo *) NULL);
       assert(exception->signature == MagickCoreSignature);
       status=OpenBlob(image_info,image,WriteBinaryBlobMode,exception);
+      if (status == MagickFalse)
+        return(status);
       info=GetStringInfoDatum(profile);
       length=GetStringInfoLength(profile);
       length=GetIPTCStream(&info,length);

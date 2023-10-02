@@ -202,6 +202,7 @@ static MagickBooleanType IsPCX(const unsigned char *magick,const size_t length)
 */
 static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
 {
+#define MaxNumberScenes  1024
 #define ThrowPCXException(severity,tag) \
 { \
   if (scanline != (unsigned char *) NULL) \
@@ -234,18 +235,8 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
   PCXInfo
     pcx_info;
 
-  ssize_t
-    x;
-
   Quantum
     *q;
-
-  ssize_t
-    i;
-
-  unsigned char
-    *p,
-    *r;
 
   size_t
     one,
@@ -253,12 +244,16 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
   ssize_t
     count,
+    i,
+    x,
     y;
 
   unsigned char
+    *p,
     packet,
     pcx_colormap[768],
     *pixels,
+    *r,
     *scanline;
 
   /*
@@ -295,11 +290,11 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
       magic=ReadBlobLSBLong(image);
       if (magic != 987654321)
         ThrowPCXException(CorruptImageError,"ImproperImageHeader");
-      page_table=(MagickOffsetType *) AcquireQuantumMemory(1024UL,
+      page_table=(MagickOffsetType *) AcquireQuantumMemory(MaxNumberScenes,
         sizeof(*page_table));
       if (page_table == (MagickOffsetType *) NULL)
         ThrowPCXException(ResourceLimitError,"MemoryAllocationFailed");
-      for (id=0; id < 1024; id++)
+      for (id=0; id < MaxNumberScenes; id++)
       {
         page_table[id]=(MagickOffsetType) ReadBlobLSBLong(image);
         if (page_table[id] == 0)
@@ -313,7 +308,7 @@ static Image *ReadPCXImage(const ImageInfo *image_info,ExceptionInfo *exception)
         ThrowPCXException(CorruptImageError,"ImproperImageHeader");
     }
   count=ReadBlob(image,1,&pcx_info.identifier);
-  for (id=1; id < 1024; id++)
+  for (id=1; id < MaxNumberScenes; id++)
   {
     int
       bits_per_pixel;
@@ -808,11 +803,9 @@ static MagickBooleanType PCXWritePixels(PCXInfo *pcx_info,
     *q;
 
   ssize_t
+    count,
     i,
     x;
-
-  ssize_t
-    count;
 
   unsigned char
     packet,
@@ -861,6 +854,9 @@ static MagickBooleanType PCXWritePixels(PCXInfo *pcx_info,
 static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
   ExceptionInfo *exception)
 {
+  const Quantum
+    *p;
+
   MagickBooleanType
     status;
 
@@ -875,26 +871,19 @@ static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
   PCXInfo
     pcx_info;
 
-  const Quantum
-    *p;
-
-  ssize_t
-    i,
-    x;
-
-  unsigned char
-    *q;
-
   size_t
-    imageListLength,
+    number_scenes,
     length;
 
   ssize_t
+    i,
+    x,
     y;
 
   unsigned char
     *pcx_colormap,
-    *pixels;
+    *pixels,
+    *q;
 
   /*
     Open output image file.
@@ -910,6 +899,9 @@ static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
   status=OpenBlob(image_info,image,WriteBinaryBlobMode,exception);
   if (status == MagickFalse)
     return(status);
+  number_scenes=GetImageListLength(image);
+  if (number_scenes > MaxNumberScenes)
+    ThrowWriterException(ResourceLimitError,"ListLengthExceedsLimit");
   page_table=(MagickOffsetType *) NULL;
   if ((LocaleCompare(image_info->magick,"DCX") == 0) ||
       ((GetNextImageInList(image) != (Image *) NULL) &&
@@ -919,15 +911,14 @@ static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
         Write the DCX page table.
       */
       (void) WriteBlobLSBLong(image,0x3ADE68B1L);
-      page_table=(MagickOffsetType *) AcquireQuantumMemory(1024UL,
+      page_table=(MagickOffsetType *) AcquireQuantumMemory(MaxNumberScenes+1,
         sizeof(*page_table));
       if (page_table == (MagickOffsetType *) NULL)
         ThrowWriterException(ResourceLimitError,"MemoryAllocationFailed");
-      for (scene=0; scene < 1024; scene++)
+      for (scene=0; scene < MaxNumberScenes; scene++)
         (void) WriteBlobLSBLong(image,0x00000000L);
     }
   scene=0;
-  imageListLength=GetImageListLength(image);
   do
   {
     if (page_table != (MagickOffsetType *) NULL)
@@ -1147,7 +1138,7 @@ static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
               for (x=0; x < (ssize_t) image->columns; x++)
               {
                 byte<<=1;
-                if (GetPixelLuma(image,p) < (QuantumRange/2.0))
+                if (GetPixelLuma(image,p) < ((double) QuantumRange/2.0))
                   byte|=0x01;
                 bit++;
                 if (bit == 8)
@@ -1178,12 +1169,10 @@ static MagickBooleanType WritePCXImage(const ImageInfo *image_info,Image *image,
     pcx_colormap=(unsigned char *) RelinquishMagickMemory(pcx_colormap);
     if (page_table == (MagickOffsetType *) NULL)
       break;
-    if (scene >= 1023)
-      break;
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

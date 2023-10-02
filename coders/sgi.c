@@ -67,7 +67,7 @@
 #include "coders/coders-private.h"
 
 /*
-  Typedef declaractions.
+  Typedef declarations.
 */
 typedef struct _SGIInfo
 {
@@ -413,7 +413,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
           }
         for (z=0; z < (ssize_t) iris_info.depth; z++)
         {
-          p=pixels+bytes_per_pixel*z;
+          p=pixels+(ssize_t) bytes_per_pixel*z;
           for (y=0; y < (ssize_t) iris_info.rows; y++)
           {
             count=ReadBlob(image,bytes_per_pixel*iris_info.columns,scanline);
@@ -523,7 +523,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
                 offset+=(ssize_t) runlength[y+z*iris_info.rows];
                 status=SGIDecode(bytes_per_pixel,(ssize_t)
                   (runlength[y+z*iris_info.rows]/bytes_per_pixel),packets,
-                  (ssize_t) iris_info.columns,p+bytes_per_pixel*z);
+                  (ssize_t) iris_info.columns,p+(ssize_t) bytes_per_pixel*z);
                 if (status == MagickFalse)
                   {
                     packet_info=RelinquishVirtualMemory(packet_info);
@@ -563,7 +563,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
                 offset+=(ssize_t) runlength[y+z*iris_info.rows];
                 status=SGIDecode(bytes_per_pixel,(ssize_t)
                   (runlength[y+z*iris_info.rows]/bytes_per_pixel),packets,
-                  (ssize_t) iris_info.columns,p+bytes_per_pixel*z);
+                  (ssize_t) iris_info.columns,p+(ssize_t) bytes_per_pixel*z);
                 if (status == MagickFalse)
                   {
                     packet_info=RelinquishVirtualMemory(packet_info);
@@ -596,7 +596,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
           {
             for (y=0; y < (ssize_t) image->rows; y++)
             {
-              p=pixels+(image->rows-y-1)*8*image->columns;
+              p=pixels+((ssize_t) image->rows-y-1)*8*(ssize_t) image->columns;
               q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
               if (q == (Quantum *) NULL)
                 break;
@@ -629,7 +629,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
         else
           for (y=0; y < (ssize_t) image->rows; y++)
           {
-            p=pixels+(image->rows-y-1)*4*image->columns;
+            p=pixels+((ssize_t) image->rows-y-1)*4*(ssize_t) image->columns;
             q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
             if (q == (Quantum *) NULL)
               break;
@@ -672,13 +672,13 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
           {
             for (y=0; y < (ssize_t) image->rows; y++)
             {
-              p=pixels+(image->rows-y-1)*8*image->columns;
+              p=pixels+((ssize_t) image->rows-y-1)*8*(ssize_t) image->columns;
               q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
               if (q == (Quantum *) NULL)
                 break;
               for (x=0; x < (ssize_t) image->columns; x++)
               {
-                quantum=(*p << 8);
+                quantum=(size_t) (*p << 8);
                 quantum|=(*(p+1));
                 SetPixelIndex(image,(Quantum) quantum,q);
                 p+=8;
@@ -698,7 +698,7 @@ static Image *ReadSGIImage(const ImageInfo *image_info,ExceptionInfo *exception)
         else
           for (y=0; y < (ssize_t) image->rows; y++)
           {
-            p=pixels+(image->rows-y-1)*4*image->columns;
+            p=pixels+((ssize_t) image->rows-y-1)*4*(ssize_t) image->columns;
             q=QueueAuthenticPixels(image,0,y,image->columns,1,exception);
             if (q == (Quantum *) NULL)
               break;
@@ -875,7 +875,7 @@ static size_t SGIEncode(unsigned char *pixels,size_t length,
     while (length != 0)
     {
       runlength=(short) (length > 126 ? 126 : length);
-      length-=runlength;
+      length-=(size_t) runlength;
       *q++=(unsigned char) (0x80 | runlength);
       for ( ; runlength > 0; runlength--)
       {
@@ -891,7 +891,7 @@ static size_t SGIEncode(unsigned char *pixels,size_t length,
     while (length != 0)
     {
       runlength=(short) (length > 126 ? 126 : length);
-      length-=runlength;
+      length-=(size_t) runlength;
       *q++=(unsigned char) runlength;
       *q++=(*mark);
     }
@@ -909,6 +909,9 @@ static MagickBooleanType WriteSGIImage(const ImageInfo *image_info,Image *image,
   const char
     *value;
 
+  const Quantum
+    *p;
+
   MagickBooleanType
     status;
 
@@ -924,17 +927,12 @@ static MagickBooleanType WriteSGIImage(const ImageInfo *image_info,Image *image,
   SGIInfo
     iris_info;
 
-  const Quantum
-    *p;
+  size_t
+    number_scenes;
 
   ssize_t
     i,
-    x;
-
-  size_t
-    imageListLength;
-
-  ssize_t
+    x,
     y,
     z;
 
@@ -957,7 +955,7 @@ static MagickBooleanType WriteSGIImage(const ImageInfo *image_info,Image *image,
   if (status == MagickFalse)
     return(status);
   scene=0;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     /*
@@ -1187,7 +1185,7 @@ static MagickBooleanType WriteSGIImage(const ImageInfo *image_info,Image *image,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);

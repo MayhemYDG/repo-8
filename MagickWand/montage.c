@@ -131,7 +131,7 @@ static MagickBooleanType MontageUsage(void)
       "  -bordercolor color   border color\n"
       "  -caption string      assign a caption to an image\n"
       "  -colors value        preferred number of colors in the image\n"
-      "  -colorspace type     alternate image colorsapce\n"
+      "  -colorspace type     alternate image colorspace\n"
       "  -comment string      annotate image with comment\n"
       "  -compose operator    composite operator\n"
       "  -compress type       type of pixel compression when writing the image\n"
@@ -147,6 +147,7 @@ static MagickBooleanType MontageUsage(void)
       "  -encoding type       text encoding type\n"
       "  -endian type         endianness (MSB or LSB) of the image\n"
       "  -extract geometry    extract area from image\n"
+      "  -family name         render text with this font family\n"
       "  -fill color          color to use when filling a graphic primitive\n"
       "  -filter type         use this filter when resizing an image\n"
       "  -font name           render text with this font\n"
@@ -278,7 +279,7 @@ WandExport MagickBooleanType MontageImageCommand(ImageInfo *image_info,
     *format;
 
   Image
-    *image,
+    *image = (Image *) NULL,
     *montage_image;
 
   ImageStack
@@ -326,7 +327,12 @@ WandExport MagickBooleanType MontageImageCommand(ImageInfo *image_info,
         }
     }
   if (argc < 3)
-    return(MontageUsage());
+    {
+      (void) ThrowMagickException(exception,GetMagickModule(),OptionError,
+        "MissingArgument","%s","");
+      (void) MontageUsage();
+      return(MagickFalse);
+    }
   format="%w,%h,%m";
   first_scene=0;
   j=1;
@@ -404,7 +410,7 @@ WandExport MagickBooleanType MontageImageCommand(ImageInfo *image_info,
                   "%s.%.20g",image_info->filename,(double) scene);
               images=ReadImages(image_info,scene_filename,exception);
             }
-          status&=(images != (Image *) NULL) &&
+          status&=(MagickStatusType) (images != (Image *) NULL) &&
             (exception->severity < ErrorException);
           if (images == (Image *) NULL)
             continue;
@@ -933,6 +939,15 @@ WandExport MagickBooleanType MontageImageCommand(ImageInfo *image_info,
       }
       case 'f':
       {
+        if (LocaleCompare("family",option+1) == 0)
+          {
+            if (*option == '+')
+              break;
+            i++;
+            if (i == (ssize_t) argc)
+              ThrowMontageException(OptionError,"MissingArgument",option);
+            break;
+          }
         if (LocaleCompare("fill",option+1) == 0)
           {
             (void) QueryColorCompliance("none",AllCompliance,
@@ -1823,7 +1838,8 @@ WandExport MagickBooleanType MontageImageCommand(ImageInfo *image_info,
       if (*montage_image->magick == '\0')
         (void) CopyMagickString(montage_image->magick,image->magick,
           MagickPathExtent);
-      status&=WriteImages(image_info,montage_image,argv[argc-1],exception);
+      status&=(MagickStatusType) WriteImages(image_info,montage_image,
+        argv[argc-1],exception);
       if (metadata != (char **) NULL)
         {
           char

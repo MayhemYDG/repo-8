@@ -121,7 +121,7 @@ static const PICTCode
   codes[] =
   {
     /* 0x00 */ { "NOP", 0, "nop" },
-    /* 0x01 */ { "Clip", 0, "clip" },
+    /* 0x01 */ { "ClipRgn", 0, "clip" },
     /* 0x02 */ { "BkPat", 8, "background pattern" },
     /* 0x03 */ { "TxFont", 2, "text font (word)" },
     /* 0x04 */ { "TxFace", 1, "text face (byte)" },
@@ -474,7 +474,7 @@ static unsigned char *DecodeImage(Image *blob,Image *image,
       */
       for (y=0; y < (ssize_t) image->rows; y++)
       {
-        q=pixels+y*width*GetPixelChannels(image);
+        q=pixels+y*(ssize_t) width*(ssize_t) GetPixelChannels(image);
         number_pixels=bytes_per_line;
         count=ReadBlob(blob,(size_t) number_pixels,scanline);
         if (count != (ssize_t) number_pixels)
@@ -500,7 +500,7 @@ static unsigned char *DecodeImage(Image *blob,Image *image,
   */
   for (y=0; y < (ssize_t) image->rows; y++)
   {
-    q=pixels+y*width;
+    q=pixels+y*(ssize_t) width;
     if (bytes_per_line > 200)
       scanline_length=ReadBlobMSBShort(blob);
     else
@@ -523,7 +523,7 @@ static unsigned char *DecodeImage(Image *blob,Image *image,
           number_pixels=length*bytes_per_pixel;
           p=UnpackScanline(scanline+j+1,bits_per_pixel,unpack_buffer,
             &number_pixels);
-          if ((q-pixels+number_pixels) <= *extent)
+          if ((size_t) (q-pixels+(ssize_t) number_pixels) <= *extent)
             (void) memcpy(q,p,(size_t) number_pixels);
           q+=number_pixels;
           j+=(ssize_t) (length*bytes_per_pixel+1);
@@ -536,7 +536,7 @@ static unsigned char *DecodeImage(Image *blob,Image *image,
             &number_pixels);
           for (i=0; i < (ssize_t) length; i++)
           {
-            if ((q-pixels+number_pixels) <= *extent)
+            if ((size_t) (q-pixels+(ssize_t) number_pixels) <= *extent)
               (void) memcpy(q,p,(size_t) number_pixels);
             q+=number_pixels;
           }
@@ -1087,7 +1087,7 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
                 if (length > 200)
                   scanline_length=ReadBlobMSBShort(image);
                 else
-                  scanline_length=ReadBlobByte(image);
+                  scanline_length=(size_t) ReadBlobByte(image);
                 if ((MagickSizeType) scanline_length > GetBlobSize(image))
                   ThrowPICTException(CorruptImageError,
                     "InsufficientImageDataInFile");
@@ -1226,11 +1226,11 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
                   {
                     for (i=0; i < (ssize_t) tile_image->colors; i++)
                     {
-                      tile_image->colormap[i].red=(Quantum) (QuantumRange-
+                      tile_image->colormap[i].red=((double) QuantumRange-
                         tile_image->colormap[i].red);
-                      tile_image->colormap[i].green=(Quantum) (QuantumRange-
+                      tile_image->colormap[i].green=((double) QuantumRange-
                         tile_image->colormap[i].green);
-                      tile_image->colormap[i].blue=(Quantum) (QuantumRange-
+                      tile_image->colormap[i].blue=((double) QuantumRange-
                         tile_image->colormap[i].blue);
                     }
                   }
@@ -1303,7 +1303,7 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
                         SetPixelRed(tile_image,ScaleCharToQuantum(
                           (unsigned char) ((i & 0x7c) << 1)),q);
                         SetPixelGreen(tile_image,ScaleCharToQuantum(
-                          (unsigned char) (((i & 0x03) << 6) |
+                          (unsigned char) ((size_t) ((i & 0x03) << 6) |
                           ((k & 0xe0) >> 2))),q);
                         SetPixelBlue(tile_image,ScaleCharToQuantum(
                           (unsigned char) ((k & 0x1f) << 3)),q);
@@ -1342,7 +1342,7 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
               if ((tile_image->storage_class == DirectClass) &&
                   (pixmap.bits_per_pixel != 16))
                 {
-                  p+=(pixmap.component_count-1)*tile_image->columns;
+                  p+=(pixmap.component_count-1)*(ssize_t) tile_image->columns;
                   if (p < pixels)
                     break;
                 }
@@ -1493,7 +1493,7 @@ static Image *ReadPICTImage(const ImageInfo *image_info,
             read_info=AcquireImageInfo();
             (void) FormatLocaleString(read_info->filename,MagickPathExtent,
               "jpeg:%s",image_info->filename);
-            tile_image=BlobToImage(read_info,stream,count,exception);
+            tile_image=BlobToImage(read_info,stream,(size_t) count,exception);
             pixels=(unsigned char *) RelinquishMagickMemory(pixels);
             read_info=DestroyImageInfo(read_info);
           }
@@ -1659,12 +1659,15 @@ static MagickBooleanType WritePICTImage(const ImageInfo *image_info,
 #define PictPICTOp  0x98
 #define PictVersion  0x11
 
+  const Quantum
+    *p;
+
   const StringInfo
     *profile;
 
   double
-    x_resolution,
-    y_resolution;
+    x_resolution = DefaultResolution,
+    y_resolution = DefaultResolution;
 
   MagickBooleanType
     status;
@@ -1683,13 +1686,6 @@ static MagickBooleanType WritePICTImage(const ImageInfo *image_info,
     size_rectangle,
     source_rectangle;
 
-  const Quantum
-    *p;
-
-  ssize_t
-    i,
-    x;
-
   size_t
     bytes_per_line,
     count,
@@ -1697,6 +1693,8 @@ static MagickBooleanType WritePICTImage(const ImageInfo *image_info,
     storage_class;
 
   ssize_t
+    i,
+    x,
     y;
 
   unsigned char
@@ -1754,8 +1752,6 @@ static MagickBooleanType WritePICTImage(const ImageInfo *image_info,
   pixmap.table=0;
   pixmap.reserved=0;
   transfer_mode=0;
-  x_resolution=0.0;
-  y_resolution=0.0;
   if ((image->resolution.x > MagickEpsilon) &&
       (image->resolution.y > MagickEpsilon))
     {

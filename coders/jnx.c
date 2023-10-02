@@ -58,6 +58,7 @@
 #include "MagickCore/property.h"
 #include "MagickCore/pixel-accessor.h"
 #include "MagickCore/quantum-private.h"
+#include "MagickCore/resource_.h"
 #include "MagickCore/static.h"
 #include "MagickCore/string_.h"
 
@@ -90,12 +91,6 @@ typedef struct _JNXLevelInfo
   int
     count,
     offset;
-
-  unsigned int
-    scale;
-
-  unsigned short
-    copyright[MagickPathExtent];
 } JNXLevelInfo;
 
 /*
@@ -140,6 +135,9 @@ static Image *ReadJNXImage(const ImageInfo *image_info,ExceptionInfo *exception)
 
   MagickBooleanType
     status;
+
+  MagickSizeType
+    num_images;
 
   ssize_t
     i;
@@ -191,6 +189,7 @@ static Image *ReadJNXImage(const ImageInfo *image_info,ExceptionInfo *exception)
   /*
     Read JNX levels.
   */
+  num_images=0;
   (void) memset(&jnx_level_info,0,sizeof(jnx_level_info));
   for (i=0; i < (ssize_t) jnx_info.levels; i++)
   {
@@ -198,26 +197,20 @@ static Image *ReadJNXImage(const ImageInfo *image_info,ExceptionInfo *exception)
     if (jnx_level_info[i].count > 50000)
       ThrowReaderException(CorruptImageError,"ImproperImageHeader");
     jnx_level_info[i].offset=ReadBlobLSBSignedLong(image);
-    jnx_level_info[i].scale=ReadBlobLSBLong(image);
-    *jnx_level_info[i].copyright='\0';
+    /* scale */
+    (void) ReadBlobLSBLong(image);
     if (jnx_info.version > 3)
       {
-        ssize_t
-          j;
-
-        unsigned short
-          c;
-
+        /* copyright */
         (void) ReadBlobLSBLong(image);
-        j=0;
-        while ((c=ReadBlobLSBShort(image)) != 0)
-          if (j < (MagickPathExtent-1))
-            jnx_level_info[i].copyright[j++]=c;
-        jnx_level_info[i].copyright[j]='\0';
+        while (ReadBlobLSBShort(image) != 0);
       }
     if (EOFBlob(image) != MagickFalse)
       ThrowReaderException(CorruptImageError,"UnexpectedEndOfFile");
+    num_images+=(MagickSizeType) jnx_level_info[i].count;
   }
+  if (AcquireMagickResource(ListLengthResource,num_images) == MagickFalse)
+    ThrowReaderException(ResourceLimitError,"ListLengthExceedsLimit");
   /*
     Read JNX tiles.
   */

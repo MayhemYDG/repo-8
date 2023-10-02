@@ -455,6 +455,47 @@ WandExport char *MagickGetFormat(MagickWand *wand)
 %                                                                             %
 %                                                                             %
 %                                                                             %
+%   M a g i c k G e t F i l t e r                                             %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  MagickGetFilter() gets the wand filter.
+%
+%  The format of the MagickGetFilter method is:
+%
+%      FilterType MagickGetFilter(MagickWand *wand)
+%
+%  A description of each parameter follows:
+%
+%    o wand: the magick wand.
+%
+*/
+WandExport FilterType MagickGetFilter(MagickWand *wand)
+{
+  const char
+    *option;
+
+  FilterType
+    type;
+
+  assert(wand != (MagickWand *) NULL);
+  assert(wand->signature == MagickWandSignature);
+  if (wand->debug != MagickFalse)
+    (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
+  option=GetImageOption(wand->image_info,"filter");
+  if (option == (const char *) NULL)
+    return(UndefinedFilter);
+  type=(FilterType) ParseCommandOption(MagickFilterOptions,MagickFalse,option);
+  return(type);
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
 %   M a g i c k G e t G r a v i t y                                           %
 %                                                                             %
 %                                                                             %
@@ -1798,7 +1839,7 @@ WandExport unsigned char *MagickRemoveImageProfile(MagickWand *wand,
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  MagickSetAntialias() sets the antialias propery of the wand.
+%  MagickSetAntialias() sets the antialias property of the wand.
 %
 %  The format of the MagickSetAntialias method is:
 %
@@ -2170,6 +2211,46 @@ WandExport MagickBooleanType MagickSetFormat(MagickWand *wand,
 %                                                                             %
 %                                                                             %
 %                                                                             %
+%   M a g i c k S e t F i l t e r                                             %
+%                                                                             %
+%                                                                             %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  MagickSetFilter() sets the filter type.
+%
+%  The format of the MagickSetFilter type is:
+%
+%      MagickBooleanType MagickSetFilter(MagickWand *wand,
+%        const FilterType type)
+%
+%  A description of each parameter follows:
+%
+%    o wand: the magick wand.
+%
+%    o type: the filter type.
+%
+*/
+WandExport MagickBooleanType MagickSetFilter(MagickWand *wand,
+  const FilterType type)
+{
+  MagickBooleanType
+    status;
+
+  assert(wand != (MagickWand *) NULL);
+  assert(wand->signature == MagickWandSignature);
+  if (wand->debug != MagickFalse)
+    (void) LogMagickEvent(WandEvent,GetMagickModule(),"%s",wand->name);
+  status=SetImageOption(wand->image_info,"filter",CommandOptionToMnemonic(
+    MagickFilterOptions,(ssize_t) type));
+  return(status);
+}
+
+/*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             %
+%                                                                             %
+%                                                                             %
 %   M a g i c k S e t G r a v i t y                                           %
 %                                                                             %
 %                                                                             %
@@ -2296,7 +2377,7 @@ WandExport MagickBooleanType MagickSetImageProfile(MagickWand *wand,
   if (wand->images == (Image *) NULL)
     ThrowWandException(WandError,"ContainsNoImages",wand->name);
   profile_info=AcquireStringInfo((size_t) length);
-  SetStringInfoDatum(profile_info,(unsigned char *) profile);
+  SetStringInfoDatum(profile_info,(const unsigned char *) profile);
   status=SetImageProfile(wand->images,name,profile_info,wand->exception);
   profile_info=DestroyStringInfo(profile_info);
   return(status);
@@ -2434,7 +2515,7 @@ WandExport MagickBooleanType MagickSetInterpolateMethod(MagickWand *wand,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickSetOption() associates one or options with the wand (.e.g
-%  MagickSetOption(wand,"jpeg:perserve","yes")).
+%  MagickSetOption(wand,"jpeg:preserve","yes")).
 %
 %  The format of the MagickSetOption method is:
 %
@@ -2767,7 +2848,7 @@ WandExport MagickBooleanType MagickSetResolution(MagickWand *wand,
 %
 %    o wand: the magick wand.
 %
-%    o number_factoes: the number of factors.
+%    o number_factors: the number of factors.
 %
 %    o sampling_factors: An array of doubles representing the sampling factor
 %      for each color component (in RGB order).
@@ -2816,7 +2897,7 @@ WandExport MagickBooleanType MagickSetSamplingFactors(MagickWand *wand,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  MagickSetSeed() sets the pseudo-random number generator seed.  Use it to
-%  generate a pedictable sequence of random numbers.
+%  generate a predictable sequence of random numbers.
 %
 %  The format of the MagickSetSeed method is:
 %

@@ -158,33 +158,29 @@ MagickExport Image *AcquireImage(const ImageInfo *image_info,
   image->depth=MAGICKCORE_QUANTUM_DEPTH;
   image->colorspace=sRGBColorspace;
   image->rendering_intent=PerceptualIntent;
-  image->gamma=1.000f/2.200f;
-  image->chromaticity.red_primary.x=0.6400f;
-  image->chromaticity.red_primary.y=0.3300f;
-  image->chromaticity.red_primary.z=0.0300f;
-  image->chromaticity.green_primary.x=0.3000f;
-  image->chromaticity.green_primary.y=0.6000f;
-  image->chromaticity.green_primary.z=0.1000f;
-  image->chromaticity.blue_primary.x=0.1500f;
-  image->chromaticity.blue_primary.y=0.0600f;
-  image->chromaticity.blue_primary.z=0.7900f;
-  image->chromaticity.white_point.x=0.3127f;
-  image->chromaticity.white_point.y=0.3290f;
-  image->chromaticity.white_point.z=0.3583f;
+  image->gamma=1.000/2.200;
+  image->chromaticity.red_primary.x=0.6400;
+  image->chromaticity.red_primary.y=0.3300;
+  image->chromaticity.red_primary.z=0.0300;
+  image->chromaticity.green_primary.x=0.3000;
+  image->chromaticity.green_primary.y=0.6000;
+  image->chromaticity.green_primary.z=0.1000;
+  image->chromaticity.blue_primary.x=0.1500;
+  image->chromaticity.blue_primary.y=0.0600;
+  image->chromaticity.blue_primary.z=0.7900;
+  image->chromaticity.white_point.x=0.3127;
+  image->chromaticity.white_point.y=0.3290;
+  image->chromaticity.white_point.z=0.3583;
   image->interlace=NoInterlace;
   image->ticks_per_second=UndefinedTicksPerSecond;
   image->compose=OverCompositeOp;
-  (void) QueryColorCompliance(MatteColor,AllCompliance,&image->matte_color,
-    exception);
-  (void) QueryColorCompliance(BackgroundColor,AllCompliance,
-    &image->background_color,exception);
-  (void) QueryColorCompliance(BorderColor,AllCompliance,&image->border_color,
-    exception);
-  (void) QueryColorCompliance(TransparentColor,AllCompliance,
-    &image->transparent_color,exception);
+  GetPixelInfoRGBA(BackgroundColorRGBA,&image->background_color);
+  GetPixelInfoRGBA(BorderColorRGBA,&image->border_color);
+  GetPixelInfoRGBA(MatteColorRGBA,&image->matte_color);
+  GetPixelInfoRGBA(TransparentColorRGBA,&image->transparent_color);
   GetTimerInfo(&image->timer);
   image->cache=AcquirePixelCache(0);
-  image->channel_mask=DefaultChannels;
+  image->channel_mask=AllChannels;
   image->channel_map=AcquirePixelChannelMap();
   image->blob=CloneBlobInfo((BlobInfo *) NULL);
   image->timestamp=GetMagickTime();
@@ -1072,8 +1068,8 @@ MagickExport MagickBooleanType CopyImagePixels(Image *image,
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   if ((offset->x < 0) || (offset->y < 0) ||
-      ((ssize_t) (offset->x+geometry->width) > (ssize_t) image->columns) ||
-      ((ssize_t) (offset->y+geometry->height) > (ssize_t) image->rows))
+      ((offset->x+(ssize_t) geometry->width) > (ssize_t) image->columns) ||
+      ((offset->y+(ssize_t) geometry->height) > (ssize_t) image->rows))
     ThrowBinaryException(OptionError,"GeometryDoesNotContainImage",
       image->filename);
   if (SetImageStorageClass(image,DirectClass,exception) == MagickFalse)
@@ -1347,9 +1343,6 @@ MagickExport void GetImageInfo(ImageInfo *image_info)
   char
     *synchronize;
 
-  ExceptionInfo
-    *exception;
-
   /*
     File and image dimension members.
   */
@@ -1359,26 +1352,21 @@ MagickExport void GetImageInfo(ImageInfo *image_info)
   (void) memset(image_info,0,sizeof(*image_info));
   image_info->adjoin=MagickTrue;
   image_info->interlace=NoInterlace;
-  image_info->channel=DefaultChannels;
+  image_info->channel=AllChannels;
   image_info->quality=UndefinedCompressionQuality;
   image_info->antialias=MagickTrue;
   image_info->dither=MagickTrue;
+  image_info->depth=0;
   synchronize=GetEnvironmentValue("MAGICK_SYNCHRONIZE");
   if (synchronize != (const char *) NULL)
     {
       image_info->synchronize=IsStringTrue(synchronize);
       synchronize=DestroyString(synchronize);
     }
-  exception=AcquireExceptionInfo();
-  (void) QueryColorCompliance(BackgroundColor,AllCompliance,
-    &image_info->background_color,exception);
-  (void) QueryColorCompliance(BorderColor,AllCompliance,
-    &image_info->border_color,exception);
-  (void) QueryColorCompliance(MatteColor,AllCompliance,&image_info->matte_color,
-    exception);
-  (void) QueryColorCompliance(TransparentColor,AllCompliance,
-    &image_info->transparent_color,exception);
-  exception=DestroyExceptionInfo(exception);
+  GetPixelInfoRGBA(BackgroundColorRGBA,&image_info->background_color);
+  GetPixelInfoRGBA(BorderColorRGBA,&image_info->border_color);
+  GetPixelInfoRGBA(MatteColorRGBA,&image_info->matte_color);
+  GetPixelInfoRGBA(TransparentColorRGBA,&image_info->transparent_color);
   image_info->debug=(GetLogEventMask() & ImageEvent) != 0 ? MagickTrue :
     MagickFalse;
   image_info->signature=MagickCoreSignature;
@@ -1756,7 +1744,7 @@ MagickExport size_t InterpretImageFilename(const ImageInfo *image_info,
         *q='\0';
         (void) CopyMagickString(filename+(p-format-offset),option,(size_t)
           (MagickPathExtent-(p-format-offset)));
-        offset+=strlen(pattern)-strlen(option)+3;
+        offset+=(ssize_t) strlen(pattern)-(ssize_t) strlen(option)+3;
         *q=c;
         (void) ConcatenateMagickString(filename,r+1,MagickPathExtent);
         canonical=MagickTrue;
@@ -1865,7 +1853,7 @@ MagickExport MagickBooleanType IsHighDynamicRangeImage(const Image *image,
         if (traits == UndefinedPixelTrait)
           continue;
         pixel=(double) p[i];
-        if ((pixel < 0.0) || (pixel > QuantumRange) ||
+        if ((pixel < 0.0) || (pixel > (double) QuantumRange) ||
             (pixel != (double) ((QuantumAny) pixel)))
           break;
       }
@@ -2204,13 +2192,13 @@ MagickExport MagickBooleanType ResetImagePage(Image *image,const char *page)
         {
           image->page.x=geometry.x;
           if ((image->page.width == 0) && (geometry.x > 0))
-            image->page.width=image->columns+geometry.x;
+            image->page.width=(size_t) ((ssize_t) image->columns+geometry.x);
         }
       if ((flags & YValue) != 0)
         {
           image->page.y=geometry.y;
           if ((image->page.height == 0) && (geometry.y > 0))
-            image->page.height=image->rows+geometry.y;
+            image->page.height=(size_t) ((ssize_t) image->rows+geometry.y);
         }
     }
   return(MagickTrue);
@@ -2228,7 +2216,7 @@ MagickExport MagickBooleanType ResetImagePage(Image *image,const char *page)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  ResetImagePixels() reset the image pixels, that is, all the pixel components
-%  are zereod.
+%  are zeroed.
 %
 %  The format of the SetImage method is:
 %
@@ -2439,7 +2427,7 @@ MagickExport MagickBooleanType SetImageBackgroundColor(Image *image,
   if (SetImageStorageClass(image,DirectClass,exception) == MagickFalse)
     return(MagickFalse);
   if ((image->background_color.alpha_trait != UndefinedPixelTrait) &&
-      (image->alpha_trait == UndefinedPixelTrait))
+      ((image->alpha_trait & BlendPixelTrait) == 0))
     (void) SetImageAlphaChannel(image,OnAlphaChannel,exception);
   ConformPixelInfo(image,&image->background_color,&background,exception);
   /*
@@ -2523,7 +2511,7 @@ MagickExport ChannelType SetImageChannelMask(Image *image,
 %  The format of the SetImageColor method is:
 %
 %      MagickBooleanType SetImageColor(Image *image,const PixelInfo *color,
-%        ExeptionInfo *exception)
+%        ExceptionInfo *exception)
 %
 %  A description of each parameter follows:
 %
@@ -2696,7 +2684,7 @@ MagickExport MagickBooleanType SetImageExtent(Image *image,const size_t columns,
 %  It is set to a type of image format based on the prefix or suffix of the
 %  filename.  For example, 'ps:image' returns PS indicating a Postscript image.
 %  JPEG is returned for this filename: 'image.jpg'.  The filename prefix has
-%  precendence over the suffix.  Use an optional index enclosed in brackets
+%  precedence over the suffix.  Use an optional index enclosed in brackets
 %  after a file name to specify a desired scene of a multi-resolution image
 %  format like Photo CD (e.g. img0001.pcd[4]).  A True (non-zero) return value
 %  indicates success.
@@ -2891,6 +2879,9 @@ MagickExport MagickBooleanType SetImageInfo(ImageInfo *image_info,
     {
       (void) CopyMagickString(magic,image_info->magick,MagickPathExtent);
       magick_info=GetMagickInfo(magic,sans_exception);
+      if ((magick_info != (const MagickInfo *) NULL) &&
+          (magick_info->format_type == ExplicitFormatType))
+        image_info->affirm=MagickTrue;
       if (frames == 0)
         GetPathComponent(image_info->filename,CanonicalPath,component);
       else
@@ -3228,16 +3219,20 @@ MagickExport MagickBooleanType SetImageMask(Image *image,const PixelMask type,
       {
         case ReadPixelMask:
         {
-          image->channels=(ChannelType) (image->channels & ~ReadMaskChannel);
+          image->channels=(ChannelType) (image->channels &
+            (unsigned int) ~ReadMaskChannel);
           break;
         }
         case WritePixelMask:
         {
-          image->channels=(ChannelType) (image->channels & ~WriteMaskChannel);
+          image->channels=(ChannelType) (image->channels &
+            (unsigned int) ~WriteMaskChannel);
+          magick_fallthrough;
         }
         default:
         {
-          image->channels=(ChannelType) (image->channels & ~CompositeMaskChannel);
+          image->channels=(ChannelType) (image->channels &
+            (unsigned int) ~CompositeMaskChannel);
           break;
         }
       }
@@ -3384,17 +3379,20 @@ MagickExport MagickBooleanType SetImageRegionMask(Image *image,
       {
         case ReadPixelMask:
         {
-          image->channels=(ChannelType) (image->channels & ~ReadMaskChannel);
+          image->channels=(ChannelType) (image->channels &
+            (unsigned int) ~ReadMaskChannel);
           break;
         }
         case WritePixelMask:
         {
-          image->channels=(ChannelType) (image->channels & ~WriteMaskChannel);
+          image->channels=(ChannelType) (image->channels &
+            (unsigned int) ~WriteMaskChannel);
           break;
         }
         default:
         {
-          image->channels=(ChannelType) (image->channels & ~CompositeMaskChannel);
+          image->channels=(ChannelType) (image->channels &
+            (unsigned int) ~CompositeMaskChannel);
           break;
         }
       }
@@ -3602,7 +3600,7 @@ static ssize_t SmushXGap(const Image *smush_image,const Image *images,
       p=GetCacheViewVirtualPixels(left_view,x,left_geometry.y+y,1,1,exception);
       if ((p == (const Quantum *) NULL) ||
           (GetPixelAlpha(left_image,p) != TransparentAlpha) ||
-          ((left_image->columns-x-1) >= gap))
+          (((ssize_t) left_image->columns-x-1) >= (ssize_t) gap))
         break;
     }
     i=(ssize_t) left_image->columns-x-1;
@@ -3673,7 +3671,7 @@ static ssize_t SmushYGap(const Image *smush_image,const Image *images,
       p=GetCacheViewVirtualPixels(top_view,top_geometry.x+x,y,1,1,exception);
       if ((p == (const Quantum *) NULL) ||
           (GetPixelAlpha(top_image,p) != TransparentAlpha) ||
-          ((top_image->rows-y-1) >= gap))
+          (((ssize_t) top_image->rows-y-1) >= (ssize_t) gap))
         break;
     }
     i=(ssize_t) top_image->rows-y-1;
@@ -3758,12 +3756,12 @@ MagickExport Image *SmushImages(const Image *images,
           width=next->columns;
         height+=next->rows;
         if (next->previous != (Image *) NULL)
-          height+=offset;
+          height=(size_t) MagickMax((ssize_t) height+offset,0U);
         continue;
       }
     width+=next->columns;
     if (next->previous != (Image *) NULL)
-      width+=offset;
+      width=(size_t) MagickMax((ssize_t) width+offset,0U);
     if (next->rows > height)
       height=next->rows;
   }
@@ -3847,7 +3845,8 @@ MagickExport Image *SmushImages(const Image *images,
 %    o exception: return any errors or warnings in this structure.
 %
 */
-MagickExport MagickBooleanType StripImage(Image *image,ExceptionInfo *exception)
+MagickExport MagickBooleanType StripImage(Image *image,
+  ExceptionInfo *magick_unused(exception))
 {
   MagickBooleanType
     status;

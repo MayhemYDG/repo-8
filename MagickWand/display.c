@@ -105,6 +105,7 @@ static MagickBooleanType DisplayUsage(void)
       "  -log format          format of debugging information\n"
       "  -version             print version information",
     operators[] =
+      "  -auto-level          automagically adjust color levels of image\n"
       "  -auto-orient         automagically orient image\n"
       "  -border geometry     surround image with a border of color\n"
       "  -clip                clip along the first path from the 8BIM profile\n"
@@ -240,10 +241,10 @@ static MagickBooleanType DisplayUsage(void)
   return(MagickTrue);
 }
 
+#if defined(MAGICKCORE_X11_DELEGATE)
 WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
   int argc,char **argv,char **wand_unused(metadata),ExceptionInfo *exception)
 {
-#if defined(MAGICKCORE_X11_DELEGATE)
 #define DestroyDisplay() \
 { \
   if ((state & ExitState) == 0) \
@@ -332,6 +333,7 @@ WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
   assert(image_info != (ImageInfo *) NULL);
   assert(image_info->signature == MagickCoreSignature);
   assert(exception != (ExceptionInfo *) NULL);
+  wand_unreferenced(metadata);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
   if (argc == 2)
@@ -491,7 +493,7 @@ WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
         (void) CopyMagickString(image_info->filename,filename,MagickPathExtent);
         images=ReadImage(image_info,exception);
         CatchException(exception);
-        status&=(images != (Image *) NULL) &&
+        status&=(MagickStatusType) (images != (Image *) NULL) &&
           (exception->severity < ErrorException);
         if (images == (Image *) NULL)
           continue;
@@ -576,7 +578,8 @@ WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
               (void) CopyMagickString(display_image->filename,
                 resource_info.write_filename,MagickPathExtent);
               (void) SetImageInfo(image_info,1,exception);
-              status&=WriteImage(image_info,display_image,exception);
+              status&=(MagickStatusType) WriteImage(image_info,display_image,
+                exception);
             }
           /*
             Proceed to next/previous image.
@@ -682,6 +685,8 @@ WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
               ThrowDisplayException(OptionError,"MissingArgument",option);
             break;
           }
+        if (LocaleCompare("auto-level",option+1) == 0)
+          break;
         if (LocaleCompare("auto-orient",option+1) == 0)
           break;
         ThrowDisplayException(OptionError,"UnrecognizedOption",option);
@@ -1371,7 +1376,7 @@ WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
             resource_info.map_type=(char *) NULL;
             if (*option == '+')
               break;
-            (void) strcpy(argv[i]+1,"san");
+            (void) CopyMagickString(argv[i]+1,"...",strlen(argv[i]+1)+1);
             i++;
             if (i == (ssize_t) argc)
               ThrowDisplayException(OptionError,"MissingArgument",option);
@@ -1892,6 +1897,10 @@ WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
   DestroyDisplay();
   return(status != 0 ? MagickTrue : MagickFalse);
 #else
+WandExport MagickBooleanType DisplayImageCommand(ImageInfo *image_info,
+  int wand_unused(argc),char **wand_unused(argv),
+  char **wand_unused(metadata),ExceptionInfo *exception)
+{
   wand_unreferenced(argc);
   wand_unreferenced(argv);
   wand_unreferenced(metadata);

@@ -1206,8 +1206,8 @@ static MagickBooleanType WriteCMYKImage(const ImageInfo *image_info,
     quantum_type;
 
   size_t
-    imageListLength,
-    length;
+    length,
+    number_scenes;
 
   ssize_t
     count,
@@ -1235,7 +1235,7 @@ static MagickBooleanType WriteCMYKImage(const ImageInfo *image_info,
         return(status);
     }
   scene=0;
-  imageListLength=GetImageListLength(image);
+  number_scenes=GetImageListLength(image);
   do
   {
     /*
@@ -1247,7 +1247,7 @@ static MagickBooleanType WriteCMYKImage(const ImageInfo *image_info,
     if (LocaleCompare(image_info->magick,"CMYKA") == 0)
       {
         quantum_type=CMYKAQuantum;
-        if (image->alpha_trait == UndefinedPixelTrait)
+        if ((image->alpha_trait & BlendPixelTrait) == 0)
           (void) SetImageAlphaChannel(image,OpaqueAlphaChannel,exception);
       }
     quantum_info=AcquireQuantumInfo(image_info,image);
@@ -1608,7 +1608,7 @@ static MagickBooleanType WriteCMYKImage(const ImageInfo *image_info,
     if (GetNextImageInList(image) == (Image *) NULL)
       break;
     image=SyncNextImageInList(image);
-    status=SetImageProgress(image,SaveImagesTag,scene++,imageListLength);
+    status=SetImageProgress(image,SaveImagesTag,scene++,number_scenes);
     if (status == MagickFalse)
       break;
   } while (image_info->adjoin != MagickFalse);
