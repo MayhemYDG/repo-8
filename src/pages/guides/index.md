@@ -1,26 +1,94 @@
 ---
-title: Guides - Cat Analytics
-description: This is the guides overview page of Cat Analytics 
+title: Quickstart guide
+description: This is the quickstart guide for Adobe Firefly API
+contributors:
+  - https://github.com/amandahuarng
 ---
+<!-- TODO: Update -->
+# Quickstart Guide
 
-# Get Started
+This guide will show you how to make your first successful call to the Firefly Text-to-Image API. Your organization admin must first create credentials in [Adobe Developer Console](https://developer.adobe.com/console) and share the following information with you:
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam malesuada feugiat enim vel facilisis. Nunc eget enim eu lacus lobortis tincidunt a nec est. Nunc quis sapien quis orci rutrum sollicitudin. Nullam vehicula ultricies mauris, id aliquam justo aliquam vitae. Nam quis tincidunt ante. Curabitur sagittis aliquam elit, at auctor enim maximus et. Praesent in lectus facilisis, tempor magna eget, bibendum est. In quis ornare mi. Donec vestibulum viverra magna, non mollis leo vestibulum sit amet. Aenean euismod nulla augue, sit amet vehicula nibh faucibus vel. Fusce at est lacus. Nullam ante nulla, elementum nec ornare in, placerat luctus enim. Suspendisse vitae lacinia nibh. Pellentesque porta accumsan est at volutpat. Nulla aliquam dictum faucibus.
+* `client_id`
+* `client_secret`
 
-## Authentication
+To call the Firefly text-to-image endpoint, you need a valid API key and an access token. To get an access token, use the following command:
 
-Mauris pellentesque ornare nulla. Proin fermentum elementum velit non consequat. Donec euismod nisl sed tellus sagittis, a consequat leo rhoncus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse neque justo, porttitor eget volutpat sed, suscipit nec mauris. Etiam nec egestas purus. Praesent suscipit in elit cursus consectetur. Duis blandit pulvinar odio, eget volutpat magna vestibulum interdum. Ut sed ultrices risus, vel gravida nisi. Sed vitae rutrum felis. Aliquam at eros molestie, sagittis augue sed, venenatis erat. Praesent at consectetur tellus, ut vehicula nunc. Pellentesque aliquet condimentum neque, fermentum consequat neque viverra vel. Aliquam accumsan dignissim turpis vitae consequat. Aenean id justo vel diam sollicitudin posuere. Sed eu mauris ac elit porta commodo et varius sem.
+```bash
+curl -X POST 'https://ims-na1.adobelogin.com/ims/token/v3' \
+-H 'Content-Type: application/x-www-form-urlencoded' \
+-d 'grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}&scope=openid,AdobeID,firefly_enterprise,firefly_api,ff_apis'
+```
 
-## OAuth
+Access tokens expire every 24 hours and it is wise that you rotate them programmatically before they expire. The token endpoint above returns expiry information alongside the token itself. Read more about this in our [auth guide](./authentication/index.md). Once you have this token, you are ready to make your first request to the text-to-image endpoint.
 
-Donec imperdiet tempus ligula, sit amet pellentesque justo pharetra quis. Duis sed lacus diam. Maecenas sollicitudin diam sit amet pharetra placerat. Aliquam egestas lectus et tellus sagittis, venenatis finibus nisi volutpat. Cras laoreet, nisl sed faucibus laoreet, nibh arcu pretium enim, eget elementum ligula tellus vitae lorem. Aenean consequat in lorem at venenatis. Phasellus consequat dolor in libero vulputate rutrum. Nulla sit amet augue fringilla, elementum libero eget, accumsan velit. Suspendisse et lorem ornare, congue justo vel, ultrices felis. Ut et aliquet eros. Nulla facilisi. Nulla vitae velit a enim egestas eleifend. Etiam malesuada orci non mollis vulputate. Praesent id augue eget sapien lobortis bibendum. Praesent placerat tellus dui, vel facilisis magna condimentum in.
+Now, replace your API key and access token in the example below, and you're all set to make your first request to the text-to-image endpoint.
 
-[Adobe I/O Console](https://console.adobe.io).
+## Request Headers
 
-<InlineAlert variant="info" slots="text"/>
+* `X-Api-Key`: This is a required parameter -- provide your client ID from Console.
+* `Authorization`: This is a required header -- provide your access token.
+* `Content-Type`: Specifies the media type of the request body.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In urna tellus, fringilla sit amet lorem eget, dignissim pellentesque ligula. Donec nec dolor vitae leo laoreet aliquam vehicula at dui. Integer in tortor lacus. Aliquam convallis, lorem ac consectetur sodales, tellus.
+## Example Request
 
-## JWT
+```bash
+curl --location 'https://firefly-api.adobe.io/v2/images/generate' \
+--header 'X-Api-Key: {CLIENT_ID}' \
+--header 'Authorization: {ACCESS_TOKEN}' \
+--header 'Content-Type: application/json' \
+--data '{
+    "n": 1,
+    "prompt": "Horse on a field.",
+    "contentClass": "photo",
+    "size": {
+        "width": 2048,
+        "height": 2048
+    },
+    "styles": {
+        "presets": ["concept_art"]
+    } 
+}'
+```
 
-Donec imperdiet tempus ligula, sit amet pellentesque justo pharetra quis. Duis sed lacus diam. Maecenas sollicitudin diam sit amet pharetra placerat. Aliquam egestas lectus et tellus sagittis, venenatis finibus nisi volutpat. Cras laoreet, nisl sed faucibus laoreet, nibh arcu pretium enim, eget elementum ligula tellus vitae lorem. Aenean consequat in lorem at venenatis. Phasellus consequat dolor in libero vulputate rutrum. Nulla sit amet augue fringilla, elementum libero eget, accumsan velit. Suspendisse et lorem ornare, congue justo vel, ultrices felis. Ut et aliquet eros. Nulla facilisi. Nulla vitae velit a enim egestas eleifend. Etiam malesuada orci non mollis vulputate. Praesent id augue eget sapien lobortis bibendum. Praesent placerat tellus dui, vel facilisis magna condimentum in.
+## Responses
+
+Got a 200 response code? Great! Your API call was successful. Here is an example response:
+
+```json
+{
+  "version": "2.10.2",
+  "size": {
+    "width": 2048,
+    "height": 2048
+  },
+  "predictedPhotoSettings": {
+    "aperture": 5.6,
+    "shutterSpeed": 0.0005,
+    "fieldOfView": 50
+  },
+  "outputs": [
+    {
+      "seed": 290878684,
+      "image": {
+          "id": "{IMAGE_ID}",
+          "presignedUrl": "https://pre-signed-firefly-prod.s3.amazonaws.com/images/{IMAGE_ID}?..."
+      }
+    }
+  ]
+}
+```
+
+![Horse on a field, photo, concept_art](../images/horse_t2i_sample.jpg)
+
+### Error Codes
+
+To learn more about each response code, head over to the [**Try it** (Responses)](../api/) section.
+
+### Rate Limits
+
+Read more about the text-to-image API's throttling limits [here](./usage_limits/)
+
+## Try it yourself
+
+Go ahead and try making calls using the __Try it__ feature on the __API Reference__ page. Configure the headers and send a request. Once you get a 200 response code, the response body will contain a pre-signed URL of your image.

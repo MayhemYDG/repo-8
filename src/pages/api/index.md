@@ -1,5 +1,1 @@
----
-title: Cat API Spec 2.0
-description: Cat API Spec 2.0
-openAPISpec:  /petstore.json
---- 
+<RedoclyAPIBlock src="https://developer.adobe.com/firefly-api/openapi/openapi.yaml" />

@@ -11,100 +11,52 @@
  */
 
 module.exports = {
-  pathPrefix: process.env.PATH_PREFIX || '/dev-site-documentation-template/',
+  pathPrefix: process.env.PATH_PREFIX || '/firefly-api/',
   siteMetadata: {
-    versions: [
-      {
-        title: 'v2.0',
-        selected: true
-      },
-      {
-        title: 'v1.4',
-        path: 'https://github.com/AdobeDocs/dev-site'
-      }
-    ],
     pages: [
       {
-        title: 'Cat Analytics',
+        title: 'Overview',
         path: '/'
       },
       {
-        title: 'Guides',
+        title: 'Getting Started',
         path: '/guides/'
       },
       {
         title: 'API Reference',
-        menu: [
-          {
-            title: 'Cat Reference v2.0',
-            description: 'Cat Reporting API',
-            path: '/api/index.md'
-          },
-          {
-            title: 'Cat Reference v1.4',
-            description: 'Cat API Spec',
-            path: '/api/1.4.md'
-          }
-        ]
+        description: 'Reference for Firefly APIs',
+        path: '/api/index.md'
       },
       {
-        title: 'Support',
-        path: '/support/'
+        title: 'Release Notes',
+        path: '/release-notes/',
       }
     ],
     subPages: [
       {
-        title: 'Get Started',
+        title: 'Getting Started',
         path: '/guides/',
-        pages: [
-          {
-            title: 'Dummy an OAuth Client',
-            path: '/guides/dummy_oauth_client/'
-          },
-          {
-            title: 'Dummy OAuth using POSTMAN',
-            path: '/guides/dummy_using_postman/'
-          }
-        ]
-      },
-      {
-        title: 'Cat Metrics API',
-        path: '/guides/dummy_metrics_api/'
-      },
-      {
-        title: 'Migrating',
-        path: '/guides/migrating/'
-      },
-      {
-        title: 'Overview',
-        path: '/support/',
         header: true,
         pages: [
           {
-            title: 'Help',
-            path: '/support/'
+            title: 'Quickstart',
+            path: '/guides/'
           },
           {
-            title: 'FAQ',
-            path: '/support/FAQ/'
+            title: 'Authentication',
+            path: '/guides/authentication/'
           },
           {
-            title: 'How to contribute',
-            path: '/support/contribute/'
-          }
-        ]
-      },
-      {
-        title: 'Community',
-        path: '/support/community/',
-        header: true,
-        pages: [
+            title: 'Usage Limits',
+            path: '/guides/usage_limits/'
+          },
           {
-            title: 'Information',
-            path: '/support/community/'
+            title: 'Image Model Styles',
+            path: '/guides/styles/'
           }
         ]
       }
+        
     ]
   },
   plugins: [`@adobe/gatsby-theme-aio`]
