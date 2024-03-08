@@ -75,10 +75,6 @@ module.exports = {
               title: 'Sample Tutorial One',
               path: '/guides/tutorials/sample-tutorial-one.md'
             },
-            {
-              title: 'Sample Tutorial Two',
-              path: '/guides/tutorials/sample-tutorial-two.md'
-            }
           ]
         },
         {
