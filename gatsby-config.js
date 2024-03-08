@@ -69,7 +69,7 @@ module.exports = {
         }, 
         {
           title: 'Tutorials',
-          path: '/guides/tutorials/index.md',
+          path: '/guides/tutorials/sample-tutorial-one.md',
           pages: [
             {
               title: 'Sample Tutorial One',
@@ -83,11 +83,11 @@ module.exports = {
         },
         {
           title: 'How-Tos',
-          path: '/guides/how_tos/',
+          path: '/guides/how_tos/create-your-first-ff-application.md',
           pages:[
             {
-              title: 'Sample How To One',
-              path: '/guides/how_tos/sample-how-to-one.md'
+              title: 'Create Your First Firefly API Implementation using Node.JS/Python',
+              path: '/guides/how_tos/create-your-first-ff-application.md'
             }
           ]
         },
