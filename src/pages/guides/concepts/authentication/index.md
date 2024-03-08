@@ -9,7 +9,7 @@ contributors:
 
 Server-to-server authentication credentials lets your application’s server generate access tokens and make API calls on behalf of your application. This is sometimes referred to as “two-legged OAuth”.
 
-For your application to generate an access token, an end-user does not need to sign in or provide consent to your application. Instead, your application can use its credentials (client id and secrets) to authenticate itself and generate access tokens. Your application can then use the generated access token to call Adobe APIs and services on its behalf.
+For your application to generate an access token, an end-user does not need to sign in or provide consent to your application. Instead, your application can use its credentials (client id and secrets) to authenticate itself and generate access tokens. Your application can then use the generated access token to call Adobe API and services on its behalf.
 
 ## Access tokens
 

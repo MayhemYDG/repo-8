@@ -24,7 +24,7 @@ module.exports = {
       },
       {
         title: 'API Reference',
-        description: 'Reference for Firefly APIs',
+        description: 'Reference for Firefly API',
         path: '/api/'
       },
       {
@@ -92,14 +92,6 @@ module.exports = {
           ]
         },
       {
-        title: 'Cat Metrics API',
-        path: '/guides/dummy_metrics_api/'
-      },
-      {
-        title: 'Migrating',
-        path: '/guides/migrating/'
-      },
-      {
         title: 'Overview',
         path: '/support/',
         header: true,
@@ -118,7 +110,7 @@ module.exports = {
           },
           {
             title: 'Best practices',
-            path: 's/support/best-practices'
+            path: '/support/best-practices'
           },
           {
             title: 'Troubleshooting',
