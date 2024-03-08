@@ -33,7 +33,7 @@ Now, replace your API key and access token in the example below, and you're all 
 ## Example Request
 
 ```bash
-curl --location 'https://firefly-beta.adobe.io/v2/images/generate' \
+curl --location 'https://firefly-api.adobe.io/v2/images/generate' \
 --header 'X-Api-Key: {CLIENT_ID}' \
 --header 'Authorization: {ACCESS_TOKEN}' \
 --header 'Content-Type: application/json' \
