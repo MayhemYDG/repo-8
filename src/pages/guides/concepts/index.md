@@ -5,7 +5,6 @@ contributors:
   - https://github.com/nimithajalal
 ---
 
-
 # Resources
 
 Welcome to our Resources Hub! 
