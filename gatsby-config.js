@@ -13,19 +13,9 @@
 module.exports = {
   pathPrefix: process.env.PATH_PREFIX || '/dev-site-documentation-template/',
   siteMetadata: {
-    versions: [
-      {
-        title: 'v2.0',
-        selected: true
-      },
-      {
-        title: 'v1.4',
-        path: 'https://github.com/AdobeDocs/dev-site'
-      }
-    ],
     pages: [
       {
-        title: 'Cat Analytics',
+        title: 'Overview',
         path: '/'
       },
       {
@@ -34,39 +24,73 @@ module.exports = {
       },
       {
         title: 'API Reference',
-        menu: [
-          {
-            title: 'Cat Reference v2.0',
-            description: 'Cat Reporting API',
-            path: '/api/index.md'
-          },
-          {
-            title: 'Cat Reference v1.4',
-            description: 'Cat API Spec',
-            path: '/api/1.4.md'
-          }
-        ]
+        description: 'Reference for Firefly APIs',
+        path: '/api/'
       },
       {
         title: 'Support',
         path: '/support/'
-      }
+      },
+      {
+        title: 'Release Notes',
+        path: '/release-notes/'
+      },
     ],
     subPages: [
       {
-        title: 'Get Started',
+        title: 'Quickstart',
         path: '/guides/',
+      },
+      {
+        title: 'Concepts',
+        path: '/guides/concepts/',
         pages: [
           {
-            title: 'Dummy an OAuth Client',
-            path: '/guides/dummy_oauth_client/'
+            title: 'Access Tokens',
+            path: '/guides/concepts/acess-token.md'
           },
           {
-            title: 'Dummy OAuth using POSTMAN',
-            path: '/guides/dummy_using_postman/'
+            title: 'Get Credentials',
+            path: '/guides/concepts/create-credentials/'
+          },
+          {
+            title: 'Authentication',
+            path: '/guides/concepts/authentication/'
+          },
+          {
+            title: 'Image Model Styles',
+            path: '/guides/concepts/styles/'
+          },
+          {
+            title: 'Rate limits',
+            path: '/guides/concepts/usage_limits/'
           }
         ]
-      },
+        }, 
+        {
+          title: 'Tutorials',
+          path: '/guides/tutorials/index.md',
+          pages: [
+            {
+              title: 'Sample Tutorial One',
+              path: '/guides/tutorials/sample-tutorial-one.md'
+            },
+            {
+              title: 'Sample Tutorial Two',
+              path: '/guides/tutorials/sample-tutorial-two.md'
+            }
+          ]
+        },
+        {
+          title: 'How-Tos',
+          path: '/guides/how_tos/',
+          pages:[
+            {
+              title: 'Sample How To One',
+              path: '/guides/how_tos/sample-how-to-one.md'
+            }
+          ]
+        },
       {
         title: 'Cat Metrics API',
         path: '/guides/dummy_metrics_api/'
@@ -91,6 +115,14 @@ module.exports = {
           {
             title: 'How to contribute',
             path: '/support/contribute/'
+          },
+          {
+            title: 'Best practices',
+            path: 's/support/best-practices'
+          },
+          {
+            title: 'Troubleshooting',
+            path: '/support/troubleshooting'
           }
         ]
       },
