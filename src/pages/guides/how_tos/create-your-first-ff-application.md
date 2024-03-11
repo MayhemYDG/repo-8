@@ -3,7 +3,7 @@ title: Create Your First Firefly API Implementation Node.JS/Python - Adobe Firef
 description: This how-to guides you through the process of integrating Adobe's Firefly workflows into your applications.
 contributors:
   - https://github.com/nimithajalal
-
+  - https://github.com/cfjedimaster
 ---
 
 # Create your first Firefly API implementation using Node.JS/Python
@@ -19,7 +19,7 @@ Before we begin, make sure you have the following:
 
 ## Step 1: Set Up Your Environment
 
-Begin by creating a new script, named `firefly.js`, and save it anywhere on your computer. This will be the script we use to test our integration with Firefly APIs.
+Begin by creating a new script, named `firefly.js` (or `firefly.py`), and save it anywhere on your computer., and save it anywhere on your computer. This will be the script we use to test our integration with Firefly APIs.
 
 Next, set your `client_id` and `client_secret` as environment variables. For example, on a Mac or in Windows Subsystem for Linux (WSL), you can do the following:
 
@@ -34,7 +34,7 @@ Note that our code is going to assume CLIENT_ID and CLIENT_SECRET - case matters
 
 Let's begin by initializing a few variables. As previously mentioned, it is crucial to set up two environment variables, as the following code relies on them:
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
@@ -55,7 +55,7 @@ CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 To authenticate, we take these two variables and make a `POST` request to our authentication endpoint: `https://ims-na1.adobelogin.com/ims/token/v3`. You need to pass your credentials along with the requested scopes that allow for access to Firefly. We can wrap up the entire thing in one simple function:
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
@@ -107,7 +107,7 @@ In this case, we will focus on the Text-to-image functionality, which includes o
 
 Please refer to the [Text-to-image with optional generative](https://developer.adobe.com/firefly-api/api/#operation/v2/images/generate) match section in the API Reference for more details.
 
-Based on the docs, we can see that the only required parameter is prompt. Also, the n prompt specifies how many images we want. So the simplest request body we could build would look like so:
+Based on the docs, we can see that the only required parameter is prompt. Also, the `n` prompt specifies how many images we want. So the simplest request body we could build would look like so:
 
 ```js
 {
@@ -121,7 +121,7 @@ Now, let's create a function to generate an image using a prompt.
 First, we'll build a simple function to call the REST endpoint.
 It requires our previous `client_id` value and the `access_token`, and our prompt:
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
@@ -174,7 +174,7 @@ Please ensure you include the authentication headers correctly. Pass the token i
 
 We define a simple prompt and call the function to interact with the Firefly API, displaying the result on the screen.
 
-<CodeBlock slots="heading, code" repeat="3" languages="JSON, PYTHON, JSON" />
+<CodeBlock slots="heading, code" repeat="3" languages="JavaScript, PYTHON, JSON" />
 
 #### Sample code
 
@@ -233,7 +233,7 @@ Let's see how you can write a quick utility to download these images.
 
 First, import the necessary file-related modules and the requests module for Python:
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
@@ -253,7 +253,7 @@ import requests
 
 Create a function that takes a URL and a file path as arguments, and downloads the file from the URL to the specified path (This step is only required for Node.js).
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
@@ -279,7 +279,7 @@ def downloadFile(url, filePath):
 
 Finally, iterate over the results (assuming result contains the response from the API call) and save each image with a unique file name using the seed value from the result:
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
@@ -300,13 +300,15 @@ for output in result["outputs"]:
 
 After running these steps, you'll see four images output in the same directory.
 
-Sample output of [a cat dancing on a rainbow](../images/firefly-sample.png)
+**Sample output**
+
+![a cat dancing on a rainbow](../images/firefly-sample.png)
 
 ## Complete Code
 
 Here's the entire code sample. As a reminder, feel free to modify and change the prompt:
 
-<CodeBlock slots="heading, code" repeat="2" languages="JSON, PYTHON" />
+<CodeBlock slots="heading, code" repeat="2" languages="JavaScript, PYTHON" />
 
 #### Sample code
 
