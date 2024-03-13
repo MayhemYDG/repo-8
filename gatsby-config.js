@@ -19,112 +19,70 @@ module.exports = {
         path: '/'
       },
       {
-        title: 'Guides',
+        title: 'Getting Started',
         path: '/guides/'
       },
       {
-        title: 'API Reference',
-        description: 'Reference for Firefly API',
-        path: '/api/'
-      },
-      {
-        title: 'Support',
-        path: '/support/'
-      },
-      {
         title: 'Release Notes',
-        path: '/release-notes/'
+        path: '/release-notes/',
+      },
+      {
+        title: 'Usage Limits',
+        path: '/guides/usage_limits/'
+      },
+      {
+        title: 'API Reference',
+        path: '/guides/api/upload_image'
       },
     ],
     subPages: [
       {
-        title: 'Quickstart',
+        title: 'Getting Started',
         path: '/guides/',
-      },
-      {
-        title: 'Concepts',
-        path: '/guides/concepts/',
+        header: true,
         pages: [
           {
-            title: 'Access Tokens',
-            path: '/guides/concepts/acess-token.md'
-          },
-          {
-            title: 'Get Credentials',
-            path: '/guides/concepts/create-credentials/'
+            title: 'Quickstart',
+            path: '/guides/'
           },
           {
             title: 'Authentication',
-            path: '/guides/concepts/authentication/'
+            path: '/guides/authentication/'
+          },
+          {
+            title: 'Usage Limits',
+            path: '/guides/usage_limits/'
           },
           {
             title: 'Image Model Styles',
-            path: '/guides/concepts/styles/'
+            path: '/guides/styles/'
           },
-          {
-            title: 'Rate limits',
-            path: '/guides/concepts/usage_limits/'
-          }
-        ]
-        }, 
-        {
-          title: 'Tutorials',
-          path: '/guides/tutorials/sample-tutorial-one.md',
-          pages: [
-            {
-              title: 'Sample Tutorial One',
-              path: '/guides/tutorials/sample-tutorial-one.md'
-            },
-          ]
-        },
-        {
-          title: 'How-Tos',
-          path: '/guides/how_tos/create-your-first-ff-application.md',
-          pages:[
-            {
-              title: 'Create Your First Firefly API Implementation using Node.JS/Python',
-              path: '/guides/how_tos/create-your-first-ff-application.md'
-            }
-          ]
-        },
-      {
-        title: 'Overview',
-        path: '/support/',
-        header: true,
-        pages: [
-          {
-            title: 'Help',
-            path: '/support/'
-          },
-          {
-            title: 'FAQ',
-            path: '/support/FAQ/'
-          },
-          {
-            title: 'How to contribute',
-            path: '/support/contribute/'
-          },
-          {
-            title: 'Best practices',
-            path: '/support/best-practices'
-          },
-          {
-            title: 'Troubleshooting',
-            path: '/support/troubleshooting'
-          }
         ]
       },
       {
-        title: 'Community',
-        path: '/support/community/',
+        title: 'API Reference',
+        path: '/guides/api/upload_image',
         header: true,
         pages: [
           {
-            title: 'Information',
-            path: '/support/community/'
+            title: "Upload Image",
+            path: "/guides/api/upload_image/"
+          },
+          {
+            title: "Text to Image",
+            path: "/guides/api/image_generation/"
+          },
+          {
+            title: "Generative Expand",
+            path: "/guides/api/generative_expand/"
+          },
+          {
+            title: "Generative Fill",
+            path: "/guides/api/generative_fill/"
           }
         ]
-      }
+      },
+        
     ]
   },
   plugins: [`@adobe/gatsby-theme-aio`]
