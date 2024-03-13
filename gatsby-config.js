@@ -52,6 +52,48 @@ module.exports = {
         ]
       },
       {
+        title: 'Concepts',
+        path: '/guides/concepts/',
+        pages: [
+          {
+            title: 'Access Tokens',
+            path: '/guides/concepts/acess-token.md'
+          },
+          {
+            title: 'Get Credentials',
+            path: '/guides/concepts/create-credentials/'
+          },
+          {
+            title: 'Authentication',
+            path: '/guides/concepts/authentication/'
+          },
+        ]
+      },
+      {
+        title: 'Tutorials',
+        path: '/guides/tutorials/index.md',
+        pages: [
+          {
+            title: 'Sample Tutorial One',
+            path: '/guides/tutorials/sample-tutorial-one.md'
+          },
+          {
+            title: 'Sample Tutorial Two',
+            path: '/guides/tutorials/sample-tutorial-two.md'
+          }
+        ]
+      },
+      {
+        title: 'How-Tos',
+        path: '/guides/how_tos/',
+        pages:[
+          {
+            title: 'Sample How To One',
+            path: '/guides/how_tos/sample-how-to-one.md'
+          }
+        ]
+      },
+      {
         title: 'API Reference',
         path: '/guides/api/upload_image',
         header: true,

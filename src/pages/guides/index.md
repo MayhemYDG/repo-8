@@ -9,8 +9,8 @@ contributors:
 
 This guide will show you how to make your first successful call to the Firefly Text-to-Image API. Your organization admin must first create credentials in [Adobe Developer Console](https://developer.adobe.com/console) and share the following information with you:
 
-* `client_id`
-* `client_secret`
+- `client_id`
+- `client_secret`
 
 To call the Firefly text-to-image endpoint, you need a valid API key and an access token. To get an access token, use the following command:
 
@@ -83,7 +83,7 @@ Got a 200 response code? Great! Your API call was successful. Here is an example
 
 ### Error Codes
 
-To learn more about each response code, head over to the [**Try it** (Responses)](../guides/api/upload_image/) section.
+To learn more about each response code, head over to the [**Try it** (Responses)](./guides/api/upload_image/) section.
 
 ### Rate Limits
 
