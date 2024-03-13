@@ -22,15 +22,10 @@ module.exports = {
         title: 'Getting Started',
         path: '/guides/'
       },
-      // {
-      //   title: 'API Reference',
-      //   description: 'Reference for Firefly APIs',
-      //   path: '/api/index.md'
-      // },
       {
         title: 'Release Notes',
         path: '/release-notes/',
-      }
+      },
     ],
     subPages: [
       {
@@ -53,12 +48,12 @@ module.exports = {
           {
             title: 'Image Model Styles',
             path: '/guides/styles/'
-          }
+          },
         ]
       },
       {
         title: 'API Reference',
-        path: '/guides/api/',
+        path: '/guides/api/upload_image',
         header: true,
         pages: [
           {
