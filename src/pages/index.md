@@ -44,6 +44,6 @@ Get started with the Adobe Firefly API.
 
 <!-- ### API References -->
 
-[Try the API](guides/api/)
+[Try the API](guides/api/upload_image/)
 
 Try the Adobe Firefly API. Explore, make calls, with full endpoint descriptions.
