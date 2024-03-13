@@ -41,43 +41,10 @@ Try out the APIs today to:
 
 Get started with the Adobe Firefly APIs.
 
-<!-- <DiscoverBlock slots="heading, link, text"/>
-
-### Guides
-
-[Text-to-image API](guides/dummy_metrics_api/)
-
-Returns information on the user's company that is necessary for making other Cat Analytics API calls.
-
-<DiscoverBlock slots="link, text"/>
-
-[Generative Expand API](guides/dummy_oauth_client/)
-
-Provides configuration guidance and best practices for the /segments endpoint.
-
-<DiscoverBlock slots="link, text"/>
-
-[Generative Fill API](guides/dummy_using_postman/)
-
-Provides configuration guidance and best practices for the /reports endpoint.
-
-<DiscoverBlock slots="link, text"/>
-
-[Upload Image API](guides/migrating/)
-
-For help migrating from the 1.4 versions of the Analytics API to the newer and more capable /reports API. -->
-
 <DiscoverBlock slots="link, text"/>
 
 <!-- ### API References -->
 
-[Try the API](api/)
+[Try the API](guides/api/upload_image/)
 
 Try the Adobe Firefly APIs. Explore, make calls, with full endpoint descriptions.
-
-<!-- ## API Requests & Rate Limits
-
-The timeout for API requests through adobe.io is currently *60 seconds*.
-
-The default rate limit for an Cat Analytics Company is *120 requests per minute*. (The limit is enforced as *12 requests every 6 seconds*).
-When rate limiting is being enforced you will get `429` HTTP response codes with the following response body: `{"error_code":"429050","message":"Too many requests"}`. -->

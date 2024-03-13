@@ -83,7 +83,7 @@ Got a 200 response code? Great! Your API call was successful. Here is an example
 
 ### Error Codes
 
-To learn more about each response code, head over to the [**Try it** (Responses)](../api/) section.
+To learn more about each response code, head over to the [**Try it** (Responses)](../guides/api/upload_image/) section.
 
 ### Rate Limits
 
