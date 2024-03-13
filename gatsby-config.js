@@ -22,11 +22,11 @@ module.exports = {
         title: 'Getting Started',
         path: '/guides/'
       },
-      {
-        title: 'API Reference',
-        description: 'Reference for Firefly APIs',
-        path: '/api/index.md'
-      },
+      // {
+      //   title: 'API Reference',
+      //   description: 'Reference for Firefly APIs',
+      //   path: '/api/index.md'
+      // },
       {
         title: 'Release Notes',
         path: '/release-notes/',
@@ -55,7 +55,30 @@ module.exports = {
             path: '/guides/styles/'
           }
         ]
-      }
+      },
+      {
+        title: 'API Reference',
+        path: '/guides/api/',
+        header: true,
+        pages: [
+          {
+            title: "Upload Image",
+            path: "/guides/api/upload_image/"
+          },
+          {
+            title: "Text to Image",
+            path: "/guides/api/image_generation/"
+          },
+          {
+            title: "Generative Expand",
+            path: "/guides/api/generative_expand/"
+          },
+          {
+            title: "Generative Fill",
+            path: "/guides/api/generative_fill/"
+          }
+        ]
+      },
         
     ]
   },
