@@ -1,6 +1,6 @@
 ---
 title: Best Practices
-description: This guide explains rate limiting for the Adobe Firefly API.
+description: This guide explains best practices for the Adobe Firefly API.
 contributors:
   - https://github.com/nimithajalal
 ---
@@ -42,6 +42,3 @@ The Adobe Firefly API provides powerful functionality for developers to integrat
 ## Monitoring and Logging
 - Implement logging to track API usage, errors, and performance metrics.
 - Monitor API usage and performance to identify and address issues proactively.
-
-## Conclusion
-Following these best practices will help you use Firefly APIs effectively and efficiently in your applications. For more detailed information, refer to the Firefly API documentation.

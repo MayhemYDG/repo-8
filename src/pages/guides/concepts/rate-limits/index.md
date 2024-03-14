@@ -1,10 +1,10 @@
 ---
-title: Usage Limits - Adobe Firefly API
+title: Rate Limits - Adobe Firefly API
 description: This guide explains rate limiting for the Adobe Firefly API.
 contributors:
   - https://github.com/amandahuarng
 ---
-# Usage Limits
+# Rate Limits
 
 To ensure our customers enjoy equitable peak performance with Firefly APIs, Adobe places limits on the volume, frequency, and concurrency of API calls, and monitors your API usage to proactively contact you and resolve any risks to API performance.
 

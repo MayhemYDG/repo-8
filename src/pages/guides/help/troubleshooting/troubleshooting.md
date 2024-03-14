@@ -1,6 +1,6 @@
 ---
 title: Best Practices
-description: This guide explains rate limiting for the Adobe Firefly API.
+description: This guide explains troubleshooting for the Adobe Firefly API.
 contributors:
   - https://github.com/nimithajalal
 ---
@@ -19,7 +19,6 @@ This guide provides solutions to common issues encountered when using the Adobe 
 ### Solution:
 - Implement exponential backoff and retry logic to handle rate limiting.
 - Reduce the frequency of API calls or optimize your code to make fewer requests.
-- Contact Adobe support to request a rate limit increase if necessary.
 
 ## Issue: Unexpected API Response
 ### Solution:
@@ -37,6 +36,3 @@ This guide provides solutions to common issues encountered when using the Adobe 
 - Check your network connection and ensure that it is stable and fast.
 - Optimize your code to reduce the amount of data sent in API requests.
 - Consider using a CDN or caching strategy to reduce latency for static resources.
-
-## Conclusion
-By following the solutions provided in this guide, you should be able to resolve common issues encountered when using the Adobe Firefly API. If you continue to experience problems, please refer to the API documentation or contact Adobe support for assistance.

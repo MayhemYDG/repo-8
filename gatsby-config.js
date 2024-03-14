@@ -46,23 +46,13 @@ module.exports = {
           },
           {
             title: 'Rate limits',
-            path: '/guides/concepts/usage_limits/'
+            path: '/guides/concepts/rate-limits/'
           }
         ]
-        }, 
-        {
-          title: 'Tutorials',
-          path: '/guides/tutorials/sample-tutorial-one.md',
-          pages: [
-            {
-              title: 'Sample Tutorial One',
-              path: '/guides/tutorials/sample-tutorial-one.md'
-            },
-          ]
         },
         {
           title: 'How-Tos',
-          path: '/guides/how_tos/create-your-first-ff-application.md',
+          path: '/guides/how-tos/create-your-first-ff-application.md',
           pages:[
             {
               title: 'Create Your First Firefly API Implementation using Node.JS/Python',
