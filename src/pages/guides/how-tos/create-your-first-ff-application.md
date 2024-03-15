@@ -1,21 +1,29 @@
 ---
-title: Create Your First Firefly API Implementation Node.JS/Python - Adobe Firefly API
+title: Create Your First Firefly API Implementatio - Adobe Firefly API
 description: This how-to guides you through the process of integrating Adobe's Firefly workflows into your applications.
 contributors:
   - https://github.com/nimithajalal
   - https://github.com/cfjedimaster
 ---
 
-# Create your first Firefly API implementation using Node.JS/Python
+# Create your first Firefly API implementation
 
-Welcome to Adobe's Firefly APIs! These APIs offer a seamless way to integrate powerful creative workflows into your applications using a simple REST-based API. In this tutorial, we'll guide you through creating your first implementation of the Firefly APIs using Node.js. Let's get started!
+Welcome to Adobe's Firefly APIs! These APIs offer a seamless way to integrate powerful creative workflows into your applications using a simple REST-based API.
+
+In this tutorial, we'll guide you through creating your first implementation of the Firefly API.
+
+<InlineAlert slots="text" />
+
+This tutorial provides code snippets in both `Node.js` and `Python` for your convenience. Feel free to use the language of your choice to complete the implementation of your first Firefly API.
+
+Let's get started!
 
 ## Prerequisites
 
 Before we begin, make sure you have the following:
 
 -   Firefly API credentials. If you don't have them yet, you can [sign up](https://developer.adobe.com/firefly-api) for a free trial and obtain your `client_id` and `client_secret`.
--   `Node.js` or `Python` installed on your machine and basic familiarity with `JavaScript` or `Python`. 
+-   `Node.js` or `Python` installed on your machine and basic familiarity with `JavaScript` or `Python`.
 
 ## Step 1: Set Up Your Environment
 
@@ -27,7 +35,7 @@ Next, set your `client_id` and `client_secret` as environment variables. For exa
 export CLIENT_ID=YOURIDHERE
 export CLIENT_SECRET=YOURSECRETHERE
 ```
- 
+
 Note that our code is going to assume CLIENT_ID and CLIENT_SECRET - case matters!
 
 ## Step 2: Authentication
@@ -99,9 +107,9 @@ The provided code example does not include error handling for credentials. For p
 
 ## Step 3: Generate an Image with a Prompt
 
-For our demo, we will use Firefly to generate four images from a single prompt. 
+For our demo, we will use Firefly to generate four images from a single prompt.
 
-In this case, we will focus on the Text-to-image functionality, which includes optional generative matching. 
+In this case, we will focus on the Text-to-image functionality, which includes optional generative matching.
 
 <InlineAlert variant="help" slots="text" />
 
@@ -223,11 +231,11 @@ print(json.dumps(result, indent=True))
 
 This function sends a POST request to the Firefly API with the prompt and retrieves the generated images. Replace `a cat dancing on a rainbow` with your desired prompt.
 
-You can copy and paste any of the `presignedUrl` values from the result to view the images. 
+You can copy and paste any of the `presignedUrl` values from the result to view the images.
 
 ## Step 4: Downloading Images from Firefly API
 
-Let's see how you can write a quick utility to download these images. 
+Let's see how you can write a quick utility to download these images.
 
 ### Import the Required Modules
 

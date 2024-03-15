@@ -19,46 +19,19 @@ module.exports = {
         path: '/'
       },
       {
-        title: 'Getting Started',
+        title: 'Guides',
         path: '/guides/'
-      },
-      {
-        title: 'Release Notes',
-        path: '/release-notes/',
       },
     ],
     subPages: [
       {
-        title: 'Getting Started',
+        title: 'Quickstart',
         path: '/guides/',
-        header: true,
-        pages: [
-          {
-            title: 'Quickstart',
-            path: '/guides/'
-          },
-          {
-            title: 'Authentication',
-            path: '/guides/authentication/'
-          },
-          {
-            title: 'Usage Limits',
-            path: '/guides/usage_limits/'
-          },
-          {
-            title: 'Image Model Styles',
-            path: '/guides/styles/'
-          },
-        ]
       },
       {
         title: 'Concepts',
         path: '/guides/concepts/',
         pages: [
-          {
-            title: 'Access Tokens',
-            path: '/guides/concepts/acess-token.md'
-          },
           {
             title: 'Get Credentials',
             path: '/guides/concepts/create-credentials/'
@@ -67,36 +40,29 @@ module.exports = {
             title: 'Authentication',
             path: '/guides/concepts/authentication/'
           },
-        ]
-      },
-      {
-        title: 'Tutorials',
-        path: '/guides/tutorials/index.md',
-        pages: [
           {
-            title: 'Sample Tutorial One',
-            path: '/guides/tutorials/sample-tutorial-one.md'
+            title: 'Image Model Styles',
+            path: '/guides/concepts/styles/'
           },
           {
-            title: 'Sample Tutorial Two',
-            path: '/guides/tutorials/sample-tutorial-two.md'
+            title: 'Rate limits',
+            path: '/guides/concepts/rate-limits/'
           }
         ]
-      },
-      {
-        title: 'How-Tos',
-        path: '/guides/how_tos/',
-        pages:[
-          {
-            title: 'Sample How To One',
-            path: '/guides/how_tos/sample-how-to-one.md'
-          }
-        ]
-      },
+        },
+        {
+          title: 'How-Tos',
+          path: '/guides/how-tos/create-your-first-ff-application.md',
+          pages:[
+            {
+              title: 'Create Your First Firefly API Implementation',
+              path: '/guides/how-tos/create-your-first-ff-application.md'
+            }
+          ]
+        },
       {
         title: 'API Reference',
         path: '/guides/api/upload_image',
-        header: true,
         pages: [
           {
             title: "Upload Image",
@@ -116,7 +82,24 @@ module.exports = {
           }
         ]
       },
-        
+      {
+        title: 'Release Notes',
+        path: '/guides/release-notes/',
+      },
+      {
+        title: 'Help',
+        path: '/guides/help/best-practices/',
+        pages:[
+          {
+            title: 'Best Practices',
+            path: '/guides/help/best-practices/'
+          },
+          {
+            title: 'Troubleshooting',
+            path: '/guides/help/troubleshooting'
+          }
+        ]
+      }     
     ]
   },
   plugins: [`@adobe/gatsby-theme-aio`]
