@@ -47,6 +47,11 @@ module.exports = {
           {
             title: 'Rate limits',
             path: '/guides/concepts/rate-limits/'
+          },
+          {
+            title: ' Seed ID',
+            path: '/guides/concepts/seed-id'
+
           }
         ]
         },
