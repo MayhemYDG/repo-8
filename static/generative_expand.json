@@ -19,7 +19,6 @@
   "paths": {
     "/v1/images/expand": {
       "post": {
-        "tags": ["public"],
         "summary": "Generative expand",
         "description": "This API gives you access to Firefly's multidiffusion out-painting feature.",
         "operationId": "expandImagesV1",
