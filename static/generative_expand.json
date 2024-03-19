@@ -12,10 +12,10 @@
   ],
   "security": [
     {
-      "X-ApiKey": [],
-      "Access token": []
+        "X-ApiKey": [],
+        "Access token": []
     }
-  ],
+],
   "paths": {
     "/v1/images/expand": {
       "post": {
@@ -171,7 +171,7 @@
         "name": "x-api-key",
         "in": "header"
       },
-      "Access-token": {
+      "Access token": {
         "type": "http",
         "scheme": "bearer"
       }
