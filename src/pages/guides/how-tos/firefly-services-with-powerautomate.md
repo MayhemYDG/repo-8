@@ -31,7 +31,7 @@ For simplicity's sake, this flow will be manually triggered, but certainly, you 
 
 As described earlier, a Microsoft List will be used to define our prompts. We created a new list, named it "Prompts", and added two simple values in the first column.
 
-![Microsoft List with two prompts](./shot1.png)
+![Microsoft List with two prompts](../images/shot1.png)
 
 ## Step Two - Create the Flow
 
@@ -41,7 +41,7 @@ Next, create a new "Instant" Power Automate flow. This will let us test as neede
 
 PowerAutomate has steps that automatically integrate with Lists, so the next step will be to add the "Get items" action from Sharepoint. This will require you to configure the Sharepoint site hosting the list and then select the list. 
 
-![Step configured to read list values](./shot2.png)
+![Step configured to read list values](../images/shot2.png)
 
 Note that we've renamed the action to "Get Prompts"
 
@@ -65,7 +65,7 @@ Name this step, "Set Firefly Client Secret".
 
 At this point, your flow should look like so:
 
-![The flow, so far](./shot3.png)
+![The flow, so far](../images/shot3.png)
 
 ## Step Five - Exchange Credentials
 
@@ -112,13 +112,13 @@ Name this step, "Initialize Image String".
 
 At this point, your flow should look like so:
 
-![The flow, so far](./shot4.png)
+![The flow, so far](../images/shot4.png)
 
 ## Step Seven - Beginning the Loop
 
 Our workflow will generate results for each prompt and email them, so now we add a new action, "Apply to each" (found in the "Control" section when adding a new action). You will be prompted to select an output to drive the looping. If you remember we read in our Microsoft List value in the beginning, so select that: 
 
-![Defining the loop variable](./shot5.png)
+![Defining the loop variable](../images/shot5.png)
 
 All of the next steps will be defined inside this loop. 
 
@@ -238,4 +238,4 @@ Here are your generated images for the prompt, @{items('Apply_to_each')?['Title'
 
 With the flow complete, we can now save and test. As it processes, it will fire off one email as each prompt is done. The images are somewhat large so the screenshot below only shows one, but the additional results are directly beneath it:
 
-![Email example](./shot6.png)
+![Email example](../images/shot6.png)
