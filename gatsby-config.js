@@ -62,6 +62,10 @@ module.exports = {
             {
               title: 'Create Your First Firefly API Implementation',
               path: '/guides/how-tos/create-your-first-ff-application.md'
+            },
+            {
+              title: 'Harnassing the Firefly Services APIs in PowerAutomate',
+              path: '/guides/how-tos/firefly-services-with-powerautomate'
             }
           ]
         },
