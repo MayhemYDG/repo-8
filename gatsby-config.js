@@ -105,7 +105,7 @@ module.exports = {
           },
           {
             title: 'Troubleshooting',
-            path: '/guides/help/troubleshooting'
+            path: '/guides/help/troubleshooting/'
           }
         ]
       }     
