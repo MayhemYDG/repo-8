@@ -20,7 +20,7 @@
     "/v2/storage/image": {
       "post": {
         "summary": "Upload image",
-        "description": "This API allows you to store content on temporary storage. The API will create an object on S3 and return the asset ID of the uploaded content in response.",
+        "description": "Upload source image or mask for Image-to-Image operations, such as  fill, expand. The API will create an object on S3 and return the asset ID of the uploaded content in response.",
         "operationId": "storageImageV2",
         "requestBody": {
           "content": {
