@@ -92,8 +92,8 @@ module.exports = {
         ]
       },
       {
-        title: 'Release Notes',
-        path: '/guides/release-notes/',
+        title: 'Changelog',
+        path: '/guides/changelog/',
       },
       {
         title: 'Help',
