@@ -1,13 +1,33 @@
 ---
 title: Overview - Adobe Firefly API
-description: This is the overview page for Adobe Firefly API
+description: An overview of the Adobe Firefly API
+keywords:
+  - Adobe Firefly Services
+  - Firefly API
+  - Firefly Developer documentation
+  - Firefly API documentation
+  - Creative workflows
+  - Generative AI
+  - Adobe workflows
+  - Firefly automation
+  - Firefly code example
+  - Application development with Firefly
+  - Adobe Firefly
+  - Firefly software development kit (SDK)
+  - JavaScript framework
+  - Adobe Experience Platform
+  - Firefly API endpoints
+  - Firefly authentication and authorization
 contributors:
   - https://github.com/amandahuarng
+  - https://github.com/nimithajalal
+  - https://github.com/hollyschinsky
+hideBreadcrumbNav: true
 ---
 
 <Hero slots="heading, text" background="rgb(233, 80, 80)"/>
 
-# Adobe Firefly API
+# Adobe Firefly API - Firefly Services
 
 The Adobe Firefly API makes it easy for you to integrate generative AI into your creative workflows.
 

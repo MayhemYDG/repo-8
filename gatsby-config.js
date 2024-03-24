@@ -30,7 +30,7 @@ module.exports = {
       },
       {
         title: 'Concepts',
-        path: '/guides/concepts/',
+        path: '/guides/concepts/authentication/',
         pages: [
           // {
           //   title: 'Get Credentials',
