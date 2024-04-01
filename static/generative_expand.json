@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://firefly.adobe.io"
+      "url": "https://firefly-api.adobe.io"
     }
   ],
   "security": [

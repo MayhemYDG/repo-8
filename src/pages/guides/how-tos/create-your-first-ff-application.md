@@ -62,7 +62,7 @@ Let's get started!
 
 Before we begin, make sure you have the following:
 
--   Firefly API credentials. If you don't have them yet, first visit the [Firefly Services Getting Started guide](https://developer.adobe.com/firefly-services/docs/guides/get-started/) to obtain a `client_id` and `client_secret`.
+-   Firefly API credentials. If you don't have them yet, first visit the Firefly Services [Getting Started](../../../guides/get-started.md) guide to obtain a `client_id` and `client_secret`.
 -   `Node.js` or `Python` installed on your machine and basic familiarity with `JavaScript` or `Python`.
 
 ## Step 1: Set Up Your Environment
@@ -115,7 +115,7 @@ async function getAccessToken(id, secret) {
 	params.append('grant_type', 'client_credentials');
 	params.append('client_id', id);
 	params.append('client_secret', secret);
-	params.append('scope', 'scope=openid,AdobeID,session,additional_info,read_organizations,firefly_api,ff_apis');
+	params.append('scope', 'openid,AdobeID,session,additional_info,read_organizations,firefly_api,ff_apis');
 	
 	let resp = await fetch('https://ims-na1.adobelogin.com/ims/token/v3', 
 		{ 
@@ -153,7 +153,7 @@ In this case, we will focus on the Text-to-image functionality, which includes o
 
 <InlineAlert variant="help" slots="text" />
 
-Please refer to the [Text-to-image with optional generative](https://developer.adobe.com/firefly-api/api/#operation/v2/images/generate) match section in the API Reference for more details.
+Please refer to the [Text-to-image](../api/generative_expand/index.md) with optional generative match section in the API Reference for more details.
 
 Based on the docs, we can see that the only required parameter is prompt. Also, the `n` prompt specifies how many images we want. So the simplest request body we could build would look like so:
 
