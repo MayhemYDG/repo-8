@@ -430,7 +430,7 @@
               },
               "id": {
                 "type": "string",
-                "description": "Unique ID associated with the generated image.<br><strong>Note:</strong>Note: The ID of the generated image will remain valid for 24 hours."
+                "description": "Unique ID associated with the generated image.<br><strong>Note:</strong> The ID of the generated image will remain valid for 24 hours."
               }
             }
           },
