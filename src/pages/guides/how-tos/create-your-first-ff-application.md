@@ -149,11 +149,11 @@ The provided code example does not include error handling for credentials. For p
 
 For our demo, we will use Firefly to generate four images from a single prompt.
 
-In this case, we will focus on the Text-to-image functionality, which includes optional generative matching.
+In this case, we will focus on the `generateImages` functionality, which includes optional generative matching.
 
 <InlineAlert variant="help" slots="text" />
 
-Please refer to the [Text-to-image with optional generative](https://developer.adobe.com/firefly-api/api/#operation/v2/images/generate) match section in the API Reference for more details.
+Please refer to the [generateImages](../api/image_generation/index.md) in the API Reference for more details.
 
 Based on the docs, we can see that the only required parameter is prompt. Also, the `n` prompt specifies how many images we want. So the simplest request body we could build would look like so:
 
