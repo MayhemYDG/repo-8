@@ -78,15 +78,15 @@ module.exports = {
             path: "/guides/api/upload_image/"
           },
           {
-            title: "generateImages",
+            title: "Generate Images",
             path: "/guides/api/image_generation/"
           },
           {
-            title: "expandImage",
+            title: "Exapnd Image",
             path: "/guides/api/generative_expand/"
           },
           {
-            title: "fillImage",
+            title: "Fill Image",
             path: "/guides/api/generative_fill/"
           }
         ]
