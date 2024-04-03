@@ -19,7 +19,7 @@
   "paths": {
     "/v1/images/fill": {
       "post": {
-        "summary": "Fill Image API",
+        "summary": "fillImage",
         "description": "Fill the masked area of an image with an optional prompt.",
         "operationId": "fillImagesV1",
         "requestBody": {
