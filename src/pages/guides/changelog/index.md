@@ -31,6 +31,12 @@ hideBreadcrumbNav: true
 <!-- TODO: Update with latest prod details, elaborate on API descriptions -->
 # Changelog
 
+## April 18, 2024
+
+### Added
+
+Firefly Services now support customer-supplied pre-signed URLs as input image for [`generateImages` API](../api/image_generation/).
+
 ## December 13, 2023
 
 ### Added
