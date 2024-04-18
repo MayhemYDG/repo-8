@@ -435,7 +435,7 @@
                       "minLength": 1,
                       "format": "uri",
                       "title": "The presigned url",
-                      "description": "Reference to public or signed url of the input data. \n Note: Only allow listed domains are allowed to be accepted as input URL in the request. The allow-listed domains are as follows: \n <ul><li><a href='https://aws.amazon.com/'>AWS</a></li> <li><a href ='https://dotnet.microsoft.com/en-us/'> Azure</a></li><li><a href='https://dropboxusercontent.com'>Dropbox</a></li></ul>"
+                      "description": "Reference to public or signed url of the input data.\n<strong>Note</strong>: Only allow listed domains are allowed to be accepted as input URL in the request.\nThe allow-listed domains are as follows:\n<ul><li><a href='https://aws.amazon.com/'>AWS</a></li> <li><a href ='https://dotnet.microsoft.com/en-us/'> Azure</a></li><li><a href='https://dropboxusercontent.com'>Dropbox</a></li></ul>"
                   }
               }
           },
