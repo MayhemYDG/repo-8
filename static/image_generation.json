@@ -21,7 +21,6 @@
   "paths": {
       "/v2/images/generate": {
           "post": {
-              "tags": ["public"],
               "summary": "Generate Images",
               "description": "Generate images based on a prompt with optional reference image to match style.",
               "operationId": "generateImages",
