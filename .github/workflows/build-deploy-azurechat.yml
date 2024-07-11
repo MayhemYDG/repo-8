@@ -1,4 +1,5 @@
 name: build-deploy-azurechat
+run-name: build-deploy-azurechat-${{ github.run_number }}
 
 on:
   push:
