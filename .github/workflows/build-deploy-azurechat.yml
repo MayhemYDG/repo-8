@@ -1,4 +1,4 @@
-name: Build and deploy - ${{ secrets.APP_NAME }}
+name: build-deploy-azurechat
 
 on:
   push:
