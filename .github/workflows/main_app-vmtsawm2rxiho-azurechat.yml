@@ -59,6 +59,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'app-vmtsawm2rxiho-azurechat'
+          app-name: 'app-5yxthixn6ycjs-azurechat'
           slot-name: 'Production'
           package: .
