@@ -52,14 +52,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A2D2423E7F454EF989BA29FEC09971E2 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_50E09CBDF7894DD9855957FE9D0BE9FB }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D43EA7E6D10C47BF89FFCC36EA2149D7 }}
-      
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C105878D63F448A0B8AC3F529592DDAA }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_76F102273D21495BB3245CA067FC1C36 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_41A92757E7C642699778AC8A3734943B }}
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ secrets.APP_NAME }}
+          app-name: 'app-5yxthixn6ycjs-azurechat'
           slot-name: 'Production'
           package: .
