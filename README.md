@@ -99,8 +99,8 @@ azd auth login
 This repository uses environment variables to configure the deployment, which can be used to enable optional features. You can set these variables with the `azd env set` command. Learn more about all [optional features here](#optional-features).
 
 ```shell
-azd env set USE_REDIS_CACHE_APIM '<true-or-false>'
-azd env set SECONDARY_OPENAI_LOCATION '<your-secondary-openai-location>'
+azd env set USE_REDIS_CACHE_APIM 'true'
+azd env set SECONDARY_OPENAI_LOCATION 'swedencentral'
 ```
 
 In the azd template, we automatically set an environment variable for your current IP address. During deployment, this allows traffic from your local machine to the Azure Container Registry for deploying the containerized application. 

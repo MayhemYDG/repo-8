@@ -23,7 +23,7 @@ export const ChatMessageEmptyState: FC<Prop> = (props) => {
   return (
     <div className="grid grid-cols-5 w-full items-center container mx-auto max-w-3xl justify-center h-full gap-9">
       <div className="col-span-2 gap-5 flex flex-col flex-1">
-        <img src="/ai-icon.png" className="w-36" />
+        <img src="/logo-tiny.svg" className="w-36" />
         <p className="">
           Start by just typing your message in the box below. You can also
           personalise the chat by making changes to the settings on the right.

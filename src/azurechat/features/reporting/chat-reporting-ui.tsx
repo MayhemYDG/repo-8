@@ -22,7 +22,7 @@ export const ChatReportingUI: FC<Props> = async (props) => {
           {chats.map((message: ChatMessageModel, index: number) => (
             <ChatRow
               name={message.role === "user" ? chatThread.useName : AI_NAME}
-              profilePicture={message.role === "user" ? "" : "/ai-icon.png"}
+              profilePicture={message.role === "user" ? "" : "/logo-tiny.svg"}
               message={message.content}
               type={message.role}
               key={index}

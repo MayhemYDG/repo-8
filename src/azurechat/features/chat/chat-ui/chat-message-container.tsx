@@ -25,7 +25,7 @@ export const ChatMessageContainer = () => {
           <ChatRow
             name={message.role === "user" ? session?.user?.name! : AI_NAME}
             profilePicture={
-              message.role === "user" ? session?.user?.image! : "/ai-icon.png"
+              message.role === "user" ? session?.user?.image! : "/logo-tiny.svg"
             }
             message={message.content}
             type={message.role}
