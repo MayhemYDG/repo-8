@@ -12,29 +12,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-
       - name: npm install, build, and test
         run: |
           npm install
           npm run build --if-present
           npm run test --if-present
-
+        working-directory: src/azurechat
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
-
+        working-directory: src/azurechat
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: node-app
-          path: release.zip
+          path: src/azurechat/release.zip
 
   deploy:
     runs-on: ubuntu-latest
