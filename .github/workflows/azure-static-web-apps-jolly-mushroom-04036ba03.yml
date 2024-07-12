@@ -44,7 +44,6 @@ jobs:
           AZURE_TENANT_ID: "54f25355-87cb-43b2-8483-6d1700834927"
           NEXTAUTH_SECRET: "bzecfhkkycoms"
           NEXTAUTH_URL: "https://app-5yxthixn6ycjs-azurechat.azurewebsites.net"
-          SCM_DO_BUILD_DURING_DEPLOYMENT: "true"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
