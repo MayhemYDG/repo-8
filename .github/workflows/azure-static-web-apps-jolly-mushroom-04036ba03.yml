@@ -36,6 +36,15 @@ jobs:
           api_location: "" # Api source code path - optional
           output_location: "" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+        env:
+          APPCONFIG_ENDPOINT: "https://appcs-5yxthixn6ycjs-chatapp.azconfig.io"
+          AUTH_ENTRA_CLIENT_ID: "@Microsoft.KeyVault(VaultName=kv-5yxthixn6ycjs;SecretName=AzureChatClientId)"
+          AUTH_ENTRA_CLIENT_SECRET: "@Microsoft.KeyVault(VaultName=kv-5yxthixn6ycjs;SecretName=AzureChatClientSecret)"
+          AZURE_CLIENT_ID: "56c20c55-7a00-46da-91ce-f6f694030fea"
+          AZURE_TENANT_ID: "54f25355-87cb-43b2-8483-6d1700834927"
+          NEXTAUTH_SECRET: "bzecfhkkycoms"
+          NEXTAUTH_URL: "https://app-5yxthixn6ycjs-azurechat.azurewebsites.net"
+          SCM_DO_BUILD_DURING_DEPLOYMENT: "true"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
