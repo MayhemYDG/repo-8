@@ -253,7 +253,7 @@ jobs:
         fetch-depth: 2
     - continue-on-error: true
       id: detect-trigger
-      uses: xarray-contrib/ci-trigger@v1.1
+      uses: xarray-contrib/ci-trigger@v1.2
       with:
         keyword: '[test-upstream]'
     - name: after
