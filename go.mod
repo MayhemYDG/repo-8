@@ -32,7 +32,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.3.7
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/logrusorgru/aurora v0.0.0-20190803045625-94edacc10f9b
-	github.com/microsoft/azure-devops-go-api/azuredevops v0.0.0-20191014190507-26902c1d4325
+	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/mmcdole/gofeed v1.1.4-0.20211013195857-68ee9054d97b
 	github.com/olebedev/config v0.0.0-20190528211619-364964f3a8e4
 	github.com/olekukonko/tablewriter v0.0.5
