@@ -255,7 +255,7 @@ jobs:
         \n  gh api $url > \"$name.zip\"\n  unzip -d \"$name\" \"$name.zip\"\ndone\n"
     - continue-on-error: true
       name: Publish Unit Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v1
+      uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         comment_mode: false
         commit: ${{ github.event.workflow_run.head_sha }}
