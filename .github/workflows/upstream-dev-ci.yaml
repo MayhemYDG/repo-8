@@ -514,7 +514,7 @@ jobs:
       with:
         python-version: 3.x
     - continue-on-error: true
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         path: /tmp/workspace/logs
     - continue-on-error: true
