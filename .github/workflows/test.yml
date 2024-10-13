@@ -246,7 +246,7 @@ jobs:
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
       name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - continue-on-error: true
       name: Install dependencies
       run: npm install
@@ -753,7 +753,7 @@ jobs:
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
       name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - continue-on-error: true
       id: skip_check
       name: Run action
@@ -1010,7 +1010,7 @@ jobs:
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
       name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - continue-on-error: true
       id: skip_check
       name: Run action
@@ -1275,7 +1275,7 @@ jobs:
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
       name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - continue-on-error: true
       id: skip_check
       name: Run action
