@@ -14,7 +14,7 @@ require (
 	github.com/andygrunwald/go-gerrit v0.0.0-20190825170856-5959a9bf9ff8
 	github.com/briandowns/openweathermap v0.0.0-20180804155945-5f41b7c9d92d
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/chzyer/readline v1.5.1
 	github.com/creack/pty v1.1.18
 	github.com/digitalocean/godo v1.83.0
 	github.com/docker/distribution v2.7.1+incompatible // indirect
