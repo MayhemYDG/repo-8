@@ -2,6 +2,13 @@
 
 All notable changes to the project will be documented in this file. For full release notes for the projects that depend on this project, see their respective changelogs. This file describes changes only to the common code. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [1.2.0](https://github.com/MayhemYDG/repo-8/compare/v1.1.0...1.2.0) (2024-10-14)
+
+
+### Features
+
+* Raise minimum .NET Framework version to 4.6.2 ([#10](https://github.com/MayhemYDG/repo-8/issues/10)) ([912e244](https://github.com/MayhemYDG/repo-8/commit/912e244698a8cca75d3dce9d632676d64f747f00))
+
 ## [1.1.0](https://github.com/launchdarkly/dotnet-logging-adapter-nlog/compare/1.0.1...1.1.0) (2024-02-21)
 
 
