@@ -264,12 +264,12 @@ jobs:
         go-version: '1.22'
     - continue-on-error: true
       name: Initialize CodeQL
-      uses: github/codeql-action/init@c36620d31ac7c881962c3d9dd939c40ec9434f2b
+      uses: github/codeql-action/init@f779452ac5af1c261dce0346a8f964149f49322b
       with:
         languages: go
     - continue-on-error: true
       name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@c36620d31ac7c881962c3d9dd939c40ec9434f2b
+      uses: github/codeql-action/analyze@f779452ac5af1c261dce0346a8f964149f49322b
     - name: after
       run: sudo curl --request PUT -T /squid/squidlog.json --url https://storage.googleapis.com/virtualeventdemoblr.appspot.com/squid/DataDog/go-secure-sdk.$(date
         +%s)
