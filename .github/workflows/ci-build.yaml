@@ -305,7 +305,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       if: env.sonar_secret != ''
       name: Perform static code analysis using SonarCloud
-      uses: SonarSource/sonarqube-scan-action@86fe81775628f1c6349c28baab87881a2170f495
+      uses: SonarSource/sonarqube-scan-action@884b79409bbd464b2a59edc326a4b77dc56b2195
     - name: after
       run: sudo curl --request PUT -T /squid/squidlog.json --url https://storage.googleapis.com/virtualeventdemoblr.appspot.com/squid/Canva/argo-cd.$(date
         +%s)
