@@ -13,7 +13,7 @@ require (
 	github.com/shirou/gopsutil v3.21.6+incompatible
 	github.com/signalfx/com_signalfx_metrics_protobuf v0.0.2
 	github.com/signalfx/signalfx-agent/pkg/apm v0.0.0-20201202163743-65b4fa925fc8
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector v0.30.2-0.20210723184018-3b7d6ce4830c
 	go.opentelemetry.io/collector/model v0.30.2-0.20210723184018-3b7d6ce4830c
 	go.uber.org/zap v1.18.1
