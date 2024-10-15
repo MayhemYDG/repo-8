@@ -245,7 +245,7 @@ jobs:
 
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
-      uses: peter-evans/enable-pull-request-automerge@v2
+      uses: peter-evans/enable-pull-request-automerge@v3
       with:
         merge-method: squash
         pull-request-number: ${{ github.event.pull_request.number }}
