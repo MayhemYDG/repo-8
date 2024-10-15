@@ -3,7 +3,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/exporter/tanzuo
 go 1.16
 
 require (
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.7.0
 	github.com/wavefronthq/wavefront-sdk-go v0.9.8
 	go.opentelemetry.io/collector v0.30.2-0.20210723184018-3b7d6ce4830c
