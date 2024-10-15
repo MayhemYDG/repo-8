@@ -820,7 +820,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -1113,7 +1113,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -1127,7 +1127,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
@@ -1402,7 +1402,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -1416,7 +1416,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
@@ -1690,7 +1690,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
@@ -1701,7 +1701,7 @@ jobs:
         cache-name: cache-fluentbit
       id: fluentbit-cache
       name: Fluentbit Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: fluentbit-cache-1.5.3
         path: /opt/td-agent-bit
@@ -1732,7 +1732,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -2309,7 +2309,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
@@ -2629,7 +2629,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
@@ -2964,7 +2964,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -2978,7 +2978,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
@@ -3270,7 +3270,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -3563,7 +3563,7 @@ jobs:
         cache-name: cache-go-modules
       id: module-cache
       name: Cache Go
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum')
           }}
@@ -3577,7 +3577,7 @@ jobs:
         cache-name: cache-tool-binaries
       id: tool-cache
       name: Cache Tools
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         key: v1-tools-${{ runner.os }}-${{ hashFiles('./internal/tools/go.mod') }}
         path: /home/runner/go/bin
