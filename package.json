@@ -62,7 +62,7 @@
     "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/chai": "^4.3.6",
-    "@types/chai-almost": "^1.0.1",
+    "@types/chai-almost": "^1.0.3",
     "@types/chai-as-promised": "^7.1.6",
     "@types/debug": "^4.1.12",
     "@types/elliptic": "^6.4.15",

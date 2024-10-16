@@ -1882,10 +1882,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/chai-almost@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/chai-almost/-/chai-almost-1.0.1.tgz#e8a2de03b53c22e9a2dd2c85ef98bde5f19b685c"
-  integrity sha512-UwJTbGAP8Jc84JwpSeCEiE50LBvE7MD4pWYsWdwgZG/umPjUlAYCEMK4WnzbEQO/08HH2jDJ+Ikm9CPzHWdGGQ==
+"@types/chai-almost@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@types/chai-almost/-/chai-almost-1.0.3.tgz#bfd9767d5816895dc18c1b453ee07b4626a9a8f2"
+  integrity sha512-NMLjvnFjgxS0Z36whNuoma2p/2Fu6m+dV8eddO8tRAztMAqTqYxFYGyJNsAsOlwx89siUMfxQ1Wdqew2xXsiEg==
   dependencies:
     "@types/chai" "*"
 
