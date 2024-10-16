@@ -58,7 +58,7 @@ rand = "0.8.4"
 regex = "1.7.0"
 reqwest = { version = "0.11", features = ["json", "blocking", "stream"], optional = true }
 retry = "2"
-ring = { version = "0.16", optional = true, features = ["std"] }
+ring = { version = "0.17", optional = true, features = ["std"] }
 rredis = { package = "redis", version = "0.21", optional = true, default-features = false, features = ["aio", "tokio-comp", "tokio-native-tls-comp"] }
 semver = "1.0"
 sha2 = { version = "0.10.6", optional = true }
