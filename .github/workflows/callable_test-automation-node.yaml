@@ -611,7 +611,7 @@ jobs:
           '
     - continue-on-error: true
       name: Build and cache image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         build-args: 'LIBINDY_VERSION=${{ env.INPUT_LIBINDYVERSION}}
 
@@ -943,7 +943,7 @@ jobs:
           '
     - continue-on-error: true
       name: Build and push image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         build-args: 'UBUNTU_VERSION=${{ env.DIND_BUILD_ARG }}
 
@@ -1532,7 +1532,7 @@ jobs:
     - continue-on-error: true
       if: steps.cache-image.outputs.cache-hit != 'true'
       name: Build and cache image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         build-args: 'EXTENTION_DEB=${{ env.INPUT_DEBNAME }}
 
