@@ -617,7 +617,7 @@ jobs:
         path: artifacts
     - continue-on-error: true
       name: Publish release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: 'artifacts/AppImage-clang/ImageMagick--clang-x86_64.AppImage
 
