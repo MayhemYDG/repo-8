@@ -91,7 +91,7 @@ void = { version = "1", optional = true }
 version-compare = { version = "0.1.1", optional = true }
 
 aws-config = { version = "0.51", optional = true }
-aws-sdk-s3 = { version = "0.21", optional = true }
+aws-sdk-s3 = { version = "0.22", optional = true }
 aws-smithy-client = { version = "0.51", features = ["rustls"], optional = true }
 aws-sig-auth = { version = "0.51", optional = true }
 
