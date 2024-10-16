@@ -246,7 +246,7 @@ jobs:
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
       name: Install QEMU static binaries
-      uses: docker/setup-qemu-action@v2.1.0
+      uses: docker/setup-qemu-action@v3.2.0
     - continue-on-error: true
       name: Configure Buildkit
       uses: docker/setup-buildx-action@v2.2.1
