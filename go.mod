@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/chartmuseum/auth v0.4.5
@@ -22,13 +22,13 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/gomodule/redigo v1.8.4 // indirect
-	github.com/prometheus/client_golang v1.9.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/prometheus/client_golang v1.19.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.7.0
-	github.com/urfave/cli v1.22.5
+	github.com/stretchr/testify v1.9.0
+	github.com/urfave/cli v1.22.12
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	github.com/zsais/go-gin-prometheus v0.1.0
-	go.uber.org/zap v1.16.0
-	helm.sh/helm/v3 v3.5.1
+	go.uber.org/zap v1.26.0
+	helm.sh/helm/v3 v3.16.2
 )
