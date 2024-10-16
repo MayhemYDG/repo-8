@@ -41,7 +41,7 @@
     "cspell": "npx cspell \"**/*\""
   },
   "dependencies": {
-    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
     "@openzeppelin/contracts": "^4.9.3",
     "@openzeppelin/contracts-upgradeable": "^4.9.6",
     "@openzeppelin/hardhat-upgrades": "^3.2.0",
