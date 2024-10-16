@@ -9,6 +9,6 @@ pysimdjson==5.0.2
 python-rapidjson==1.14
 cysimdjson==23.8
 responses==0.24.1
-types-requests<2.31.0.7
+types-requests<2.32.0.20240915
 testcontainers==3.7.1
 pyOpenSSL==24.0.0
