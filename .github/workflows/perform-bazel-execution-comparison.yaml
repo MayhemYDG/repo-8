@@ -256,7 +256,7 @@ jobs:
         repository: bazelbuild/bazel
     - continue-on-error: true
       name: MOUNT BAZEL CACHE
-      uses: actions/cache@v4.0.2
+      uses: actions/cache@v4.1.1
       with:
         key: bazel
         path: /home/runner/.cache/bazel
