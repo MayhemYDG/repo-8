@@ -2068,7 +2068,7 @@ jobs:
     - continue-on-error: true
       uses: actions/checkout@v4
     - continue-on-error: true
-      uses: shivammathur/setup-php@2.28.0
+      uses: shivammathur/setup-php@2.31.1
       with:
         php-version: ${{ env.PHP_VER }}
     - continue-on-error: true
@@ -2357,7 +2357,7 @@ jobs:
     - continue-on-error: true
       uses: actions/checkout@v4
     - continue-on-error: true
-      uses: shivammathur/setup-php@2.28.0
+      uses: shivammathur/setup-php@2.31.1
       with:
         coverage: pcov
         extensions: imagick
