@@ -302,7 +302,7 @@ jobs:
         '
     - continue-on-error: true
       name: CREATE PULL REQUEST
-      uses: peter-evans/create-pull-request@v6.0.5
+      uses: peter-evans/create-pull-request@v7.0.5
       with:
         author: GitHub <noreply@github.com>
         body: 'Automated changes created by ${{ github.server_url }}/${{ github.repository
