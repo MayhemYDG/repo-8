@@ -78,7 +78,7 @@
     "croner": "^5.3.5",
     "loglevel": "^1.8.0",
     "p-event": "^5.0.1",
-    "p-queue": "^7.2.0",
+    "p-queue": "^8.0.1",
     "tough-cookie": "^4.0.0"
   }
 }
