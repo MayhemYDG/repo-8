@@ -246,7 +246,7 @@ jobs:
 
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
-      uses: Submitty/peter-evans-repository-dispatch@v23.07.00
+      uses: Submitty/peter-evans-repository-dispatch@v24.07.00
       with:
         client-payload: '{ "ref": "${{ github.ref }}", "ref_name": "${{ github.ref_name
           }}" }'
