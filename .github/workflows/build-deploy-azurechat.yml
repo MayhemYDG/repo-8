@@ -544,7 +544,7 @@ jobs:
     - continue-on-error: true
       id: deploy-to-webapp
       name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
+      uses: azure/webapps-deploy@v3
       with:
         app-name: app-5yxthixn6ycjs-azurechat
         package: .
