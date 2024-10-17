@@ -1812,7 +1812,7 @@ jobs:
       run: npm run test
     - continue-on-error: true
       name: Upload Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: site/tests/report/jest/clover.xml
         flags: js
@@ -2383,7 +2383,7 @@ jobs:
       run: php vendor/bin/phpunit
     - continue-on-error: true
       name: Upload Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: site/tests/report/clover.xml
         flags: php
@@ -2935,7 +2935,7 @@ jobs:
       working-directory: python_submitty_utils
     - continue-on-error: true
       name: Upload submitty python utils Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: python_submitty_utils/coverage.xml
         flags: python_submitty_utils
@@ -2949,7 +2949,7 @@ jobs:
       working-directory: migration
     - continue-on-error: true
       name: Upload migrator Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: migration/coverage.xml
         flags: migrator
@@ -2963,7 +2963,7 @@ jobs:
       working-directory: autograder
     - continue-on-error: true
       name: Upload autograder Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: autograder/coverage.xml
         flags: autograder
@@ -2986,7 +2986,7 @@ jobs:
       working-directory: sbin/submitty_daemon_jobs
     - continue-on-error: true
       name: Upload submitty_daemon_jobs Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: sbin/submitty_daemon_jobs/coverage.xml
         flags: submitty_daemon_jobs
