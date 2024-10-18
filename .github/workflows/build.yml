@@ -1123,7 +1123,7 @@ jobs:
         path: ./pages/site/dev/coverage
     - continue-on-error: true
       name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v3
       with:
         path: ./pages/site/
     - name: after
