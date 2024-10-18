@@ -1083,7 +1083,7 @@ jobs:
       name: Prepare environment
       run: npm ci
     - continue-on-error: true
-      uses: JS-DevTools/npm-publish@v1
+      uses: JS-DevTools/npm-publish@v3
       with:
         token: ${{ secrets.NPM_TOKEN }}
     - name: after
