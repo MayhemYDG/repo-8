@@ -546,7 +546,7 @@ jobs:
       run: docker image push --all-tags $DOCKER_USERNAME/${{github.event.repository.name}}
     - continue-on-error: true
       name: Update DockerHub readme
-      uses: peter-evans/dockerhub-description@v3
+      uses: peter-evans/dockerhub-description@v4
       with:
         password: ${{ secrets.DOCKER_PWD }}
         readme-filepath: ./README.md
